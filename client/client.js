@@ -14,7 +14,6 @@ Meteor.Router.add({
     }
 });
 
-
 Meteor.startup(function () {
     Meteor.autorun(function () {
         //when logged out, switch to login
@@ -27,4 +26,7 @@ Meteor.startup(function () {
             Meteor.Router.to("/addBounty");
         }
     });
+
+    //add stripe library
+    document.body.appendChild(document.createElement('script')).src = 'https://checkout.stripe.com/v2/checkout.js';
 });
