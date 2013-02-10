@@ -16,11 +16,6 @@ var CODEBOUNTY = (function () {
         $(".state-indicator.open").html("Open $" + amount);
     };
 
-    my.Loaded = function () {
-        //TODO checking the current page url and set up the proper issue bounty
-
-    };
-
     //static for now
     my.SetIssueBounty(35);
 
