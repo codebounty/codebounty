@@ -9,3 +9,5 @@ preserve-inputs
 accounts-base
 accounts-ui
 accounts-github
+page-js
+router

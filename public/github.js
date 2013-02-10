@@ -6,9 +6,13 @@
 var CODEBOUNTY = (function () {
     var my = {};
 
+    my.OpenPopup = function (url) {
+        window.open(url, 'window', 'width=480,height=480,scrollbars=yes,status=yes');
+    };
+
     my.SetIssueBounty = function (amount) {
         //TODO touchup ui
-        $("<a>Add Bounty</a>").insertAfter(".discussion-stats");
+        $("<a href='http://localhost:3000/addBounty' onclick='CODEBOUNTY.OpenPopup(this.href); return false'>Add Bounty</a>").insertAfter(".discussion-stats");
         $(".state-indicator.open").html("Open $" + amount);
     };
 
