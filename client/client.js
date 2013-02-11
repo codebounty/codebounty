@@ -3,7 +3,11 @@
 
 Meteor.Router.add({
     '/addBounty': function () {
-        return "addBountyView";
+        //if no user return no view, the user will be redirected to login automatically
+        if (!Meteor.userId())
+            return;
+
+        //TODO setup paypal flow
     },
     '/login': function () {
         return "loginView";
