@@ -1,0 +1,8 @@
+{
+    "name": "code bounty",
+    "version": "0.0.1",
+    "description": "a simple bounty system",
+    "dependencies": {
+        "paypal-ec": "*"
+    }
+}

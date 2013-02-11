@@ -1,11 +1,18 @@
-Meteor.methods({
-    //Authorize bounty payment, capture later
-    //see https://www.x.com/developers/paypal/documentation-tools/express-checkout/how-to/ht_ec-singleAuthPayment-curl-etc
-    'processTransaction': function () {
-        //Start SetExpressCheckout API Operation
-        //TODO return url use https://github.com/andzdroid/paypal-express
+var Future = NodeModules.require('fibers/future');
 
-        //node capturing payment happens after the bounty is confirmed
+Meteor.methods({
+    //Authorize bounty payment, then capture later
+    //returns the express checkout url
+    'processBounty': function () {
+
+        var fut = new Future();
+
+        //Start SetExpressCheckout API Operation
+        PAYPAL.StartCheckout(function (url) {
+            fut.ret(url);
+        });
+
+        return fut.wait();
     }
 });
 
