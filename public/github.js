@@ -18,6 +18,18 @@ var CODEBOUNTY = (function () {
         $(".state-indicator.open").html("Open $" + amount);
     }
 
+    function setupReward() {
+        //TODO make this work when the button gets regenerated (the issue is reopened)
+        $("button[name='comment_and_close']").click(function () {
+            var reward = confirm("Would you like to reward the bounty?");
+            if (reward) {
+                //TODO trigger reward (make sure currently logged in user can reward)
+            }
+        });
+
+        //TODO on reopen, ask to postpone bounty?
+    }
+
     my.OpenPopup = function (url) {
         window.open(url, 'window', 'width=480,height=480,scrollbars=yes,status=yes');
     };
@@ -27,6 +39,7 @@ var CODEBOUNTY = (function () {
     createBountyButton(10);
     createBountyButton(5);
     setIssueBounty(35);
+    setupReward();
 
     return my;
 })();
