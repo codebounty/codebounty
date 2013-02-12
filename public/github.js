@@ -6,11 +6,70 @@
 var CODEBOUNTY = (function () {
     var my = {};
 
-    function createBountyButton(amount) {
-        var url = window.location.href;
-        $("<a href='http://localhost:3000/processBounty?amount=" + amount + "&url=" + encodeURI(url) +
-            "' onclick='CODEBOUNTY.OpenPopup(this.href); return false'>$" + amount + "</a>")
-            .insertAfter(".discussion-stats");
+    function createBountyButton(initValue) {
+        //TODO: make style classes
+        /*github style*/
+        var style = "" +
+        ".bountyButton {" +
+            "box-sizing: border-box;" +
+            "margin-bottom: 8px;" +
+            "width: 100%;" +
+            "overflow: hidden;" +
+            /*"display: block;"+
+            "text-align: center;"+
+            "padding: 7px 10px;"+
+            "margin-bottom: 8px;"+
+            "background: #6cc644;"+
+            "color: #fff;"+
+            "text-decoration: none;"+
+            "font-weight: bold;"+
+            "-webkit-border-radius: 3px;"+
+            "-moz-border-radius: 3px;"+
+            "border-radius: 3px;"+*/
+        "}" +
+        ".bountyCurrency {" +
+            "position: absolute;" +
+            "font-size: 18px;" +
+            "font-weight: bold;" +
+            "padding-top: 2px;" +
+            "padding-left: 7px;" +
+        "}"+
+        ".bountyInput {" +
+            "margin-bottom: 8px;" +
+            "width: 100%;" +
+            "text-align: center;" +
+            "font-weight: bold;" +
+            "font-size: 18px;" +
+            "box-sizing: border-box;" +
+            "padding-left: 20px;"+
+        "}";
+        var customStyles = document.createElement('style');
+        customStyles.appendChild(document.createTextNode(style));
+        document.documentElement.insertBefore(customStyles);
+        /*var link = document.createElement('link');
+        link.href =  "http://localhost:3000/codebounty.css";
+        link.rel = 'stylesheet';
+        document.documentElement.insertBefore(link);*/
+
+        var bountyDiv = "" +
+            "<label class='bountyCurrency'>$</label>" +
+            "<input class='bountyInput' type='number' value='"+initValue+"' min='0' step='5'/>" +
+            "<a class='bountyButton button minibutton bigger' href='#'>"+
+                "Place Bounty"+
+            "</a>";
+
+        $(bountyDiv).insertAfter(".discussion-stats .state-indicator");
+        var $bountyButton = $(".bountyButton");
+        $bountyButton.click(function(e){
+            //TODO: Maybe encodeURIComponent
+            var url = encodeURI(window.location.href);
+            //TODO: Input validation.
+            var amount = $(".bountyInput").val();
+            var target = "http://localhost:3000/processBounty?amount=" + amount + "&url=" + url;
+            CODEBOUNTY.OpenPopup(target);
+            e.stopPropagation();
+            e.preventDefault();
+        });
     }
 
     function setIssueBounty(amount) {
@@ -34,9 +93,6 @@ var CODEBOUNTY = (function () {
         window.open(url, 'window', 'width=480,height=480,scrollbars=yes,status=yes');
     };
 
-    //static for now
-    createBountyButton(15);
-    createBountyButton(10);
     createBountyButton(5);
     setIssueBounty(35);
     setupReward();
