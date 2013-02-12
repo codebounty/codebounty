@@ -33,8 +33,9 @@ var CODEBOUNTY = (function () {
             "font-weight: bold;" +
             "padding-top: 2px;" +
             "padding-left: 7px;" +
+            "pointer-events: none;"+
         "}"+
-        ".bountyInput {" +
+        "#bountyInput {" +
             "margin-bottom: 8px;" +
             "width: 100%;" +
             "text-align: center;" +
@@ -52,8 +53,8 @@ var CODEBOUNTY = (function () {
         document.documentElement.insertBefore(link);*/
 
         var bountyDiv = "" +
-            "<label class='bountyCurrency'>$</label>" +
-            "<input class='bountyInput' type='number' value='"+initValue+"' min='0' step='5'/>" +
+            "<label for='bountyInput' class='bountyCurrency'>$</label>" +
+            "<input id='bountyInput' type='number' value='"+initValue+"' min='0' step='5'/>" +
             "<a class='bountyButton button minibutton bigger' href='#'>"+
                 "Place Bounty"+
             "</a>";
@@ -64,7 +65,7 @@ var CODEBOUNTY = (function () {
             //TODO: Maybe encodeURIComponent
             var url = encodeURI(window.location.href);
             //TODO: Input validation.
-            var amount = $(".bountyInput").val();
+            var amount = $("#bountyInput").val();
             var target = "http://localhost:3000/processBounty?amount=" + amount + "&url=" + url;
             CODEBOUNTY.OpenPopup(target);
             e.stopPropagation();
