@@ -12,6 +12,8 @@ var CODEBOUNTY = (function () {
         var style = "" +
         ".bountyButton {" +
             "box-sizing: border-box;" +
+            "-moz-box-sizing: border-box;" +
+            "-webkit-box-sizing: border-box;" +
             "margin-bottom: 8px;" +
             "width: 100%;" +
             "overflow: hidden;" +
@@ -41,12 +43,14 @@ var CODEBOUNTY = (function () {
             "text-align: center;" +
             "font-weight: bold;" +
             "font-size: 18px;" +
+            "-moz-box-sizing: border-box;" +
+            "-webkit-box-sizing: border-box;" +
             "box-sizing: border-box;" +
             "padding-left: 20px;"+
         "}";
         var customStyles = document.createElement('style');
         customStyles.appendChild(document.createTextNode(style));
-        document.documentElement.insertBefore(customStyles);
+        document.body.appendChild(customStyles);
         /*var link = document.createElement('link');
         link.href =  "http://localhost:3000/codebounty.css";
         link.rel = 'stylesheet';
