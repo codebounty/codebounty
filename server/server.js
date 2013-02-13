@@ -1,8 +1,7 @@
 var Future = NodeModules.require('fibers/future');
 
 Meteor.methods({
-    //Authorize bounty payment, then capture later
-    //returns the express checkout url
+    //return the paypal express checkout url for the bounty
     'processBounty': function () {
 
         var fut = new Future();
@@ -13,6 +12,12 @@ Meteor.methods({
         });
 
         return fut.wait();
+    },
+    //after a bounty payment has been authorized
+    //test the the token and payer id are valid (since the client passed them)
+    //then store them to capture the payment later
+    'storeBounty': function (token, payerId) {
+        
     }
 });
 

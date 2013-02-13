@@ -1,10 +1,10 @@
 var PAYPAL = (function () {
     var my = {};
 
-    var cred = {
-        username: 'seller_1339472528_biz_api1.gmail.com',
-        password: '1339472553',
-        signature: 'AFcWxV21C7fd0v3bYYYRCpSSRl31Af-aECo8vsiP1HospgIyBCFncbx3'
+    var credentials = {
+        username: 'bmerch_1360785614_biz_api1.facebook.com',
+        password: '1360785637',
+        signature: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg'
     };
 
     //https://www.x.com/developers/paypal/documentation-tools/express-checkout/how-to/ht_ec-singleAuthPayment-curl-etc
@@ -14,19 +14,18 @@ var PAYPAL = (function () {
 
         var opts = {
             sandbox: true,
-            version: '78.0'
+            version: '95'
         };
 
-        var ec = new PayPalEC(cred, opts);
+        var ec = new PayPalEC(credentials, opts);
 
         var params = {
             returnUrl: 'http://localhost:3000/confirm',
             cancelUrl: 'http://localhost:3000/cancel',
-            SOLUTIONTYPE: 'sole',
+            PAYMENTREQUEST_0_PAYMENTACTION: 'Authorization',
             PAYMENTREQUEST_0_AMT: '10.0',
-            PAYMENTREQUEST_0_DESC: 'Something',
             PAYMENTREQUEST_0_CURRENCYCODE: 'USD',
-            PAYMENTREQUEST_0_PAYMENTACTION: 'Sale'
+            PAYMENTREQUEST_0_DESC: 'A code bounty for Issue ...'
         };
 
         ec.set(params, function (err, data) {
