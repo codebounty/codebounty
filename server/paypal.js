@@ -1,57 +1,87 @@
 var PAYPAL = (function () {
-    var my = {};
+    var my = {}, request = require('request'),
 
-    var PayPalEC = NodeModules.require('paypal-ec');
+    //the longest a bounty can be open for
+        MAXDAYS = 90;
 
-    var credentials = {
-        username: 'bmerch_1360785614_biz_api1.facebook.com',
-        password: '1360785637',
-        signature: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg'
-    };
-
-    var opts = {
-        sandbox: true,
-        version: '95'
-    };
-
-    //https://www.x.com/developers/paypal/documentation-tools/express-checkout/how-to/ht_ec-singleAuthPayment-curl-etc
-    //callback passes an error or the express checkout url
-    my.StartCheckout = function (amount, description, callback) {
-        var ec = new PayPalEC(credentials, opts);
-
-        var params = {
-            returnUrl: 'http://localhost:3000/confirm',
-            cancelUrl: 'http://localhost:3000/cancel',
-            PAYMENTACTION: 'Authorization',
-            AMT: amount,
-            CURRENCYCODE: 'USD',
-            DESC: description
+    /**
+     * Executes an Adaptive Payments API call
+     * @param operation Ex. Pay
+     * @param fields The fields required for the API call
+     * @param callback Passes an error or the response data
+     */
+    function execute(operation, fields, callback) {
+        var headers = {
+            "X-PAYPAL-APPLICATION-ID": CONFIG.paypalApi.APPLICATIONID,
+            "X-PAYPAL-SECURITY-USERID": CONFIG.paypalApi.USERID,
+            "X-PAYPAL-SECURITY-PASSWORD": CONFIG.paypalApi.PASSWORD,
+            "X-PAYPAL-SECURITY-SIGNATURE": CONFIG.paypalApi.SIGNATURE,
+            "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
+            "X-PAYPAL-RESPONSE-DATA-FORMAT": "JSON",
+            "Content-Type": "application/json"
         };
 
-        ec.set(params, function (error, data) {
+        request.post({
+            headers: headers,
+            url: CONFIG.paypalApi.REQURL + "AdaptivePayments/" + operation,
+            json: fields
+        }, function (error, response, data) {
             if (error)
                 callback(error);
+            else if (data.responseEnvelope.ack !== "Success" && data.responseEnvelope.ack !== "SuccessWithWarning")
+                callback(data.responseEnvelope.error.message);
             else
-                callback(null, data['PAYMENTURL']);
+                callback(null, data);
+        });
+    }
+
+//callback passes an error or the pre-approval of funds data and url
+    my.GetApproval = function (amount, description, cancelUrl, confirmUrl, callback) {
+        var startDate = new Date();
+        var endDate = new Date();
+        endDate.setDate(startDate.getDate() + MAXDAYS);
+
+        var params = {
+            endingDate: endDate.toISOString(),
+            startingDate: startDate.toISOString(),
+            maxTotalAmountOfAllPayments: amount,
+            currencyCode: 'USD',
+            cancelUrl: cancelUrl,
+            returnUrl: confirmUrl,
+            requestEnvelope: {
+                errorLanguage: "en_US"
+            },
+            displayMaxTotalAmount: true,
+            memo: description,
+            ipnNotificationUrl: CONFIG.rootUrl + "approved"
+        };
+
+        execute('Preapproval', params, function (error, data) {
+            if (error) {
+                callback(error);
+            } else if (data) {
+                var preApprovalUrl = CONFIG.paypalApi.REDURL + "webscr?cmd=_ap-preapproval&preapprovalkey=" + data.preapprovalKey;
+                callback(null, data, preApprovalUrl);
+            }
         });
     };
 
-    //confirms the payment
-    //callback passes an error or the confirmed checkout data
-    my.Confirm = function (token, payerId, callback) {
-        var ec = new PayPalEC(credentials, opts);
-
+    my.ConfirmApproval = function (preapprovalKey, callback) {
         var params = {
-            TOKEN: token,
-            PAYERID: payerId,
-            PAYMENTACTION: 'Authorization',
-            AMT: '10.0'
+            preapprovalKey: preapprovalKey,
+            requestEnvelope: {
+                errorLanguage: "en_US"
+            }
         };
 
-        ec.do_payment(params, function (error, data) {
-            callback(error, data);
+        execute('PreapprovalDetails', params, function (error, data) {
+            if (error) {
+                callback(error);
+            } else if (data) {
+                callback(null, data);
+            }
         });
-    }
+    };
 
     return my;
 }());

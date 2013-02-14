@@ -1,46 +1,94 @@
-var Future = NodeModules.require('fibers/future');
+Bounties = new Meteor.Collection("bounties");
+
+//TODO: changing in meteor 0.5.5, see release notes
+var Future = NodeModules.require("fibers/future");
 
 Meteor.methods({
-    //return the paypal express checkout url for the bounty
-    'processBounty': function (amount, bountyUrl) {
+    //return the paypal pre-approval url
+    'createBounty': function (amount, bountyUrl) {
         var fut = new Future();
 
-        BOUNTY.parse(amount, bountyUrl, function (error, bounty) {
-            if (error)
-                throw new Meteor.Error(404, "Incorrect parameters");
+        var userId = this.userId;
 
-            //Start SetExpressCheckout API Operation
-            PAYPAL.StartCheckout(bounty.amount, bounty.desc, function (error, url) {
+        Fiber(function () {
+            BOUNTY.parse(amount, bountyUrl, function (error, bounty) {
                 if (error)
-                    throw new Meteor.Error(500, "Error starting checkout");
+                    throw new Meteor.Error(404, "Incorrect parameters");
 
-                //TODO store bounty
+                //store the bounty
+                bounty.userId = userId;
 
-                fut.ret(url);
+                var id = Bounties.insert(bounty);
+
+                var cancel = CONFIG.rootUrl + "cancelBounty?id=" + id;
+                var confirm = CONFIG.rootUrl + "confirmBounty?id=" + id;
+
+                //Start pre-approval process
+                PAYPAL.GetApproval(bounty.amount, bounty.desc, cancel, confirm, function (error, data, approvalUrl) {
+                    if (error) {
+                        Bounties.remove({_id: id});
+                        throw new Meteor.Error(500, "Error starting preapproval");
+                    }
+
+                    Fiber(function () {
+                        Bounties.update({_id: id}, {$set: {preapprovalKey: data.preapprovalKey}})
+                    }).run();
+
+                    fut.ret(approvalUrl);
+                });
             });
-        });
+        }).run();
 
         return fut.wait();
     },
+    'cancelBounty': function (id) {
+        Bounties.remove({_id: id, userId: this.userId});
+    },
+    //TODO move confirm bounty to an IPN method instead. will be more stable
     //after a bounty payment has been authorized
     //test the the token and payer id are valid (since the client passed them)
     //then store them to capture the payment later
-    'confirmBounty': function (token, payerId) {
+    'confirmBounty': function (id) {
         var fut = new Future();
 
-        PAYPAL.Confirm(token, payerId, function (error, data) {
-            if (error)
-                throw new Meteor.Error(404, "Error processing the transaction");
+        var userId = this.userId;
 
-            //TODO update bounty with token and payerId
+        var bounty = Bounties.findOne({_id: id, userId: this.userId});
+
+        //Start pre-approval process
+        PAYPAL.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
+            if (error)
+                throw new Meteor.Error(500, "Error confirming preapproval");
+
             console.log("Confirmed!");
             console.log(data);
-            //TODO add comment to GitHub
+
+            if (!data.approved)
+                throw new Meteor.Error(402, "Payment not approved");
+
+            //TODO update bounty to approved. add comment to GitHub
 
             fut.ret(true);
         });
 
         return fut.wait();
+    }
+});
+
+Meteor.Router.add({
+    '/totalBounties': function () {
+        var query = this.request.query;
+
+        if (!query.url)
+            return 0;
+
+        var bounties = Bounties.find({url: query.url}).fetch();
+
+        var totalBounty = _.reduce(bounties, function (sum, bounty) {
+            return sum + parseFloat(bounty.amount);
+        }, 0);
+
+        return totalBounty.toString();
     }
 });
 
