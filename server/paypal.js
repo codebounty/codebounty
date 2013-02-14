@@ -1,23 +1,30 @@
 var PAYPAL = (function () {
-    var my = {};
+    var my = {}, sandbox = true,
+        url = require('url'),
+        NVPRequest = NodeModules.require('paypal-nvp-request'),
+        SANDBOX_URL = 'www.sandbox.paypal.com', REGULAR_URL = 'www.paypal.com';
 
-    var PayPalEC = NodeModules.require('paypal-ec');
+    function createRequest() {
+        var credentials = {
+            username: 'bmerch_1360785614_biz_api1.facebook.com',
+            password: '1360785637',
+            signature: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg'
+        };
 
-    var credentials = {
-        username: 'bmerch_1360785614_biz_api1.facebook.com',
-        password: '1360785637',
-        signature: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg'
-    };
+        var opts = {
+            sandbox: sandbox,
+            version: '95'
+        };
 
-    var opts = {
-        sandbox: true,
-        version: '95'
-    };
+
+        var nvpreq = new NVPRequest(credentials, opts);
+        return nvpreq;
+    }
 
     //https://www.x.com/developers/paypal/documentation-tools/express-checkout/how-to/ht_ec-singleAuthPayment-curl-etc
     //callback passes an error or the express checkout url
     my.StartCheckout = function (amount, description, callback) {
-        var ec = new PayPalEC(credentials, opts);
+        var request = createRequest();
 
         var params = {
             returnUrl: 'http://localhost:3000/confirm',
@@ -28,18 +35,31 @@ var PAYPAL = (function () {
             DESC: description
         };
 
-        ec.set(params, function (error, data) {
-            if (error)
+        request.execute('SetExpressCheckout', params, function (error, data) {
+            if (error) {
                 callback(error);
-            else
-                callback(null, data['PAYMENTURL']);
+            } else {
+                var paymentUrl = url.format({
+                    protocol: 'https:',
+                    host: sandbox ? SANDBOX_URL : REGULAR_URL,
+                    pathname: '/cgi-bin/webscr',
+                    query: {
+                        cmd: '_express-checkout',
+                        token: data.TOKEN
+                    }
+                });
+
+                console.log(paymentUrl);
+
+                callback(null, paymentUrl);
+            }
         });
     };
 
     //confirms the payment
     //callback passes an error or the confirmed checkout data
     my.Confirm = function (token, payerId, callback) {
-        var ec = new PayPalEC(credentials, opts);
+        var request = createRequest();
 
         var params = {
             TOKEN: token,
@@ -48,7 +68,7 @@ var PAYPAL = (function () {
             AMT: '10.0'
         };
 
-        ec.do_payment(params, function (error, data) {
+        request.execute('GetExpressCheckoutDetails', params, function (error, data) {
             callback(error, data);
         });
     }
