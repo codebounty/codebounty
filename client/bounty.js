@@ -9,7 +9,7 @@ var BOUNTY = (function () {
             } else {
                 handle.stop();
 
-                Meteor.call('processBounty', amount, url, function (error, result) {
+                Meteor.call('createBounty', amount, url, function (error, result) {
                     if (error) {
                         debugger;
                         //TODO error handling, route to some error page with details
@@ -18,6 +18,14 @@ var BOUNTY = (function () {
                 });
             }
         });
+    };
+
+    my.Cancel = function (id, callback) {
+        Meteor.call('cancelBounty', id, callback);
+    };
+
+    my.Confirm = function (id, callback) {
+        Meteor.call('confirmBounty', id, callback);
     };
 
     return my;

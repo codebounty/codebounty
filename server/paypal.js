@@ -35,8 +35,38 @@ var PAYPAL = (function () {
         });
     }
 
-//callback passes an error or the pre-approval of funds url
-    my.GetApproval = function (amount, description, callback) {
+//callback passes an error or the pre-approval of funds data and url
+    my.GetApproval = function (amount, description, cancelUrl, confirmUrl, callback) {
+        var startDate = new Date();
+        var endDate = new Date();
+        endDate.setDate(startDate.getDate() + MAXDAYS);
+
+        var params = {
+            endingDate: endDate.toISOString(),
+            startingDate: startDate.toISOString(),
+            maxTotalAmountOfAllPayments: amount,
+            currencyCode: 'USD',
+            cancelUrl: cancelUrl,
+            returnUrl: confirmUrl,
+            requestEnvelope: {
+                errorLanguage: "en_US"
+            },
+            displayMaxTotalAmount: true,
+            memo: description,
+            ipnNotificationUrl: CONFIG.rootUrl + "approved"
+        };
+
+        execute('Preapproval', params, function (error, data) {
+            if (error) {
+                callback(error);
+            } else if (data) {
+                var preApprovalUrl = CONFIG.paypalApi.REDURL + "webscr?cmd=_ap-preapproval&preapprovalkey=" + data.preapprovalKey;
+                callback(null, data, preApprovalUrl);
+            }
+        });
+    };
+
+    my.ConfirmApproval = function (amount, description, callback) {
         var startDate = new Date();
         var endDate = new Date();
         endDate.setDate(startDate.getDate() + MAXDAYS);

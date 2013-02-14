@@ -1,23 +1,35 @@
+//TODO before publish: remove this and autosubscribe and insecure
+Bounties = new Meteor.Collection("bounties");
+
 Meteor.Router.add({
-    '/processBounty': function () {
+    '/createBounty': function () {
         var amount = window.url("?amount");
         var url = window.url("?url");
 
         BOUNTY.Create(parseFloat(amount), url);
+
         return "processBountyView";
     },
     '/logout': function () {
         Meteor.logout();
         window.close();
     },
-    '/cancel': function () {
-        return "cancelView";
+    '/cancelBounty': function () {
+        var id = window.url("?id");
+
+        BOUNTY.Cancel(id, function (error) {
+            window.close();
+        });
+
+        return "cancelBountyView";
     },
-    '/confirm': function () {
-        window.close();
+    '/confirmBounty': function () {
+        var id = window.url("?id");
+
+        BOUNTY.Confirm(id, function (error) {
+            window.close();
+        });
+
+        return "confirmBountyView";
     }
 });
-
-Template.cancelView.rendered = function () {
-    _.delay(window.close, 5000);
-};

@@ -70,7 +70,7 @@ var CODEBOUNTY = (function () {
             var url = encodeURI(window.location.href);
             //TODO: Input validation.
             var amount = $("#bountyInput").val();
-            var target = "http://localhost:3000/processBounty?amount=" + amount + "&url=" + url;
+            var target = "http://localhost:3000/createBounty?amount=" + amount + "&url=" + url;
             CODEBOUNTY.OpenPopup(target);
             e.stopPropagation();
             e.preventDefault();
