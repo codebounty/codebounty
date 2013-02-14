@@ -75,6 +75,23 @@ Meteor.methods({
     }
 });
 
+Meteor.Router.add({
+    '/totalBounties': function () {
+        var query = this.request.query;
+
+        if (!query.url)
+            return 0;
+
+        var bounties = Bounties.find({url: query.url}).fetch();
+
+        var totalBounty = _.reduce(bounties, function (sum, bounty) {
+            return sum + parseFloat(bounty.amount);
+        }, 0);
+
+        return totalBounty.toString();
+    }
+});
+
 Meteor.startup(function () {
 //Setup Authentication Providers
 //TODO need to pass settings json with deploy http://docs.meteor.com/#meteor_settings ex: meteor deploy --settings deploySettings.json

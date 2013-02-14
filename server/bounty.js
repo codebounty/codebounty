@@ -30,6 +30,7 @@ var BOUNTY = (function () {
         var bounty = {
             type: "github",
             amount: amount,
+            url: bountyUrl,
             issue: issue,
             repo: repository,
             desc: "$" + amount + " bounty for Issue #" + issue + " in " + repository
