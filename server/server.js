@@ -44,24 +44,34 @@ Meteor.methods({
     'cancelBounty': function (id) {
         Bounties.remove({_id: id, userId: this.userId});
     },
+    //TODO move confirm bounty to an IPN method instead. will be more stable
     //after a bounty payment has been authorized
     //test the the token and payer id are valid (since the client passed them)
     //then store them to capture the payment later
     'confirmBounty': function (id) {
-//        var fut = new Future();
-//
-//        PAYPAL.ConfirmApproval(token, payerId, function (error, data) {
-//            if (error)
-//                throw new Meteor.Error(404, "Error processing the transaction");
-//
-//            console.log("Confirmed!");
-//            //TODO store bounties payment info
-//            //TODO add comment to GitHub
-//
-//            fut.ret(true);
-//        });
-//
-//        return fut.wait();
+        var fut = new Future();
+
+        var userId = this.userId;
+
+        var bounty = Bounties.findOne({_id: id, userId: this.userId});
+
+        //Start pre-approval process
+        PAYPAL.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
+            if (error)
+                throw new Meteor.Error(500, "Error confirming preapproval");
+
+            console.log("Confirmed!");
+            console.log(data);
+
+            if (!data.approved)
+                throw new Meteor.Error(402, "Payment not approved");
+
+            //TODO update bounty to approved. add comment to GitHub
+
+            fut.ret(true);
+        });
+
+        return fut.wait();
     }
 });
 

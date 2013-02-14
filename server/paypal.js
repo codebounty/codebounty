@@ -66,32 +66,19 @@ var PAYPAL = (function () {
         });
     };
 
-    my.ConfirmApproval = function (amount, description, callback) {
-        var startDate = new Date();
-        var endDate = new Date();
-        endDate.setDate(startDate.getDate() + MAXDAYS);
-
+    my.ConfirmApproval = function (preapprovalKey, callback) {
         var params = {
-            endingDate: endDate.toISOString(),
-            startingDate: startDate.toISOString(),
-            maxTotalAmountOfAllPayments: amount,
-            currencyCode: 'USD',
-            cancelUrl: CONFIG.rootUrl + 'cancel',
-            returnUrl: CONFIG.rootUrl + 'confirm',
+            preapprovalKey: preapprovalKey,
             requestEnvelope: {
                 errorLanguage: "en_US"
-            },
-            displayMaxTotalAmount: true,
-            memo: description,
-            ipnNotificationUrl: CONFIG.rootUrl + "approved"
+            }
         };
 
-        execute('Preapproval', params, function (error, data) {
+        execute('PreapprovalDetails', params, function (error, data) {
             if (error) {
                 callback(error);
             } else if (data) {
-                var preApprovalUrl = CONFIG.paypalApi.REDURL + "webscr?cmd=_ap-preapproval&preapprovalkey=" + data.preapprovalKey;
-                callback(null, preApprovalUrl);
+                callback(null, data);
             }
         });
     };

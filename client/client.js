@@ -10,15 +10,12 @@ Meteor.Router.add({
 
         return "processBountyView";
     },
-    '/logout': function () {
-        Meteor.logout();
-        window.close();
-    },
     '/cancelBounty': function () {
         var id = window.url("?id");
 
         BOUNTY.Cancel(id, function (error) {
-            window.close();
+            if (!error)
+                window.close();
         });
 
         return "cancelBountyView";
@@ -27,9 +24,14 @@ Meteor.Router.add({
         var id = window.url("?id");
 
         BOUNTY.Confirm(id, function (error) {
-            window.close();
+            if (!error)
+                window.close();
         });
 
         return "confirmBountyView";
+    },
+    '/logout': function () {
+        Meteor.logout();
+        window.close();
     }
 });
