@@ -1,77 +1,70 @@
 var PAYPAL = (function () {
-    var my = {}, sandbox = true,
-        url = require('url'),
-        NVPRequest = NodeModules.require('paypal-nvp-request'),
-        SANDBOX_URL = 'www.sandbox.paypal.com', REGULAR_URL = 'www.paypal.com';
+    var my = {}, request = require('request'),
 
-    function createRequest() {
-        var credentials = {
-            username: 'bmerch_1360785614_biz_api1.facebook.com',
-            password: '1360785637',
-            signature: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg'
+    //the longest a bounty can be open for
+        MAXDAYS = 90;
+
+    /**
+     * Executes an Adaptive Payments API call
+     * @param operation Ex. Pay
+     * @param fields The fields required for the API call
+     * @param callback Passes an error or the response data
+     */
+    function execute(operation, fields, callback) {
+        var headers = {
+            "X-PAYPAL-APPLICATION-ID": CONFIG.paypalApi.APPLICATIONID,
+            "X-PAYPAL-SECURITY-USERID": CONFIG.paypalApi.USERID,
+            "X-PAYPAL-SECURITY-PASSWORD": CONFIG.paypalApi.PASSWORD,
+            "X-PAYPAL-SECURITY-SIGNATURE": CONFIG.paypalApi.SIGNATURE,
+            "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
+            "X-PAYPAL-RESPONSE-DATA-FORMAT": "JSON",
+            "Content-Type": "application/json"
         };
 
-        var opts = {
-            sandbox: sandbox,
-            version: '95'
-        };
-
-
-        var nvpreq = new NVPRequest(credentials, opts);
-        return nvpreq;
+        request.post({
+            headers: headers,
+            url: CONFIG.paypalApi.REQURL + "AdaptivePayments/" + operation,
+            json: fields
+        }, function (error, response, data) {
+            if (error)
+                callback(error);
+            else if (data.responseEnvelope.ack !== "Success" && data.responseEnvelope.ack !== "SuccessWithWarning")
+                callback(data.responseEnvelope.error.message);
+            else
+                callback(null, data);
+        });
     }
 
-    //https://www.x.com/developers/paypal/documentation-tools/express-checkout/how-to/ht_ec-singleAuthPayment-curl-etc
-    //callback passes an error or the express checkout url
-    my.StartCheckout = function (amount, description, callback) {
-        var request = createRequest();
+//callback passes an error or the pre-approval of funds url
+    my.GetApproval = function (amount, description, callback) {
+        var startDate = new Date();
+        var endDate = new Date();
+        endDate.setDate(startDate.getDate() + MAXDAYS);
 
         var params = {
-            returnUrl: 'http://localhost:3000/confirm',
-            cancelUrl: 'http://localhost:3000/cancel',
-            PAYMENTACTION: 'Authorization',
-            AMT: amount,
-            CURRENCYCODE: 'USD',
-            DESC: description
+            endingDate: endDate.toISOString(),
+            startingDate: startDate.toISOString(),
+            maxTotalAmountOfAllPayments: amount,
+            currencyCode: 'USD',
+            cancelUrl: CONFIG.rootUrl + 'cancel',
+            returnUrl: CONFIG.rootUrl + 'confirm',
+            requestEnvelope: {
+                errorLanguage: "en_US"
+            },
+            displayMaxTotalAmount: true,
+            memo: description,
+            ipnNotificationUrl: CONFIG.rootUrl + "approved"
         };
 
-        request.execute('SetExpressCheckout', params, function (error, data) {
+        execute('Preapproval', params, function (error, data) {
             if (error) {
                 callback(error);
-            } else {
-                var paymentUrl = url.format({
-                    protocol: 'https:',
-                    host: sandbox ? SANDBOX_URL : REGULAR_URL,
-                    pathname: '/cgi-bin/webscr',
-                    query: {
-                        cmd: '_express-checkout',
-                        token: data.TOKEN
-                    }
-                });
-
-                console.log(paymentUrl);
-
-                callback(null, paymentUrl);
+            } else if (data) {
+                var preApprovalUrl = CONFIG.paypalApi.REDURL + "webscr?cmd=_ap-preapproval&preapprovalkey=" + data.preapprovalKey;
+                callback(null, preApprovalUrl);
             }
         });
     };
-
-    //confirms the payment
-    //callback passes an error or the confirmed checkout data
-    my.Confirm = function (token, payerId, callback) {
-        var request = createRequest();
-
-        var params = {
-            TOKEN: token,
-            PAYERID: payerId,
-            PAYMENTACTION: 'Authorization',
-            AMT: '10.0'
-        };
-
-        request.execute('GetExpressCheckoutDetails', params, function (error, data) {
-            callback(error, data);
-        });
-    }
 
     return my;
 }());

@@ -10,18 +10,14 @@ Meteor.Router.add({
         Meteor.logout();
         window.close();
     },
+    '/cancel': function () {
+        return "cancelView";
+    },
     '/confirm': function () {
-        var token = window.url("?token");
-        var payerId = window.url("?PayerID");
-
-        Meteor.call('confirmBounty', token, payerId, function (error) {
-            if (error) {
-                //TODO error handling
-            } else {
-                window.close();
-            }
-        });
-
-        return "confirmBountyView";
+        window.close();
     }
 });
+
+Template.cancelView.rendered = function () {
+    _.delay(window.close, 5000);
+};
