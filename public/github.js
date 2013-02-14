@@ -95,7 +95,7 @@ var CODEBOUNTY = (function () {
     }
 
     my.OpenPopup = function (url) {
-        window.open(url, 'window', 'width=480,height=480,scrollbars=yes,status=yes');
+        window.open(url, 'window', 'width=1000,height=650,status=yes');
     };
 
     createBountyButton(5);

@@ -2,13 +2,22 @@ var Future = NodeModules.require('fibers/future');
 
 Meteor.methods({
     //return the paypal express checkout url for the bounty
-    'processBounty': function () {
-
+    'processBounty': function (amount, bountyUrl) {
         var fut = new Future();
 
-        //Start SetExpressCheckout API Operation
-        PAYPAL.StartCheckout(function (url) {
-            fut.ret(url);
+        BOUNTY.parse(amount, bountyUrl, function (error, bounty) {
+            if (error)
+                throw new Meteor.Error(404, "Incorrect parameters");
+
+            //Start SetExpressCheckout API Operation
+            PAYPAL.StartCheckout(bounty.amount, bounty.desc, function (error, url) {
+                if (error)
+                    throw new Meteor.Error(500, "Error starting checkout");
+
+                //TODO store bounty
+
+                fut.ret(url);
+            });
         });
 
         return fut.wait();
@@ -16,8 +25,22 @@ Meteor.methods({
     //after a bounty payment has been authorized
     //test the the token and payer id are valid (since the client passed them)
     //then store them to capture the payment later
-    'storeBounty': function (token, payerId) {
-        
+    'confirmBounty': function (token, payerId) {
+        var fut = new Future();
+
+        PAYPAL.Confirm(token, payerId, function (error, data) {
+            if (error)
+                throw new Meteor.Error(404, "Error processing the transaction");
+
+            //TODO update bounty with token and payerId
+            console.log("Confirmed!");
+            console.log(data);
+            //TODO add comment to GitHub
+
+            fut.ret(true);
+        });
+
+        return fut.wait();
     }
 });
 

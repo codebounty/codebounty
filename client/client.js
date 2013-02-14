@@ -1,6 +1,9 @@
 Meteor.Router.add({
     '/processBounty': function () {
-        BOUNTY.Create();
+        var amount = window.url("?amount");
+        var url = window.url("?url");
+
+        BOUNTY.Create(parseFloat(amount), url);
         return "processBountyView";
     },
     '/logout': function () {
@@ -8,14 +11,17 @@ Meteor.Router.add({
         window.close();
     },
     '/confirm': function () {
-        var token = url("?token");
-        var payerId = url("?PayerID");
+        var token = window.url("?token");
+        var payerId = window.url("?PayerID");
 
-        Meteor.call('storeBounty', token, payerId, function (error) {
-            //TODO error handling
-
+        Meteor.call('confirmBounty', token, payerId, function (error) {
+            if (error) {
+                //TODO error handling
+            } else {
+                window.close();
+            }
         });
 
-        window.close();
+        return "confirmBountyView";
     }
 });
