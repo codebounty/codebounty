@@ -1,7 +1,12 @@
 Bounties = new Meteor.Collection("bounties");
 
-//TODO: changing in meteor 0.5.5, see release notes
-var Future = NodeModules.require("fibers/future");
+//TODO before publish: remove this
+Meteor.publish("allUserData", function () {
+    return Meteor.users.find();
+});
+
+var Future = __meteor_bootstrap__.require('fibers/future');
+var Fiber = __meteor_bootstrap__.require('fibers');
 
 Meteor.methods({
     //return the paypal pre-approval url
@@ -51,8 +56,7 @@ Meteor.methods({
     'confirmBounty': function (id) {
         var fut = new Future();
 
-        var userId = this.userId;
-
+        var user = Meteor.users.findOne(this.userId);
         var bounty = Bounties.findOne({_id: id, userId: this.userId});
 
         //Start pre-approval process
@@ -66,7 +70,15 @@ Meteor.methods({
             if (!data.approved)
                 throw new Meteor.Error(402, "Payment not approved");
 
-            //TODO update bounty to approved. add comment to GitHub
+            Fiber(function () {
+                Bounties.update(bounty, {$set: {approved: true}});
+            }).run();
+
+            //TODO prettify comment
+            var commentBody = "I just added a " + bounty.desc +
+                ". [Download](http://codebounty.com/extension) the codebounty code extension to add your bounties.";
+
+            GitHub.PostComment(user, bounty.repo, bounty.issue, commentBody);
 
             fut.ret(true);
         });

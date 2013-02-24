@@ -1,8 +1,8 @@
 {
-    "name": "code bounty",
+    "name": "codebounty",
     "version": "0.0.1",
     "description": "a simple bounty system",
     "dependencies": {
-        "paypal-ec": "*"
+        "github": "~0.1.8"
     }
 }

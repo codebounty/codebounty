@@ -5,7 +5,7 @@ var BOUNTY = (function () {
         Meteor.autorun(function (handle) {
             //force the user to login
             if (!Meteor.userId()) {
-                Meteor.loginWithGithub({});
+                Meteor.loginWithGithub({requestPermissions: ['user', 'repo']});
             } else {
                 handle.stop();
 

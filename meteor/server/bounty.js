@@ -22,8 +22,8 @@ var BOUNTY = (function () {
         var paths = path.split('/');
 
         //parse repository and issue
-        var repository = paths[1] + "/" + paths[2];
-        var issue = paths[4];
+        var repo = {user: paths[1], name: paths[2]};
+        var issue = parseFloat(paths[4]);
 
         //TODO check repo exists with GitHub
 
@@ -32,8 +32,8 @@ var BOUNTY = (function () {
             amount: amount,
             url: bountyUrl,
             issue: issue,
-            repo: repository,
-            desc: "$" + amount + " bounty for Issue #" + issue + " in " + repository
+            repo: repo,
+            desc: "$" + amount + " bounty for Issue #" + issue + " in " + repo.name
         };
 
         callback(null, bounty);

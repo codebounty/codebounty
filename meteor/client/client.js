@@ -1,4 +1,5 @@
-//TODO before publish: remove this and autosubscribe and insecure
+//TODO before publish: remove these and autosubscribe and insecure
+Meteor.subscribe("allUserData");
 Bounties = new Meteor.Collection("bounties");
 
 Meteor.Router.add({
