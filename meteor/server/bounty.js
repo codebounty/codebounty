@@ -1,7 +1,7 @@
 var BOUNTY = (function () {
     var my = {};
 
-    var url = NodeModules.require('url');
+    var url = NodeModules.require("url");
 
     //parses bounty data from the url
     //callback passes an error or the bounty data
@@ -19,7 +19,7 @@ var BOUNTY = (function () {
             return;
         }
 
-        var paths = path.split('/');
+        var paths = path.split("/");
 
         //parse repository and issue
         var repo = {user: paths[1], name: paths[2]};

@@ -5,12 +5,14 @@ Meteor.publish("allUserData", function () {
     return Meteor.users.find();
 });
 
-var Future = __meteor_bootstrap__.require('fibers/future');
-var Fiber = __meteor_bootstrap__.require('fibers');
+var Future = __meteor_bootstrap__.require("fibers/future");
+var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
+    //region Paypal Methods
+
     //return the paypal pre-approval url
-    'createBounty': function (amount, bountyUrl) {
+    "createBounty": function (amount, bountyUrl) {
         var fut = new Future();
 
         var userId = this.userId;
@@ -25,7 +27,7 @@ Meteor.methods({
 
                 var id = Bounties.insert(bounty);
 
-                var cancel = CONFIG.rootUrl + "cancelBounty?id=" + id;
+                var cancel = CONFIG.rootUrl + "cancelCreateBounty?id=" + id;
                 var confirm = CONFIG.rootUrl + "confirmBounty?id=" + id;
 
                 //Start pre-approval process
@@ -46,14 +48,18 @@ Meteor.methods({
 
         return fut.wait();
     },
-    'cancelBounty': function (id) {
+    /**
+     * Called if the user cancels adding a new bounty in the paypal checkout
+     */
+    "cancelCreateBounty": function (id) {
+        //TODO check that there is not a approved payment
         Bounties.remove({_id: id, userId: this.userId});
     },
     //TODO move confirm bounty to an IPN method instead. will be more stable
     //after a bounty payment has been authorized
     //test the the token and payer id are valid (since the client passed them)
     //then store them to capture the payment later
-    'confirmBounty': function (id) {
+    "confirmBounty": function (id) {
         var fut = new Future();
 
         var user = Meteor.users.findOne(this.userId);
@@ -84,23 +90,21 @@ Meteor.methods({
         });
 
         return fut.wait();
-    }
-});
+    },
 
-Meteor.Router.add({
-    '/totalBounties': function () {
-        var query = this.request.query;
+    //endregion
 
-        if (!query.url)
+    "totalReward": function (url) {
+        if (!url)
             return 0;
 
-        var bounties = Bounties.find({url: query.url}).fetch();
+        var bounties = Bounties.find({url: url, approved: true}).fetch();
 
-        var totalBounty = _.reduce(bounties, function (sum, bounty) {
+        var totalReward = _.reduce(bounties, function (sum, bounty) {
             return sum + parseFloat(bounty.amount);
         }, 0);
 
-        return totalBounty.toString();
+        return totalReward;
     }
 });
 

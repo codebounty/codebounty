@@ -11,7 +11,7 @@ Meteor.Router.add({
 
         return "processBountyView";
     },
-    "/cancelBounty": function () {
+    "/cancelCreateBounty": function () {
         var id = window.url("?id");
 
         BOUNTY.Cancel(id, function (error) {
@@ -19,7 +19,7 @@ Meteor.Router.add({
                 window.close();
         });
 
-        return "cancelBountyView";
+        return "cancelCreateBountyView";
     },
     "/confirmBounty": function () {
         var id = window.url("?id");
@@ -38,9 +38,19 @@ Meteor.Router.add({
             if (evt.origin !== "https://github.com")
                 return;
 
-            //TODO process message
-            top.postMessage({id: evt.data.id, message: "echo: " + evt.data.message}, "https://github.com")
+            var message = evt.data.message;
 
+            if (message.method) {
+                var callParams = [message.method];
+                callParams = _.union(callParams, message.params);
+
+                //add the callback
+                callParams.push(function (error, result) {
+                    top.postMessage({id: evt.data.id, message: {error: error, result: result}}, "https://github.com")
+                });
+
+                Meteor.call.apply(null, callParams);
+            }
         }, false);
 
         return "messengerView";

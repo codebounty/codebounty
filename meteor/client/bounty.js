@@ -5,11 +5,11 @@ var BOUNTY = (function () {
         Meteor.autorun(function (handle) {
             //force the user to login
             if (!Meteor.userId()) {
-                Meteor.loginWithGithub({requestPermissions: ['user', 'repo']});
+                Meteor.loginWithGithub({requestPermissions: ["user", "repo"]});
             } else {
                 handle.stop();
 
-                Meteor.call('createBounty', amount, url, function (error, result) {
+                Meteor.call("createBounty", amount, url, function (error, result) {
                     if (error) {
                         debugger;
                         //TODO error handling, route to some error page with details
@@ -21,11 +21,11 @@ var BOUNTY = (function () {
     };
 
     my.Cancel = function (id, callback) {
-        Meteor.call('cancelBounty', id, callback);
+        Meteor.call("cancelCreateBounty", id, callback);
     };
 
     my.Confirm = function (id, callback) {
-        Meteor.call('confirmBounty', id, callback);
+        Meteor.call("confirmBounty", id, callback);
     };
 
     return my;

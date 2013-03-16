@@ -3,7 +3,12 @@ var GitHub = (function () {
 
     var GitHubApi = NodeModules.require("github");
 
-    function authenticatedService(user) {
+    /**
+     * Returns the authenticated GitHub client
+     * @param {String} user "jperl"
+     * @returns {GitHubApi}
+     */
+    function authenticatedClient(user) {
         var github = new GitHubApi({
             // required
             version: "3.0.0",
@@ -19,10 +24,35 @@ var GitHub = (function () {
         return github;
     }
 
-    my.PostComment = function (user, repo, issue, comment) {
-        var gitHub = authenticatedService(user);
+    /**
+     * @param {String} user "jperl"
+     * @param {String} repo "jperl/codebounty"
+     * @param {Number} issue 7
+     * @param {{function(error, result)}} callback
+     */
+    my.GetIssue = function (user, repo, issue, callback) {
+        var client = authenticatedClient(user);
 
-        gitHub.issues.createComment(
+        client.issues.getRepoIssue(
+            {
+                user: user,
+                repo: repo,
+                number: issue
+            },
+            callback
+        );
+    };
+
+    /**
+     * @param {String} user "jperl"
+     * @param {String} repo "jperl/codebounty"
+     * @param {Number} issue 7
+     * @param {String} comment "Interesting issue!"
+     */
+    my.PostComment = function (user, repo, issue, comment) {
+        var client = authenticatedClient(user);
+
+        client.issues.createComment(
             {
                 user: repo.user,
                 repo: repo.name,
@@ -34,12 +64,6 @@ var GitHub = (function () {
             }
         );
     };
-
-    //TODO my.ConfirmRepository
-
-    //TODO my.PostComment
-
-    //TODO my.CheckCompleted or something todo with pull requests and closed issue
 
     return my;
 })();

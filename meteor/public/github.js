@@ -1,41 +1,73 @@
-//the injected github UI. should be isolated, all code required should fix in this file
-//TODO replace bookmark w Chrome Extension
-//bookmark for testing: javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://localhost/meteor/public/github.js';})()
+//the injected github UI
+//isolated: all code / styles required for the extension should be in this file
 
-var CODEBOUNTY = (function () {
-    var my = {}, rootUrl = "http://localhost:3000", currentUrl = "";
+//TODO replace bookmark w Chrome Extension
+//bookmark for testing: javascript:(function(){document.body.appendChild(document.createElement("script")).src="https://localhost/meteor/public/github.js";})()
+
+var CODEBOUNTY = (function (undefined) {
+    var my = {}, rootUrl = "http://localhost:3000", thisIssueUrl = encodeURI(window.location.href);
 
     my.OpenPopup = function (url) {
         window.open(url, "window", "width=1000,height=650,status=yes");
     };
 
-    //setup IFrame messenger
-    var iframe, messageId = 0, messageCallbacks = [];
+    var messenger, iframe, iframeLoaded = false, messageId = 0,
+    //any messages that haven't been sent yet because the iframe hasn't loaded yet
+        payloadQueue = [],
+    //callbacks listed by their message id
+        messageCallbacks = [];
 
-    function setupMessenger() {
-        iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        iframe.src = rootUrl + "/messenger";
-        document.body.appendChild(iframe);
+    messenger = {
+        setup: function () {
+            iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.src = rootUrl + "/messenger";
 
-        window.addEventListener("message", function (evt) {
-            if (evt.origin !== rootUrl)
-                return;
+            //when the iframe is ready clear and send the payload queue
+            iframe.onload = function () {
+                for (var i = 0; i < payloadQueue.length; i++)
+                    messenger.post(payloadQueue.shift());
 
-            var callback = messageCallbacks[evt.data.id];
-            if (callback)
-                callback(evt.data.message);
-        }, false);
-    }
+                iframeLoaded = true;
+            };
+            document.body.appendChild(iframe);
 
-    //communicates with the codebounty app (inside the hidden iframe)
-    function SendMessage(message, callback) {
-        iframe.contentWindow.postMessage({id: messageId, message: message}, rootUrl);
-        messageCallbacks[messageId] = callback;
-        messageId++;
-    }
+            window.addEventListener("message", function (evt) {
+                if (evt.origin !== rootUrl)
+                    return;
 
-    function createBountyButton(initValue) {
+                var callback = messageCallbacks[evt.data.id];
+                if (callback)
+                    callback(evt.data.message);
+            }, false);
+        },
+        //internal function to do a postMessage
+        //a payload is just message and an id { id: messageId, message: message }
+        post: function (payload) {
+            iframe.contentWindow.postMessage(payload, rootUrl + "/");
+        },
+        /**
+         * Communicates with the codebounty app (inside the hidden iframe)
+         * @param message the only message type is one that calls Meteor.call: { method: "methodToCall", params: ["paramOne", "paramTwo"] }
+         * @param {Function} callback returns the param (message) which has properties {error, result}
+         */
+        sendMessage: function (message, callback) {
+            messageCallbacks[messageId] = callback;
+
+            if (iframeLoaded)
+                messenger.post({id: messageId, message: message});
+            else
+                payloadQueue.push({id: messageId, message: message});
+
+            messageId++;
+        }
+    };
+
+    /**
+     * Creates the add a bounty button
+     * @param {Number} initValue
+     */
+    function createAddBountyButton(initValue) {
         //TODO: make style classes
         /*github style*/
         var style = "" +
@@ -106,12 +138,19 @@ var CODEBOUNTY = (function () {
         });
     }
 
-    function setIssueBounty(amount) {
+    /**
+     * Sets how much the total bounty is
+     * @param amount
+     */
+    function setBountyAmount(amount) {
         //TODO touchup ui
         $(".state-indicator.open").html("Open $" + amount);
     }
 
-    function setupReward() {
+    /**
+     * Sets up the reward button
+     */
+    function createRewardButton() {
         //TODO make this work when the button gets regenerated (the issue is reopened)
         $("button[name='comment_and_close']").click(function () {
             var reward = confirm("Would you like to reward the bounty?");
@@ -123,16 +162,32 @@ var CODEBOUNTY = (function () {
         //TODO on reopen, ask to postpone bounty?
     }
 
-    function canReward() {
-        var url = encodeURI(window.location.href);
-//        var target = rootUrl + "/canReward?url=" + url;
+    messenger.setup();
 
-    }
+    createAddBountyButton(5);
 
-    setupMessenger();
-    createBountyButton(5);
-    setIssueBounty(35);
-    canReward();
+    window.sendMessage = messenger.sendMessage;
+
+    //find the total bounty reward for this issue, and show it
+    messenger.sendMessage(
+        {
+            method: "totalReward",
+            params: [thisIssueUrl]
+        },
+        function (message) {
+            if (message.error)
+                return;
+
+            setBountyAmount(message.result);
+        }
+    );
+
+    //check if the user can reward
+    //and setup the reward button if they can
+//    sendMessage({
+//        method: "canReward",
+//        params: [target]
+//    }, function (callback) {
 
     return my;
 })();
