@@ -262,7 +262,7 @@ var CODEBOUNTY = (function (undefined) {
 
     messenger.initialize();
 
-    messenger.registerEvent("close", ui.closeOverlay);
+    messenger.registerEvent("closeOverlay", ui.closeOverlay);
     ui.initialize();
 
     return my;

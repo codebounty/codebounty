@@ -4,6 +4,8 @@ var PAYPAL = (function () {
     //the longest a bounty can be open for
         MAXDAYS = 90;
 
+    //https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro#id091QF0N0MPF__id092SH0050HS
+
     /**
      * Executes an Adaptive Payments API call
      * @param operation Ex. Pay
@@ -45,7 +47,7 @@ var PAYPAL = (function () {
             endingDate: endDate.toISOString(),
             startingDate: startDate.toISOString(),
             maxTotalAmountOfAllPayments: amount,
-            currencyCode: 'USD',
+            currencyCode: "USD",
             cancelUrl: cancelUrl,
             returnUrl: confirmUrl,
             requestEnvelope: {
@@ -56,7 +58,7 @@ var PAYPAL = (function () {
             ipnNotificationUrl: CONFIG.rootUrl + "approved"
         };
 
-        execute('Preapproval', params, function (error, data) {
+        execute("Preapproval", params, function (error, data) {
             if (error) {
                 callback(error);
             } else if (data) {
@@ -74,7 +76,7 @@ var PAYPAL = (function () {
             }
         };
 
-        execute('PreapprovalDetails', params, function (error, data) {
+        execute("PreapprovalDetails", params, function (error, data) {
             if (error) {
                 callback(error);
             } else if (data) {
@@ -82,6 +84,8 @@ var PAYPAL = (function () {
             }
         });
     };
+
+    //TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
 
     return my;
 }());

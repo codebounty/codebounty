@@ -11,7 +11,7 @@ var CONFIG = (function () {
         REDURL: 'https://www.sandbox.paypal.com/',
         USERID: 'bmerch_1360785614_biz_api1.facebook.com',
         PASSWORD: '1360785637',
-        SIGNATURE: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg',
+        SIGNATURE: 'AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg'
     };
 
     return my;
