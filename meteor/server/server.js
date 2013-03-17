@@ -9,21 +9,25 @@ var Future = __meteor_bootstrap__.require("fibers/future");
 var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
+    //returns true if the user added a bounty to issue that has yet to be rewarded
+    //and the issue is eligible for a reward because a commit has referenced the issue
     "canReward": function (url) {
         var fut = new Future();
 
         var user = Meteor.users.findOne(this.userId);
-        var bounty = Bounties.findOne({userId: this.userId, url: url});
+        var bounty = Bounties.findOne({userId: this.userId, url: url, rewarded: null});
 
         if (!user || !bounty)
             fut.return(false);
 
-        GitHub.GetIssue(user, bounty.repo, bounty.issue, function (error, result) {
-            console.log(result);
-            console.log(error);
+        else
+            GitHub.GetIssueEvents(user, bounty.repo, bounty.issue, function (error, result) {
+                var anyReferencedCommit = _.any(result, function (event) {
+                    return event.commit_id != null;
+                });
 
-            fut.ret(true);
-        });
+                fut.ret(anyReferencedCommit);
+            });
 
         return fut.wait();
     },

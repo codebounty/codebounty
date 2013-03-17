@@ -30,10 +30,10 @@ var GitHub = (function () {
      * @param {Number} issue 7
      * @param {{function(error, result)}} callback
      */
-    my.GetIssue = function (user, repo, issue, callback) {
+    my.GetIssueEvents = function (user, repo, issue, callback) {
         var client = authenticatedClient(user);
 
-        client.issues.getRepoIssue(
+        client.issues.getEvents(
             {
                 user: repo.user,
                 repo: repo.name,

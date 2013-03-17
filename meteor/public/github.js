@@ -191,18 +191,19 @@ var CODEBOUNTY = (function (undefined) {
             );
 
             //check if the user can reward and setup the reward button if they can
-                messenger.sendMessage(
-                    {
-                        method: "canReward",
-                        params: [thisIssueUrl]
-                    },
-                    function (message) {
-                        if (message.error)
-                            return;
+            messenger.sendMessage(
+                {
+                    method: "canReward",
+                    params: [thisIssueUrl]
+                },
+                function (message) {
+                    if (message.error)
+                        return;
 
+                    if (message.result)
                         ui.setupRewardBounty();
-                    }
-                );
+                }
+            );
         }
     };
 
