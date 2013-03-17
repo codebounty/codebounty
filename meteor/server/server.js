@@ -9,6 +9,25 @@ var Future = __meteor_bootstrap__.require("fibers/future");
 var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
+    "canReward": function (url) {
+        var fut = new Future();
+
+        var user = Meteor.users.findOne(this.userId);
+        var bounty = Bounties.findOne({userId: this.userId, url: url});
+
+        if (!user || !bounty)
+            fut.return(false);
+
+        GitHub.GetIssue(user, bounty.repo, bounty.issue, function (error, result) {
+            console.log(result);
+            console.log(error);
+
+            fut.ret(true);
+        });
+
+        return fut.wait();
+    },
+
     //region Paypal Methods
 
     //return the paypal pre-approval url
@@ -69,9 +88,6 @@ Meteor.methods({
         PAYPAL.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
             if (error)
                 throw new Meteor.Error(500, "Error confirming preapproval");
-
-            console.log("Confirmed!");
-            console.log(data);
 
             if (!data.approved)
                 throw new Meteor.Error(402, "Payment not approved");

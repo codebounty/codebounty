@@ -25,8 +25,8 @@ var GitHub = (function () {
     }
 
     /**
-     * @param {String} user "jperl"
-     * @param {String} repo "jperl/codebounty"
+     * @param user the meteor user object
+     * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
      * @param {{function(error, result)}} callback
      */
@@ -35,8 +35,8 @@ var GitHub = (function () {
 
         client.issues.getRepoIssue(
             {
-                user: user,
-                repo: repo,
+                user: repo.user,
+                repo: repo.name,
                 number: issue
             },
             callback
@@ -44,8 +44,8 @@ var GitHub = (function () {
     };
 
     /**
-     * @param {String} user "jperl"
-     * @param {String} repo "jperl/codebounty"
+     * @param user the meteor user object
+     * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
      * @param {String} comment "Interesting issue!"
      */
