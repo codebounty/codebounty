@@ -30,8 +30,13 @@ Meteor.Router.add({
 
         return "confirmBountyView";
     },
+
+    //a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
         MESSENGER.listen();
+
+        var url = window.url("?url");
+        BOUNTY.TrackReward(url);
 
         return "messengerView";
     },
