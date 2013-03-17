@@ -32,7 +32,7 @@ Meteor.methods({
         return fut.wait();
     },
 
-    //region Paypal Methods
+    //region Bounty Paypal Methods
 
     //return the paypal pre-approval url
     "createBounty": function (amount, bountyUrl) {
@@ -71,6 +71,7 @@ Meteor.methods({
 
         return fut.wait();
     },
+
     /**
      * Called if the user cancels adding a new bounty in the paypal checkout
      */
@@ -78,6 +79,7 @@ Meteor.methods({
         //TODO check that there is not a approved payment
         Bounties.remove({_id: id, userId: this.userId});
     },
+
     //TODO move confirm bounty to an IPN method instead. will be more stable
     //after a bounty payment has been authorized
     //test the the token and payer id are valid (since the client passed them)
