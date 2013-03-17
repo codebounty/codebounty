@@ -33,7 +33,8 @@ var BOUNTY = (function () {
             url: bountyUrl,
             issue: issue,
             repo: repo,
-            desc: "$" + amount + " bounty for Issue #" + issue + " in " + repo.name
+            desc: "$" + amount + " bounty for Issue #" + issue + " in " + repo.name,
+            rewarded: null
         };
 
         callback(null, bounty);

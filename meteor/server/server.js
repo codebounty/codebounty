@@ -9,6 +9,29 @@ var Future = __meteor_bootstrap__.require("fibers/future");
 var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
+    //returns true if the user added a bounty to issue that has yet to be rewarded
+    //and the issue is eligible for a reward because a commit has referenced the issue
+    "canReward": function (url) {
+        var fut = new Future();
+
+        var user = Meteor.users.findOne(this.userId);
+        var bounty = Bounties.findOne({userId: this.userId, url: url, rewarded: null});
+
+        if (!user || !bounty)
+            fut.return(false);
+
+        else
+            GitHub.GetIssueEvents(user, bounty.repo, bounty.issue, function (error, result) {
+                var anyReferencedCommit = _.any(result, function (event) {
+                    return event.commit_id != null;
+                });
+
+                fut.ret(anyReferencedCommit);
+            });
+
+        return fut.wait();
+    },
+
     //region Paypal Methods
 
     //return the paypal pre-approval url
@@ -69,9 +92,6 @@ Meteor.methods({
         PAYPAL.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
             if (error)
                 throw new Meteor.Error(500, "Error confirming preapproval");
-
-            console.log("Confirmed!");
-            console.log(data);
 
             if (!data.approved)
                 throw new Meteor.Error(402, "Payment not approved");
