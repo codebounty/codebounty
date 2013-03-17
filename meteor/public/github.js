@@ -9,42 +9,50 @@ var CODEBOUNTY = (function (undefined) {
 
     //region Messenger
 
-    var iframe, iframeLoaded = false, messageId = 0,
+    var messengerIFrame, messengerIFrameLoaded = false, messageId = 0,
     //any messages that haven't been sent yet because the iframe hasn't loaded yet
-        payloadQueue = [],
+        messageQueue = [],
     //callbacks listed by their message id
-        messageCallbacks = [];
+        messageCallbacks = [], eventRegistry = [];
 
     var messenger = {
         initialize: function () {
-            iframe = document.createElement("iframe");
-            iframe.style.display = "none";
-            iframe.src = rootUrl + "/messenger";
+            messengerIFrame = document.createElement("iframe");
+            messengerIFrame.style.display = "none";
+            messengerIFrame.src = rootUrl + "/messenger";
 
-            //when the iframe is ready clear and send the payload queue
-            iframe.onload = function () {
-                var payloadLength = payloadQueue.length;
+            //when the iframe is ready clear and send the message queue
+            messengerIFrame.onload = function () {
+                var queueLength = messageQueue.length;
 
-                for (var i = 0; i < payloadLength; i++)
-                    messenger.post(payloadQueue.shift());
+                for (var i = 0; i < queueLength; i++)
+                    messenger.post(messageQueue.shift());
 
-                iframeLoaded = true;
+                messengerIFrameLoaded = true;
             };
-            document.body.appendChild(iframe);
+            document.body.appendChild(messengerIFrame);
 
             window.addEventListener("message", function (evt) {
                 if (evt.origin !== rootUrl)
                     return;
 
-                var callback = messageCallbacks[evt.data.id];
-                if (callback)
-                    callback(evt.data.message);
+                //if the message has an id, find the stored callback
+                if (evt.data.id) {
+                    var callback = messageCallbacks[evt.data.id];
+                    if (callback)
+                        callback(evt.data);
+                }
+                //if the message has a registered event, trigger it's callback function
+                else if (evt.data.event) {
+                    var eventMethod = eventRegistry[evt.data.event];
+                    if (eventMethod)
+                        eventMethod(evt.data);
+                }
             }, false);
         },
         //internal function to do a postMessage
-        //a payload is just message and an id { id: messageId, message: message }
-        post: function (payload) {
-            iframe.contentWindow.postMessage(payload, rootUrl + "/");
+        post: function (message) {
+            messengerIFrame.contentWindow.postMessage(message, rootUrl + "/");
         },
         /**
          * Communicates with the codebounty app (inside the hidden iframe)
@@ -54,12 +62,22 @@ var CODEBOUNTY = (function (undefined) {
         sendMessage: function (message, callback) {
             messageCallbacks[messageId] = callback;
 
-            if (iframeLoaded)
-                messenger.post({id: messageId, message: message});
+            message.id = messageId;
+
+            if (messengerIFrameLoaded)
+                messenger.post(message);
             else
-                payloadQueue.push({id: messageId, message: message});
+                messageQueue.push(message);
 
             messageId++;
+        },
+        /**
+         * Register a codebounty app event
+         * @param event the event to register ex. "close"
+         * @param {Function} callback returns the param (message)
+         */
+        registerEvent: function (event, callback) {
+            eventRegistry[event] = callback;
         }
     };
 
@@ -68,8 +86,7 @@ var CODEBOUNTY = (function (undefined) {
     var ui = {
         addStyles: function () {
             //TODO: make style classes
-            /*github style*/
-            var style = "" +
+            var githubStyle = "" +
                 ".bountyButton {" +
                 "box-sizing: border-box;" +
                 "-moz-box-sizing: border-box;" +
@@ -112,13 +129,49 @@ var CODEBOUNTY = (function (undefined) {
                 "padding-left: 20px;" +
                 "}";
 
+            var popupStyles = "" +
+                "#iframecontainer {width:90%; height: 80%; display: none; position: fixed;margin-top: 5%; margin-left: 5%; background:#FFF; border: 1px solid #666;border: 1px solid #555;box-shadow: 2px 2px 40px #222; z-index: 999999;}" +
+                "#iframecontainer iframe {display:none; width: 100%; height: 100%; position: absolute; border: none; }" +
+                "#loader {background: url('" + rootUrl + "/ajax-loader.gif'" + "');background-repeat:no-repeat;  width: 250px; height: 250px; margin:auto;}" +
+                "#block {background: #000; opacity:0.6;  position: fixed; width: 100%; height: 100%; top:0; left:0; display:none;}";
+
+            var overlayDiv = "" +
+                "<div id='block'></div>" +
+                "<div id='iframecontainer'>" +
+                "<div id='loader'></div>" +
+                "<iframe></iframe>" +
+                "</div>";
+
+            $(overlayDiv).insertBefore(document.body);
+
             var customStyles = document.createElement("style");
-            customStyles.appendChild(document.createTextNode(style));
+            customStyles.appendChild(document.createTextNode(githubStyle + popupStyles));
             document.body.appendChild(customStyles);
         },
 
-        openPopup: function (url) {
+        openWindow: function (url) {
             window.open(url, "window", "width=1000,height=650,status=yes");
+        },
+
+        openOverlay: function (url) {
+            var container = $("#iframecontainer"), iFrame = container.find("iframe");
+            iFrame.attr("src", url);
+            $("#block").fadeIn();
+            container.fadeIn();
+
+            iFrame.load(function () {
+                $("#loader").fadeOut(function () {
+                    iFrame.fadeIn();
+                });
+            });
+        },
+
+        closeOverlay: function () {
+            var container = $("#iframecontainer"), iFrame = container.find("iframe");
+            iFrame.attr("src", "about:blank");
+            iFrame.fadeOut();
+            container.fadeOut();
+            $("#block").fadeOut();
         },
 
         /**
@@ -147,7 +200,7 @@ var CODEBOUNTY = (function (undefined) {
                 //TODO: Input validation.
                 var amount = $("#bountyInput").val();
                 var target = rootUrl + "/createBounty?amount=" + amount + "&url=" + thisIssueUrl;
-                ui.openPopup(target);
+                ui.openWindow(target);
                 e.stopPropagation();
                 e.preventDefault();
             });
@@ -166,7 +219,7 @@ var CODEBOUNTY = (function (undefined) {
 
             $("#rewardBounty").click(function (e) {
                 var target = rootUrl + "/rewardBounty?url=" + thisIssueUrl;
-                ui.openPopup(target);
+                ui.openOverlay(target);
                 e.stopPropagation();
                 e.preventDefault();
             });
@@ -208,6 +261,8 @@ var CODEBOUNTY = (function (undefined) {
     };
 
     messenger.initialize();
+
+    messenger.registerEvent("close", ui.closeOverlay);
     ui.initialize();
 
     return my;
