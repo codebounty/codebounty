@@ -19,7 +19,7 @@ var CODEBOUNTY = (function (undefined) {
         initialize: function () {
             messengerIFrame = document.createElement("iframe");
             messengerIFrame.style.display = "none";
-            messengerIFrame.src = rootUrl + "/messenger";
+            messengerIFrame.src = rootUrl + "/messenger?url=" + thisIssueUrl;
 
             //when the iframe is ready clear and send the message queue
             messengerIFrame.onload = function () {
@@ -37,7 +37,7 @@ var CODEBOUNTY = (function (undefined) {
                     return;
 
                 //if the message has an id, find the stored callback
-                if (evt.data.id) {
+                if (typeof evt.data.id !== "undefined") {
                     var callback = messageCallbacks[evt.data.id];
                     if (callback)
                         callback(evt.data);
@@ -229,20 +229,6 @@ var CODEBOUNTY = (function (undefined) {
             ui.addStyles();
             ui.setupAddBounty(5);
 
-            //find the total bounty reward for this issue, and show it
-            messenger.sendMessage(
-                {
-                    method: "totalReward",
-                    params: [thisIssueUrl]
-                },
-                function (message) {
-                    if (message.error)
-                        return;
-
-                    ui.setBountyAmount(message.result);
-                }
-            );
-
             //check if the user can reward and setup the reward button if they can
             messenger.sendMessage(
                 {
@@ -263,6 +249,15 @@ var CODEBOUNTY = (function (undefined) {
     messenger.initialize();
 
     messenger.registerEvent("closeOverlay", ui.closeOverlay);
+
+    //synchronize the total bounty reward for this issue, and show it
+    messenger.registerEvent("rewardChanged", function (message) {
+        if (!message.amount)
+            return;
+
+        ui.setBountyAmount(message.amount);
+    });
+
     ui.initialize();
 
     return my;
