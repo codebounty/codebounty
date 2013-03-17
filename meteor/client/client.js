@@ -1,6 +1,5 @@
 //TODO before publish: remove these and autosubscribe and insecure
 Meteor.subscribe("allUserData");
-Bounties = new Meteor.Collection("bounties");
 
 Meteor.Router.add({
     "/createBounty": function () {
@@ -32,28 +31,12 @@ Meteor.Router.add({
         return "confirmBountyView";
     },
     "/messenger": function () {
-        //listen for messages
-
-        window.addEventListener("message", function (evt) {
-            if (evt.origin !== "https://github.com")
-                return;
-
-            var message = evt.data.message;
-
-            if (message.method) {
-                var callParams = [message.method];
-                callParams = _.union(callParams, message.params);
-
-                //add the callback
-                callParams.push(function (error, result) {
-                    top.postMessage({id: evt.data.id, message: {error: error, result: result}}, "https://github.com")
-                });
-
-                Meteor.call.apply(null, callParams);
-            }
-        }, false);
+        MESSENGER.listen();
 
         return "messengerView";
+    },
+    "/rewardBounty": function () {
+        return "rewardBountyView";
     },
     "/logout": function () {
         Meteor.logout();
