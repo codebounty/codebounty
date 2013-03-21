@@ -9,7 +9,6 @@ preserve-inputs
 accounts-base
 accounts-ui
 accounts-github
-page-js
 router
 node-modules
 force-ssl
