@@ -1,4 +1,6 @@
-var BOUNTY = (function () {
+//contains all bounty related logic on the client
+
+var Bounty = (function () {
     var my = {};
 
     my.Create = function (amount, url) {
@@ -45,10 +47,10 @@ var BOUNTY = (function () {
                 var totalReward = new Meteor.Collection("totalReward");
                 totalReward.find().observe({
                     added: function (total) {
-                        MESSENGER.send({event: "rewardChanged", amount: total.amount});
+                        Messenger.send({event: "rewardChanged", amount: total.amount});
                     },
                     changed: function (total) {
-                        MESSENGER.send({event: "rewardChanged", amount: total.amount});
+                        Messenger.send({event: "rewardChanged", amount: total.amount});
                     }
                 });
             });

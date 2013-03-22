@@ -5,7 +5,7 @@ Template.rewardBountyView.coders = [
 
 Template.rewardBountyView.events({
     "click #closeButton": function () {
-        MESSENGER.send({event: "closeOverlay"});
+        Messenger.send({event: "closeOverlay"});
     },
 
     // Fires when any element is clicked

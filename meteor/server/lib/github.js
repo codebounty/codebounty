@@ -1,3 +1,5 @@
+//Contains all logic for interacting with github
+
 var GitHub = (function () {
     var my = {};
 
