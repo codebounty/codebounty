@@ -3,12 +3,29 @@
 var CBError = (function () {
     var my = {};
 
+    my.NotAuthorized = function () {
+        throw new Meteor.Error(404, "Not authorized");
+    };
+
     my.Bounty = {
         DoesNotExist: function () {
             throw new Meteor.Error(404, "Bounty does not exist, or you are not authorized to reward it");
         },
         Parsing: function () {
             throw new Meteor.Error(404, "Could not parse the bounty");
+        },
+        CannotReward: {
+            WithoutCommits: function () {
+                throw new Meteor.Error(404, "Cannot reward a bounty until a user has committed code");
+            }
+        }
+    };
+
+    my.GitHub = {
+        Loading: {
+            Commit: function (sha) {
+                throw new Meteor.Error(404, "There was an error loading commit " + sha);
+            }
         }
     };
 
