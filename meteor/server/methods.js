@@ -12,7 +12,6 @@ Meteor.methods({
 
         if (!user || !bounty)
             fut.return(false);
-
         else
             GitHub.GetIssueEvents(user, bounty.repo, bounty.issue, function (error, result) {
                 var anyReferencedCommit = _.any(result, function (event) {
@@ -20,6 +19,37 @@ Meteor.methods({
                 });
 
                 fut.ret(anyReferencedCommit);
+            });
+
+        return fut.wait();
+    },
+
+    /**
+     * return all authors of code references on the issue
+     * @param url The bounty url
+     * @returns {Array.<Object>}
+     * Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
+     */
+    "contributors": function (url) {
+        var fut = new Future();
+
+        var user = Meteor.users.findOne(this.userId);
+        var bounty = Bounties.findOne({userId: this.userId, url: url, rewarded: null});
+
+        if (!user || !bounty)
+            fut.return(false);
+
+        else
+            GitHub.GetContributorsCommits(user, bounty.repo, bounty.issue, function (error, result) {
+                if (error)
+                    throw error;
+                else if (result) {
+                    var authors = _.map(result, function (commit) {
+                        return commit.author;
+                    });
+
+                    fut.return(authors);
+                }
             });
 
         return fut.wait();
@@ -136,6 +166,14 @@ Meteor.methods({
 //            throw new Meteor.Error(404, "Not every user exists for this payout");
 //
 //        bounty.payout = {initiated: new Date(), rate: rate, disputed: null};
+    },
+
+    //TODO
+    /**
+     * used by moderators to hold a bounties reward until a dispute is resolved
+     * @param id
+     */
+    "holdReward": function (id) {
     }
 
     //endregion

@@ -41,6 +41,9 @@ Meteor.Router.add({
         return "messengerView";
     },
     "/rewardBounty": function () {
+        var url = window.url("?url");
+        Session.set("url", url);
+
         return "rewardBountyView";
     },
     "/logout": function () {
