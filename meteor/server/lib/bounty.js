@@ -1,4 +1,6 @@
-var BOUNTY = (function () {
+//contains all bounty logic
+
+var Bounty = (function () {
     var my = {};
 
     var url = NodeModules.require("url");

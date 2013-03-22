@@ -1,4 +1,6 @@
-var MESSENGER = (function () {
+//handles communication with the browser extension
+
+var Messenger = (function () {
     var my = {}, listening = false;
 
     var processMessage = function (message) {

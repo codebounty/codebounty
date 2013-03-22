@@ -1,0 +1,11 @@
+{
+    "ROOT_URL": "http://localhost:3000/",
+    "GITHUB_CLIENTID": "a2087b445e1e1493bb7b",
+    "GITHUB_SECRET": "74e9f41bd555149d3a546620f5a398ace8e1a34f",
+    "PAYPAL_APPLICATIONID": "APP-80W284485P519543T",
+    "PAYPAL_REQURL": "https://svcs.sandbox.paypal.com/",
+    "PAYPAL_REDURL": "https://www.sandbox.paypal.com/",
+    "PAYPAL_USERID": "bmerch_1360785614_biz_api1.facebook.com",
+    "PAYPAL_PASSWORD": "1360785637",
+    "PAYPAL_SIGNATURE": "AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg"
+}

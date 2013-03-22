@@ -1,4 +1,6 @@
-var PAYPAL = (function () {
+//Contains all logic for interacting with paypal
+
+var PayPal = (function () {
     var my = {}, request = require('request'),
 
     //the longest a bounty can be open for
@@ -14,10 +16,10 @@ var PAYPAL = (function () {
      */
     function execute(operation, fields, callback) {
         var headers = {
-            "X-PAYPAL-APPLICATION-ID": CONFIG.paypalApi.APPLICATIONID,
-            "X-PAYPAL-SECURITY-USERID": CONFIG.paypalApi.USERID,
-            "X-PAYPAL-SECURITY-PASSWORD": CONFIG.paypalApi.PASSWORD,
-            "X-PAYPAL-SECURITY-SIGNATURE": CONFIG.paypalApi.SIGNATURE,
+            "X-PAYPAL-APPLICATION-ID": Meteor.settings["PAYPAL_APPLICATIONID"],
+            "X-PAYPAL-SECURITY-USERID": Meteor.settings["PAYPAL_USERID"],
+            "X-PAYPAL-SECURITY-PASSWORD": Meteor.settings["PAYPAL_PASSWORD"],
+            "X-PAYPAL-SECURITY-SIGNATURE": Meteor.settings["PAYPAL_SIGNATURE"],
             "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
             "X-PAYPAL-RESPONSE-DATA-FORMAT": "JSON",
             "Content-Type": "application/json"
@@ -25,7 +27,7 @@ var PAYPAL = (function () {
 
         request.post({
             headers: headers,
-            url: CONFIG.paypalApi.REQURL + "AdaptivePayments/" + operation,
+            url: Meteor.settings["PAYPAL_REQURL"] + "AdaptivePayments/" + operation,
             json: fields
         }, function (error, response, data) {
             if (error)
@@ -55,14 +57,14 @@ var PAYPAL = (function () {
             },
             displayMaxTotalAmount: true,
             memo: description,
-            ipnNotificationUrl: CONFIG.rootUrl + "approved"
+            ipnNotificationUrl: Meteor.settings["ROOT_URL"] + "approved"
         };
 
         execute("Preapproval", params, function (error, data) {
             if (error) {
                 callback(error);
             } else if (data) {
-                var preApprovalUrl = CONFIG.paypalApi.REDURL + "webscr?cmd=_ap-preapproval&preapprovalkey=" + data.preapprovalKey;
+                var preApprovalUrl = Meteor.settings["PAYPAL_REDURL"] + "webscr?cmd=_ap-preapproval&preapprovalkey=" + data.preapprovalKey;
                 callback(null, data, preApprovalUrl);
             }
         });
@@ -78,6 +80,7 @@ var PAYPAL = (function () {
 
         execute("PreapprovalDetails", params, function (error, data) {
             if (error) {
+                CBError.PayPal.PreApproval();
                 callback(error);
             } else if (data) {
                 callback(null, data);
@@ -88,4 +91,4 @@ var PAYPAL = (function () {
     //TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
 
     return my;
-}());
+})();

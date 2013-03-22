@@ -6,14 +6,14 @@ Meteor.Router.add({
         var amount = window.url("?amount");
         var url = window.url("?url");
 
-        BOUNTY.Create(parseFloat(amount), url);
+        Bounty.Create(parseFloat(amount), url);
 
         return "processBountyView";
     },
     "/cancelCreateBounty": function () {
         var id = window.url("?id");
 
-        BOUNTY.Cancel(id, function (error) {
+        Bounty.Cancel(id, function (error) {
             if (!error)
                 window.close();
         });
@@ -23,7 +23,7 @@ Meteor.Router.add({
     "/confirmBounty": function () {
         var id = window.url("?id");
 
-        BOUNTY.Confirm(id, function (error) {
+        Bounty.Confirm(id, function (error) {
             if (!error)
                 window.close();
         });
@@ -33,10 +33,10 @@ Meteor.Router.add({
 
     //a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
-        MESSENGER.listen();
+        Messenger.listen();
 
         var url = window.url("?url");
-        BOUNTY.TrackReward(url);
+        Bounty.TrackReward(url);
 
         return "messengerView";
     },
