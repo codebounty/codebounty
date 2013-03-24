@@ -14,10 +14,9 @@ var CBError = (function () {
         Parsing: function () {
             throw new Meteor.Error(404, "Could not parse the bounty");
         },
-        CannotReward: {
-            WithoutCommits: function () {
-                throw new Meteor.Error(404, "Cannot reward a bounty until a user has committed code");
-            }
+        CannotReward: function () {
+            throw new Meteor.Error(404, "The user who created a bounty can reward it after a different user has " +
+                "committed code");
         }
     };
 

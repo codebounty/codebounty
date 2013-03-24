@@ -5,6 +5,46 @@ var Bounty = (function () {
 
     var url = NodeModules.require("url");
 
+    /**
+     * A bounty can be rewarded if the user has not yet rewarded the bounty
+     * and at least one commit from a different user is referenced on the issue
+     * @param bounty The bounty
+     * @param callback (canReward) returns true if it is eligible, false if not
+     */
+    my.canReward = function (bounty, callback) {
+        if (bounty.rewarded) {
+            callback(false);
+            return;
+        }
+
+        Bounty.contributors(bounty, function (contributors) {
+            callback(contributors.length > 0);
+        });
+    };
+
+    /**
+     * all authors of code references on the issue excluding the user
+     * @param bounty The bounty
+     * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
+     */
+    my.contributors = function (bounty, callback) {
+        var gitHub = new GitHub(Meteor.user());
+
+        gitHub.GetContributorsCommits(bounty.repo, bounty.issue, function (error, result) {
+            if (error)
+                throw error;
+
+            if (result) {
+                var authors = _.map(result, function (commit) {
+                    return commit.author;
+                });
+
+
+                callback(authors);
+            }
+        });
+    };
+
     //parses bounty data from the url
     //callback passes an error or the bounty data
     my.parse = function (amount, bountyUrl, callback) {
