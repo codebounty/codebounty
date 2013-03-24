@@ -1,41 +1,32 @@
 //Contains all logic for interacting with github
-
 var GitHub = (function () {
-    var my = {};
-
     var GitHubApi = NodeModules.require("github"), async = NodeModules.require("async");
 
-    /**
-     * Returns the authenticated GitHub client
-     * @param {String} user "jperl"
-     * @returns {GitHubApi}
-     */
-    function authenticatedClient(user) {
-        var github = new GitHubApi({
+    function GitHub(user) {
+        var githubApi = new GitHubApi({
             // required
             version: "3.0.0",
             // optional
             timeout: 5000
         });
 
-        github.authenticate({
+        var accessToken = user.services.github.accessToken;
+
+        githubApi.authenticate({
             type: "oauth",
-            token: user.services.github.accessToken
+            token: accessToken
         });
 
-        return github;
+        this._client = githubApi;
     }
 
     /**
-     * @param user the meteor user object
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
      * @param {{function(error, result)}} callback
      */
-    my.GetIssueEvents = function (user, repo, issue, callback) {
-        var client = authenticatedClient(user);
-
-        client.issues.getEvents(
+    GitHub.prototype.GetIssueEvents = function (repo, issue, callback) {
+        this._client.issues.getEvents(
             {
                 user: repo.user,
                 repo: repo.name,
@@ -45,10 +36,8 @@ var GitHub = (function () {
         );
     };
 
-    my.GetCommit = function (user, repo, sha, callback) {
-        var client = authenticatedClient(user);
-
-        client.gitdata.getCommit(
+    GitHub.prototype.GetCommit = function (repo, sha, callback) {
+        this._client.gitdata.getCommit(
             {
                 user: repo.user,
                 repo: repo.name,
@@ -60,14 +49,15 @@ var GitHub = (function () {
 
     /**
      * Get all the commit data from  "contributors" (users with associated commits) for an issue
-     * and exclude the current user
-     * @param user the meteor user object
+     * TODO and exclude the current user
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
      * @param {{function(error, result)}} callback
      */
-    my.GetContributorsCommits = function (user, repo, issue, callback) {
-        GitHub.GetIssueEvents(user, repo, issue, function (error, result) {
+    GitHub.prototype.GetContributorsCommits = function (repo, issue, callback) {
+        var that = this;
+
+        that.GetIssueEvents(repo, issue, function (error, result) {
             if (error) {
                 callback(error);
                 return;
@@ -85,6 +75,7 @@ var GitHub = (function () {
 
             //triggered after async.each complete
             var commitsLoaded = function (err) {
+
                 if (err)
                     callback(err);
                 else
@@ -93,7 +84,7 @@ var GitHub = (function () {
 
             async.each(referencedCommits, function (sha, commitLoaded) {
 
-                GitHub.GetCommit(user, repo, sha, function (error, result) {
+                that.GetCommit(repo, sha, function (error, result) {
                     if (error)
                         commitLoaded(error);
                     else {
@@ -108,26 +99,24 @@ var GitHub = (function () {
     };
 
     /**
-     * @param user the meteor user object
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
      * @param {String} comment "Interesting issue!"
      */
-    my.PostComment = function (user, repo, issue, comment) {
-        var client = authenticatedClient(user);
-
-        client.issues.createComment(
+    GitHub.prototype.PostComment = function (repo, issue, comment) {
+        this._client.issues.createComment(
             {
                 user: repo.user,
                 repo: repo.name,
                 number: issue,
                 body: comment
             }, function (err, res) {
+                //TODO error handling
                 console.log(err);
                 console.log(res);
             }
         );
     };
 
-    return my;
+    return GitHub;
 })();
