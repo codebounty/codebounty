@@ -24,7 +24,7 @@ var Bounty = (function () {
 
     /**
      * all authors of code references on the issue excluding the user
-     * @param bounty The bounty
+     * @param bounty to get the repo & issue to lookup contributors for
      * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
      */
     my.contributors = function (bounty, callback) {
