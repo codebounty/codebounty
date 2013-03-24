@@ -1,7 +1,6 @@
 //the injected github UI
 //isolated: all code / styles required for the extension should be in this file
 
-//TODO replace bookmark w Chrome Extension
 //bookmark for testing: javascript:(function(){document.body.appendChild(document.createElement("script")).src="https://localhost/meteor/public/github.js";})()
 
 var CODEBOUNTY = (function (undefined) {
@@ -84,57 +83,7 @@ var CODEBOUNTY = (function (undefined) {
     //endregion
 
     var ui = {
-        addStyles: function () {
-            //TODO: make style classes
-            var githubStyle = "" +
-                ".bountyButton {" +
-                "box-sizing: border-box;" +
-                "-moz-box-sizing: border-box;" +
-                "-webkit-box-sizing: border-box;" +
-                "margin-bottom: 8px;" +
-                "width: 100%;" +
-                "overflow: hidden;" +
-                /*"display: block;"+
-                 "text-align: center;"+
-                 "padding: 7px 10px;"+
-                 "margin-bottom: 8px;"+
-                 "background: #6cc644;"+
-                 "color: #fff;"+
-                 "text-decoration: none;"+
-                 "font-weight: bold;"+
-                 "-webkit-border-radius: 3px;"+
-                 "-moz-border-radius: 3px;"+
-                 "border-radius: 3px;"+*/
-                "}" +
-                ".inputWrapper {" +
-                "position: relative;" +
-                "}" +
-                ".bountyCurrency {" +
-                "position: absolute;" +
-                "font-size: 18px;" +
-                "font-weight: bold;" +
-                "padding-top: 8px;" +
-                "padding-left: 7px;" +
-                "pointer-events: none;" +
-                "}" +
-                "#bountyInput {" +
-                "margin-bottom: 8px;" +
-                "width: 100%;" +
-                "text-align: center;" +
-                "font-weight: bold;" +
-                "font-size: 18px;" +
-                "-moz-box-sizing: border-box;" +
-                "-webkit-box-sizing: border-box;" +
-                "box-sizing: border-box;" +
-                "padding-left: 20px;" +
-                "}";
-
-            var popupStyles = "" +
-                "#iframecontainer {width:90%; height: 80%; display: none; position: fixed;margin-top: 5%; margin-left: 5%; background:#FFF; border: 1px solid #666;border: 1px solid #555;box-shadow: 2px 2px 40px #222; z-index: 999999;}" +
-                "#iframecontainer iframe {display:none; width: 100%; height: 100%; position: absolute; border: none; }" +
-                "#loader {background: url('" + rootUrl + "/ajax-loader.gif'" + "');background-repeat:no-repeat;  width: 250px; height: 250px; margin:auto;}" +
-                "#block {background: #000; opacity:0.6;  position: fixed; width: 100%; height: 100%; top:0; left:0; display:none;}";
-
+        setupOverlay: function () {
             var overlayDiv = "" +
                 "<div id='block'></div>" +
                 "<div id='iframecontainer'>" +
@@ -143,10 +92,6 @@ var CODEBOUNTY = (function (undefined) {
                 "</div>";
 
             $(overlayDiv).insertBefore(document.body);
-
-            var customStyles = document.createElement("style");
-            customStyles.appendChild(document.createTextNode(githubStyle + popupStyles));
-            document.body.appendChild(customStyles);
         },
 
         openWindow: function (url) {
@@ -226,7 +171,7 @@ var CODEBOUNTY = (function (undefined) {
         },
 
         initialize: function () {
-            ui.addStyles();
+            ui.setupOverlay();
             ui.setupAddBounty(5);
 
             //check if the user can reward and setup the reward button if they can
@@ -247,7 +192,6 @@ var CODEBOUNTY = (function (undefined) {
     };
 
     messenger.initialize();
-
     messenger.registerEvent("closeOverlay", ui.closeOverlay);
 
     //synchronize the total bounty reward for this issue, and show it
