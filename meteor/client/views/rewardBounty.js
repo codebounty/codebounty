@@ -11,6 +11,15 @@ Template.rewardBountyView.rendered = function () {
 
         Session.set("contributors", result);
     });
+
+    Meteor.call("openBounties", Session.get("url"), true, function (error, result) {
+        if (error) //TODO error handling
+            return;
+
+        console.log(result);
+
+        Session.set("myOpenBounties", result);
+    });
 };
 
 Template.rewardBountyView.events({
@@ -31,10 +40,10 @@ Template.rewardBountyView.events({
         });
 
         var url = Session.get("url");
+        var bounties = Session.get("myOpenBounties");
 
-        console.log(payout);
-
-        Meteor.call("rewardBounty", url, payout, function (error, result) {
+        var ids = _.pluck(bounties, "_id");
+        Meteor.call("rewardBounty", ids, payout, function (error, result) {
 
         });
     }

@@ -1,6 +1,6 @@
 //Contains all the CodeBounty server error messages
 //prefixed with CB to prevent overwriting pre-existing error
-var CBError = (function () {
+CB.Error = (function () {
     var my = {};
 
     my.NotAuthorized = function () {
