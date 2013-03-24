@@ -1,6 +1,6 @@
 //contains all bounty logic
 
-var Bounty = (function () {
+CB.Bounty = (function () {
     var my = {};
 
     var url = NodeModules.require("url");
@@ -17,7 +17,7 @@ var Bounty = (function () {
             return;
         }
 
-        Bounty.contributors(bounty, function (contributors) {
+        CB.Bounty.contributors(bounty, function (contributors) {
             callback(contributors.length > 0);
         });
     };
@@ -28,7 +28,7 @@ var Bounty = (function () {
      * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
      */
     my.contributors = function (bounty, callback) {
-        var gitHub = new GitHub(Meteor.user());
+        var gitHub = new CB.GitHub(Meteor.user());
 
         gitHub.GetContributorsCommits(bounty.repo, bounty.issue, function (error, result) {
             if (error)

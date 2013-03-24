@@ -1,5 +1,5 @@
 //Contains all logic for interacting with github
-var GitHub = (function () {
+CB.GitHub = (function () {
     var GitHubApi = NodeModules.require("github"), async = NodeModules.require("async");
 
     function GitHub(user) {
@@ -23,7 +23,7 @@ var GitHub = (function () {
     /**
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
-     * @param {{function(error, result)}} callback
+     * @param {function} callback (error, result)
      */
     GitHub.prototype.GetIssueEvents = function (repo, issue, callback) {
         this._client.issues.getEvents(
@@ -50,9 +50,10 @@ var GitHub = (function () {
     /**
      * Get all the commit data from  "contributors" (users with associated commits) for an issue
      * TODO and exclude the current user
+     * NOTE: The commit or pull request must have a comment referencing the issue
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
-     * @param {{function(error, result)}} callback
+     * @param {function} callback (error, result)
      */
     GitHub.prototype.GetContributorsCommits = function (repo, issue, callback) {
         var that = this;
@@ -75,7 +76,6 @@ var GitHub = (function () {
 
             //triggered after async.each complete
             var commitsLoaded = function (err) {
-
                 if (err)
                     callback(err);
                 else

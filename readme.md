@@ -18,7 +18,9 @@ OS X / Linux / Ubuntu
 		sudo npm install
 		sudo mv node_modules public/node_modules
 
-4. Start meteor project (this will also install meteorite packages) `sudo mrt --settings "settings.json"`
+4. Start meteor project (this will also install meteorite packages) `sudo mrt --settings ~/src/codebounty/meteor/settings.json`**
+
+**Need absolute path until [this](https://github.com/oortcloud/meteorite/issues/85) issue gets fixed.
 
 5. Start the https web server for the github.js file in another terminal**  
 

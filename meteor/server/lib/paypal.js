@@ -1,6 +1,5 @@
 //Contains all logic for interacting with paypal
-
-var PayPal = (function () {
+CB.PayPal = (function () {
     var my = {}, request = require('request'),
 
     //the longest a bounty can be open for
