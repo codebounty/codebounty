@@ -30,7 +30,6 @@ Meteor.Router.add({
 
         return "confirmBountyView";
     },
-
     //a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
         Messenger.listen();
@@ -51,3 +50,5 @@ Meteor.Router.add({
         window.close();
     }
 });
+
+//TODO force the user to login on every action

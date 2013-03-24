@@ -4,6 +4,7 @@ var Bounty = (function () {
     var my = {};
 
     my.Create = function (amount, url) {
+        //TODO force the user to login everywhere and remove here
         Meteor.autorun(function (handle) {
             //force the user to login
             if (!Meteor.userId()) {
