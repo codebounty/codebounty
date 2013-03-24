@@ -5,6 +5,7 @@
     "dependencies": {
         "async": "latest",
         "cron": "latest",
-        "github": "~0.1.8"
+        "github": "~0.1.8",
+        "moment": "latest"
     }
 }

@@ -173,6 +173,7 @@ Meteor.methods({
             //bounty.payout = {initiated: new Date(), rate: rate, disputed: null};
             //TODO write a comment on the issue about users that do not have codebounty accounts who were paid a bounty
 
+//            CBSchedule.payment(bounties[0]);
         });
 
         return fut.wait();

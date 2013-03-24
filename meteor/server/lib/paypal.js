@@ -88,6 +88,10 @@ var PayPal = (function () {
         });
     };
 
+    my.Pay = function () {
+
+    };
+
     //TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
     //https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro
 
