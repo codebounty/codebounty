@@ -2,55 +2,36 @@ var Future = __meteor_bootstrap__.require("fibers/future");
 var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
-    //returns true if the user added a bounty to issue that has yet to be rewarded
-    //and the issue is eligible for a reward because a commit has referenced the issue
+
+    //check if the bounty is eligible for rewarding
     "canReward": function (url) {
         var fut = new Future();
 
-        var user = Meteor.users.findOne(this.userId);
-        var bounty = Bounties.findOne({userId: this.userId, url: url, rewarded: null});
+        var bounty = Bounties.findOne({url: url, rewarded: null});
 
-        if (!user || !bounty)
-            fut.return(false);
-        else
-            GitHub.GetIssueEvents(user, bounty.repo, bounty.issue, function (error, result) {
-                var anyReferencedCommit = _.any(result, function (event) {
-                    return event.commit_id != null;
-                });
+        if (!bounty)
+            CBError.Bounty.DoesNotExist();
 
-                fut.ret(anyReferencedCommit);
-            });
+        Bounty.canReward(bounty, function (canReward) {
+            fut.return(canReward);
+        });
 
         return fut.wait();
     },
 
-    /**
-     * return all authors of code references on the issue
-     * @param url The bounty url
-     * @returns {Array.<Object>}
-     * Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
-     */
+    //contributors for the current url
+    //TODO should this method be restricted to the bounty owner?
     "contributors": function (url) {
         var fut = new Future();
 
-        var user = Meteor.users.findOne(this.userId);
-        var bounty = Bounties.findOne({userId: this.userId, url: url, rewarded: null});
+        var bounty = Bounties.findOne({url: url, rewarded: null});
 
-        if (!user || !bounty)
-            fut.return(false);
+        if (!bounty)
+            CBError.Bounty.DoesNotExist();
 
-        else
-            GitHub.GetContributorsCommits(user, bounty.repo, bounty.issue, function (error, result) {
-                if (error)
-                    throw error;
-                else if (result) {
-                    var authors = _.map(result, function (commit) {
-                        return commit.author;
-                    });
-
-                    fut.return(authors);
-                }
-            });
+        Bounty.contributors(bounty, function (contributors) {
+            fut.return(contributors);
+        });
 
         return fut.wait();
     },
@@ -61,7 +42,9 @@ Meteor.methods({
     "createBounty": function (amount, bountyUrl) {
         var fut = new Future();
 
-        var userId = this.userId;
+        var userId = Meteor.userId();
+        if (!userId)
+            CBError.NotAuthorized();
 
         Fiber(function () {
             Bounty.parse(amount, bountyUrl, function (error, bounty) {
@@ -83,6 +66,7 @@ Meteor.methods({
                         CBError.PayPal.PreApproval();
                     }
 
+                    //TODO check if necessary
                     Fiber(function () {
                         Bounties.update({_id: id}, {$set: {preapprovalKey: data.preapprovalKey}})
                     }).run();
@@ -110,8 +94,12 @@ Meteor.methods({
     "confirmBounty": function (id) {
         var fut = new Future();
 
-        var user = Meteor.users.findOne(this.userId);
         var bounty = Bounties.findOne({_id: id, userId: this.userId});
+
+        if (!bounty)
+            CBError.Bounty.DoesNotExist();
+
+        var gitHub = new GitHub(Meteor.user());
 
         //Start pre-approval process
         PayPal.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
@@ -126,7 +114,7 @@ Meteor.methods({
             var commentBody = "I just added a " + bounty.desc +
                 ". [Download](http://codebounty.co/extension) the codebounty code extension to add your bounties.";
 
-            GitHub.PostComment(user, bounty.repo, bounty.issue, commentBody);
+            gitHub.PostComment(bounty.repo, bounty.issue, commentBody);
 
             fut.ret(true);
         });
@@ -138,11 +126,21 @@ Meteor.methods({
      * sets the payout rates when a backer rewards a bounty
      * post a comment on the issue with the payout rate
      * and after one week if no one disputes, the bounty will automatically be paid out with this rate
-     * @param id Bounty Id
+     * @param url the bounty url
      * @param {Object.<string, number>} rate An object with GitHub ids and their payouts
      * Ex. {"githubid": percentageHere, "githubidTwo": 50 }
      */
-    "rewardBounty": function (id, rate) {
+    "rewardBounty": function (url, rate) {
+//        var fut = new Future();
+//
+//        Bounty.canReward(url, function (canReward) {
+//            if (!canReward)
+//                CBError.Bounty.CannotReward();
+//
+//        });
+//
+//        return fut.wait();
+
 //        var bounty = Bounties.findOne({_id: id, userId: this.userId});
 //
 //        if (!bounty)
