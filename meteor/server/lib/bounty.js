@@ -12,7 +12,7 @@ CB.Bounty = (function () {
      * @param callback (canReward) returns true if it is eligible, false if not
      */
     my.canReward = function (bounty, callback) {
-        if (bounty.rewarded) {
+        if (bounty.reward) {
             callback(false);
             return;
         }
@@ -42,6 +42,40 @@ CB.Bounty = (function () {
 
                 callback(authors);
             }
+        });
+    };
+
+    /**
+     * Pay a bounty
+     * @param id to retrieve the bounty so the data is up-to-date
+     */
+    my.pay = function (id) {
+        var bounty = Bounties.findOne({_id: id});
+
+        console.log("PAID ");
+        console.log(bounty);
+    };
+
+    /**
+     * Schedules payments to be made on reward planned date
+     * @param bounty
+     */
+    my.schedulePayment = function (bounty) {
+        CB.Schedule.on(bounty.reward.planned, function () {
+            CB.Bounty.pay(bounty._id);
+        });
+    };
+
+    /**
+     * used by the scheduler whenever the server restarts to re-schedule payments
+     * for bounties that are planned to be rewarded, that have not been paid, and are not on hold
+     */
+    my.reschedulePayments = function () {
+        var bounties = Bounties.find({"reward.planned": {$ne: null}, "reward.paid": null, "reward.hold": false}).fetch();
+        console.log("bounties schedules reloaded " + bounties.length);
+
+        _.each(bounties, function (bounty) {
+            CB.Bounty.schedulePayment(bounty);
         });
     };
 
@@ -76,7 +110,7 @@ CB.Bounty = (function () {
             issue: issue,
             repo: repo,
             desc: "$" + amount + " bounty for Issue #" + issue + " in " + repo.name,
-            rewarded: null
+            reward: null
         };
 
         callback(null, bounty);

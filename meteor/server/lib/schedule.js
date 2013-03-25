@@ -1,32 +1,32 @@
+//contains all scheduling logic
+
 CB.Schedule = (function () {
     var my = {};
 
-//    var cronJob = NodeModules.require("cron").CronJob;
+    var cronJob = NodeModules.require("cron").CronJob;
 
-    //TODO
+    //load all the jobs from the database
     var initialize = function () {
-        //load all the jobs from the database
-
+        //TODO change this to be smart, and do a collection observechanges instead
+        CB.Bounty.reschedulePayments();
     };
 
-    /**
-     * Schedules a payment to be made one week from now
-     * @param bounty
-     */
-    my.payment = function (bounty) {
-        var job = new cronJob(new Date(), function () {
-                console.log("A");
-                //runs once at the specified date.
-            }, function () {
-                console.log("B");
-                // This function is executed when the job stops
-            },
-            true);
+    //schedule a function to run on the passed date
+    my.on = function (date, func) {
+        new cronJob(date,
+            function () {
+                //run function in the fiber
+                Fiber(function () {
+                    func();
+                }).run()
+            }, null, true);
 
-        job.start();
+        console.log("scheduled");
     };
 
-    initialize();
+    Meteor.startup(function () {
+        initialize();
+    });
 
     return my;
 })();
