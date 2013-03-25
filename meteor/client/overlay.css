@@ -88,6 +88,10 @@ body {
     width: 200px;
 }
 
+.contributorRow .rewardInput {
+    padding-left: 20px;
+}
+
 .contributorRow .rewardPercent {
     padding-right: 20px;
 }
@@ -95,6 +99,12 @@ body {
 .inputWrapper {
     position: relative;
     display: inline-block;
+}
+
+.dollarSign {
+    position: absolute;
+    top: 5px;
+    left: 8px;
 }
 
 .percentSign {
