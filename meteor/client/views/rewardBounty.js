@@ -22,7 +22,7 @@ Template.rewardBountyView.rendered = function () {
             max: bountyTotal,
             slide: function (event, ui) {
                 var max = $(this).slider("option", "max");
-                $(thisRow).find(".rewardInput").val(ui.value);
+                $(thisRow).find(".rewardInput").val(ui.value.toFixed(2));
                 $(thisRow).find(".rewardPercent").val(((ui.value / max) * 100).toFixed(2));
             }
         });
@@ -43,7 +43,7 @@ Template.rewardBountyView.rendered = function () {
                 var val = parseFloat(($(this).val() / 100) * max);
                 //TODO: Input validation
                 $(".rewardSlider").slider('value', val);
-                $(thisRow).find(".rewardInput").val(val);
+                $(thisRow).find(".rewardInput").val(val.toFixed(2));
             }
         );
     });

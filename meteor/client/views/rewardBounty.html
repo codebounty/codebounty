@@ -1,6 +1,6 @@
 <template name="rewardBountyView">
     <div class="container">
-        <h3>Contributor Payout:<span class="payoutTotalLabel">Total: <span class="payoutTotalAmount">45</span></span>
+        <h3>Contributor Payout:<span class="payoutTotalLabel">Total: <span class="payoutTotalAmount">$45</span></span>
         </h3>
         <ul>
             {{#each contributors}}
@@ -8,8 +8,10 @@
                 <div class="contributorName">{{name}}</div>
                 <div class="rewardInputGroup">
                     <div class="rewardSlider"></div>
-                    <input type="number" class="rewardInput"/>
-
+                    <div class="inputWrapper">
+                        <span class="dollarSign">$</span>
+                        <input type="number" min="0" value="0" class="rewardInput"/>
+                    </div>
                     <div class="inputWrapper">
                         <input class="rewardPercent"/>
                         <span class="percentSign">%</span>
