@@ -1,6 +1,6 @@
 //contains all bounty logic
 
-var Bounty = (function () {
+CB.Bounty = (function () {
     var my = {};
 
     var url = NodeModules.require("url");
@@ -12,23 +12,23 @@ var Bounty = (function () {
      * @param callback (canReward) returns true if it is eligible, false if not
      */
     my.canReward = function (bounty, callback) {
-        if (bounty.rewarded) {
+        if (bounty.reward) {
             callback(false);
             return;
         }
 
-        Bounty.contributors(bounty, function (contributors) {
+        CB.Bounty.contributors(bounty, function (contributors) {
             callback(contributors.length > 0);
         });
     };
 
     /**
      * all authors of code references on the issue excluding the user
-     * @param bounty The bounty
+     * @param bounty to get the repo & issue to lookup contributors for
      * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
      */
     my.contributors = function (bounty, callback) {
-        var gitHub = new GitHub(Meteor.user());
+        var gitHub = new CB.GitHub(Meteor.user());
 
         gitHub.GetContributorsCommits(bounty.repo, bounty.issue, function (error, result) {
             if (error)
@@ -42,6 +42,40 @@ var Bounty = (function () {
 
                 callback(authors);
             }
+        });
+    };
+
+    /**
+     * Pay a bounty
+     * @param id to retrieve the bounty so the data is up-to-date
+     */
+    my.pay = function (id) {
+        var bounty = Bounties.findOne({_id: id});
+
+        console.log("PAID ");
+        console.log(bounty);
+    };
+
+    /**
+     * Schedules payments to be made on reward planned date
+     * @param bounty
+     */
+    my.schedulePayment = function (bounty) {
+        CB.Schedule.on(bounty.reward.planned, function () {
+            CB.Bounty.pay(bounty._id);
+        });
+    };
+
+    /**
+     * used by the scheduler whenever the server restarts to re-schedule payments
+     * for bounties that are planned to be rewarded, that have not been paid, and are not on hold
+     */
+    my.reschedulePayments = function () {
+        var bounties = Bounties.find({"reward.planned": {$ne: null}, "reward.paid": null, "reward.hold": false}).fetch();
+        console.log("bounties schedules reloaded " + bounties.length);
+
+        _.each(bounties, function (bounty) {
+            CB.Bounty.schedulePayment(bounty);
         });
     };
 
@@ -76,7 +110,7 @@ var Bounty = (function () {
             issue: issue,
             repo: repo,
             desc: "$" + amount + " bounty for Issue #" + issue + " in " + repo.name,
-            rewarded: null
+            reward: null
         };
 
         callback(null, bounty);

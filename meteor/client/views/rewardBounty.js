@@ -46,6 +46,14 @@ Template.rewardBountyView.rendered = function () {
                 $(thisRow).find(".rewardInput").val(val.toFixed(2));
             }
         );
+        
+    Meteor.call("openBounties", Session.get("url"), true, function (error, result) {
+        if (error) //TODO error handling
+            return;
+
+        console.log(result);
+
+        Session.set("myOpenBounties", result);
     });
 };
 
@@ -55,7 +63,24 @@ Template.rewardBountyView.events({
     },
 
     "click #rewardButton": function (event) {
+        //for now hard code an equal reward for each person
+        //TODO ui. ui should show prevent payout for people without email on commit
+        var contributors = Session.get("contributors");
+        if (contributors.length <= 0)
+            return;
 
+        var payout = [];
+        contributors.forEach(function (contributor) {
+            payout.push({email: contributor.email, rate: 100 / contributors.length});
+        });
+
+        var url = Session.get("url");
+        var bounties = Session.get("myOpenBounties");
+
+        var ids = _.pluck(bounties, "_id");
+        Meteor.call("rewardBounty", ids, payout, function (error, result) {
+
+        });
     }
 });
 

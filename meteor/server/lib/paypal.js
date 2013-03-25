@@ -1,6 +1,5 @@
 //Contains all logic for interacting with paypal
-
-var PayPal = (function () {
+CB.PayPal = (function () {
     var my = {}, request = require('request'),
 
     //the longest a bounty can be open for
@@ -88,7 +87,12 @@ var PayPal = (function () {
         });
     };
 
+    my.Pay = function () {
+
+    };
+
     //TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
+    //https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro
 
     return my;
 })();

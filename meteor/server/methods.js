@@ -3,16 +3,16 @@ var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
 
-    //check if the bounty is eligible for rewarding
+    //check if the bounty is eligible for rewarding by the current user
     "canReward": function (url) {
         var fut = new Future();
 
-        var bounty = Bounties.findOne({url: url, rewarded: null});
+        var bounty = Bounties.findOne({url: url, userId: this.userId, reward: null});
 
         if (!bounty)
-            CBError.Bounty.DoesNotExist();
+            CB.Error.Bounty.DoesNotExist();
 
-        Bounty.canReward(bounty, function (canReward) {
+        CB.Bounty.canReward(bounty, function (canReward) {
             fut.return(canReward);
         });
 
@@ -24,16 +24,28 @@ Meteor.methods({
     "contributors": function (url) {
         var fut = new Future();
 
-        var bounty = Bounties.findOne({url: url, rewarded: null});
+        var bounty = Bounties.findOne({url: url, reward: null});
 
         if (!bounty)
-            CBError.Bounty.DoesNotExist();
+            CB.Error.Bounty.DoesNotExist();
 
-        Bounty.contributors(bounty, function (contributors) {
+        CB.Bounty.contributors(bounty, function (contributors) {
             fut.return(contributors);
         });
 
         return fut.wait();
+    },
+
+    //open bounties for a url
+    //if currentUser is true, only return bounties from the current user
+    //TODO should this method be restricted to the bounty owner?
+    "openBounties": function (url, currentUser) {
+        var selector = {url: url, reward: null};
+        if (currentUser)
+            selector.userId = this.userId;
+
+        var bounties = Bounties.find(selector, {fields: {_id: true, amount: true, desc: true}}).fetch();
+        return bounties;
     },
 
     //region Bounty Paypal Methods
@@ -44,12 +56,12 @@ Meteor.methods({
 
         var userId = Meteor.userId();
         if (!userId)
-            CBError.NotAuthorized();
+            CB.Error.NotAuthorized();
 
         Fiber(function () {
-            Bounty.parse(amount, bountyUrl, function (error, bounty) {
+            CB.Bounty.parse(amount, bountyUrl, function (error, bounty) {
                 if (error)
-                    CBError.Bounty.Parsing();
+                    CB.Error.Bounty.Parsing();
 
                 //store the bounty
                 bounty.userId = userId;
@@ -60,13 +72,12 @@ Meteor.methods({
                 var confirm = Meteor.settings["ROOT_URL"] + "confirmBounty?id=" + id;
 
                 //Start pre-approval process
-                PayPal.GetApproval(bounty.amount, bounty.desc, cancel, confirm, function (error, data, approvalUrl) {
+                CB.PayPal.GetApproval(bounty.amount, bounty.desc, cancel, confirm, function (error, data, approvalUrl) {
                     if (error) {
                         Bounties.remove({_id: id});
-                        CBError.PayPal.PreApproval();
+                        CB.Error.PayPal.PreApproval();
                     }
 
-                    //TODO check if necessary
                     Fiber(function () {
                         Bounties.update({_id: id}, {$set: {preapprovalKey: data.preapprovalKey}})
                     }).run();
@@ -87,6 +98,8 @@ Meteor.methods({
         Bounties.remove({_id: id, userId: this.userId});
     },
 
+    //TODO open bounties
+
     //TODO move confirm bounty to an IPN method instead. will be more stable
     //after a bounty payment has been authorized
     //test the the token and payer id are valid (since the client passed them)
@@ -97,20 +110,20 @@ Meteor.methods({
         var bounty = Bounties.findOne({_id: id, userId: this.userId});
 
         if (!bounty)
-            CBError.Bounty.DoesNotExist();
+            CB.Error.Bounty.DoesNotExist();
 
-        var gitHub = new GitHub(Meteor.user());
+        var gitHub = new CB.GitHub(Meteor.user());
 
         //Start pre-approval process
-        PayPal.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
+        CB.PayPal.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
             if (!data.approved)
-                CBError.PayPal.NotApproved();
+                CB.Error.PayPal.NotApproved();
 
             Fiber(function () {
                 Bounties.update(bounty, {$set: {approved: true}});
             }).run();
 
-            //TODO prettify comment
+            //TODO Issue #21: prettify this comment with auto-generated image
             var commentBody = "I just added a " + bounty.desc +
                 ". [Download](http://codebounty.co/extension) the codebounty code extension to add your bounties.";
 
@@ -126,44 +139,72 @@ Meteor.methods({
      * sets the payout rates when a backer rewards a bounty
      * post a comment on the issue with the payout rate
      * and after one week if no one disputes, the bounty will automatically be paid out with this rate
-     * @param url the bounty url
-     * @param {Object.<string, number>} rate An object with GitHub ids and their payouts
-     * Ex. {"githubid": percentageHere, "githubidTwo": 50 }
+     * @param ids the bounty ids to payout
+     * @param {Array.<{email, rate}>} payout [{email: "perl.jonathan@gmail.com", rate: 50}, ..] and their payouts
+     * Ex. {"email": percentageHere, "perl.jonathan@gmail.com": 50 }
      */
-    "rewardBounty": function (url, rate) {
-//        var fut = new Future();
-//
-//        Bounty.canReward(url, function (canReward) {
-//            if (!canReward)
-//                CBError.Bounty.CannotReward();
-//
-//        });
-//
-//        return fut.wait();
+    "rewardBounty": function (ids, payout) {
+        var fut = new Future();
 
-//        var bounty = Bounties.findOne({_id: id, userId: this.userId});
-//
-//        if (!bounty)
-//            CBError.Bounty.DoesNotExist();
-//
-//        var total = _.reduce(_.values(rate), function (memo, num) {
-//            return memo + num;
-//        }, 0);
-//
-//        if (total !== 100)
-//            throw new Meteor.Error(404, "Total payout must equal 100%");
-//
-//        //check that each user who has contributed code to a bounty has been assigned a payout
-//
-//        //TODO write a comment on the issue about users that do not have codebounty accounts who were paid a bounty
-//
-//        //check each user exists
-//        var users = _.keys(rate);
-//        var foundUsers = Meteor.users.find({_id: {$in: users}}).count();
-//        if (foundUsers !== users.length)
-//            throw new Meteor.Error(404, "Not every user exists for this payout");
-//
-//        bounty.payout = {initiated: new Date(), rate: rate, disputed: null};
+        //check the bounty payout totals to 100%
+        var totalPayout = _.reduce(_.pluck(payout, "rate"), function (memo, num) {
+            return memo + num;
+        }, 0);
+
+        if (totalPayout !== 100)
+            CB.Error.Bounty.Reward.NotOneHundredPercent();
+
+        //get all the bounties with ids sent that the user has open on the issue
+        var bounties = Bounties.find({_id: {$in: ids}, userId: this.userId, reward: null}).fetch();
+        if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
+            CB.Error.Bounty.DoesNotExist();
+
+        //confirm the payout rate is only to users who have contributed
+        //all the bounties on the issue will have the same contributors, so lookup the first bounty's contributors
+        CB.Bounty.contributors(bounties[0], function (contributors) {
+            var assignedPayouts = _.pluck(payout, "email");
+
+            //make sure every user that has contributed code has been assigned a bounty (even if it is 0)
+            var allAssignedPayouts = _.every(contributors, function (contributor) {
+                var assignedPayout = _.some(assignedPayouts, function (payoutEmail) {
+                    return contributor.email === payoutEmail;
+                });
+
+                return assignedPayout;
+            });
+
+            //and no one else has been assigned a bounty
+            if (!(allAssignedPayouts && contributors.length === assignedPayouts.length))
+                CB.Error.Bounty.Reward.NotEligible();
+
+            //everything is a-okay
+            //distribute the percentages across each bounty
+            //schedule the payment with cron
+
+            var now = new Date();
+            var oneWeek = new Date(now.setDate(now.getDate() + 7));
+            _.each(bounties, function (bounty) {
+                var reward = {
+                    updated: new Date(),
+                    planned: oneWeek,
+                    payout: payout,
+                    paid: null,
+                    hold: false
+                };
+
+                bounty.reward = reward;
+
+                Fiber(function () {
+                    Bounties.update(bounty._id, {$set: {reward: reward}});
+                }).run();
+
+                CB.Bounty.schedulePayment(bounty);
+            });
+
+            //TODO write a comment on the issue about users that do not have codebounty accounts who were paid a bounty
+        });
+
+        return fut.wait();
     },
 
     //TODO
