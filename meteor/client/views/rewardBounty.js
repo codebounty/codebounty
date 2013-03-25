@@ -34,9 +34,9 @@ Template.rewardBountyView.events({
         if (contributors.length <= 0)
             return;
 
-        var payout = {};
+        var payout = [];
         contributors.forEach(function (contributor) {
-            payout[contributor.email] = 100 / contributors.length;
+            payout.push({email: contributor.email, rate: 100 / contributors.length});
         });
 
         var url = Session.get("url");

@@ -1,4 +1,6 @@
-//TODO before publish: remove these and autosubscribe and insecure
+//TODO before publish: remove Bounties subscription, packages: autosubscrib and insecure
+Bounties = new Meteor.Collection("bounties");
+
 Meteor.subscribe("allUserData");
 
 Meteor.Router.add({
