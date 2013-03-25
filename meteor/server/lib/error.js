@@ -1,6 +1,6 @@
 //Contains all the CodeBounty server error messages
 //prefixed with CB to prevent overwriting pre-existing error
-var CBError = (function () {
+CB.Error = (function () {
     var my = {};
 
     my.NotAuthorized = function () {
@@ -14,9 +14,14 @@ var CBError = (function () {
         Parsing: function () {
             throw new Meteor.Error(404, "Could not parse the bounty");
         },
-        CannotReward: function () {
-            throw new Meteor.Error(404, "The user who created a bounty can reward it after a different user has " +
-                "committed code");
+        Reward: {
+            NotOneHundredPercent: function () {
+                throw new Meteor.Error(404, "Total bounty reward must equal 100%");
+            },
+            NotEligible: function () {
+                throw new Meteor.Error(404, "The user who created a bounty can reward it after a different user has " +
+                    "committed code");
+            }
         }
     };
 
