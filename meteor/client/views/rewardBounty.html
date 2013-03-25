@@ -1,9 +1,27 @@
 <template name="rewardBountyView">
-    {{#each contributors}}
-    <div>{{name}}</div>
-    <div>{{email}}</div>
-    {{/each}}
+    <div class="container">
+        <h3>Contributor Payout:<span class="payoutTotalLabel">Total: <span class="payoutTotalAmount">45</span></span>
+        </h3>
+        <ul>
+            {{#each contributors}}
+            <li class="contributorRow">
+                <div class="contributorName">{{name}}</div>
+                <div class="rewardInputGroup">
+                    <div class="rewardSlider"></div>
+                    <input type="number" class="rewardInput"/>
 
-    <button id="rewardButton">Reward the coders</button>
-    <button id="closeButton">Close</button>
+                    <div class="inputWrapper">
+                        <input class="rewardPercent"/>
+                        <span class="percentSign">%</span>
+                    </div>
+                </div>
+            </li>
+            {{/each}}
+        </ul>
+
+        <div class="rewardButtonGroup">
+            <button id="rewardButton">Reward the coders</button>
+            <button id="closeButton">Cancel</button>
+        </div>
+    </div>
 </template>

@@ -44,9 +44,8 @@
     margin-left: 5%;
     background: #FFF;
     border: 1px solid #666;
-    border: 1px solid #555;
     box-shadow: 2px 2px 40px #222;
-    z-index: 999999;
+    z-index: 100;
 }
 
 #iframecontainer iframe {
@@ -76,4 +75,5 @@
 
     background: #000;
     opacity: 0.6;
+    z-index: 100;
 }
