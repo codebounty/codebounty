@@ -8,11 +8,12 @@ var Tools = (function () {
 
     /**
      * Checks the user is logged in and has given the required scopes
-     * @param func
-     * @constructor
+     * otherwise prompt them to login once.
+     * Should only be used by the messenger, because after UI will not be setup until authorization has been succesful
+     * @param func Run this after logged in
      */
     my.AfterLogin = function (func) {
-        //wait till everything is loaded
+        //wait till everything is loaded (startup + 1/2 second delay)
         Meteor.startup(function () {
             _.delay(function () {
                 Meteor.autorun(function (handle) {
@@ -23,7 +24,6 @@ var Tools = (function () {
                     }
                     //if the current user has not logged in: prompt a login
                     else if (!Meteor.userId()) {
-                        debugger;
                         //only prompt for login once
                         if (!loginPrompted)
                             promptLogin();
@@ -31,7 +31,6 @@ var Tools = (function () {
                     //check the user's authorization
                     else {
                         Meteor.call("checkAuthorization", function (error, hasAccess) {
-                            debugger;
                             //all is swell proceed
                             //(setting UserAuthorized will jump the code to the first if which runs the function)
                             if (hasAccess) {
@@ -44,7 +43,7 @@ var Tools = (function () {
                         });
                     }
                 });
-            }, 1000);
+            }, 500);
         });
     };
 

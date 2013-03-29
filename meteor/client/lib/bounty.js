@@ -4,13 +4,11 @@ var Bounty = (function () {
     var my = {};
 
     my.Create = function (amount, url) {
-        Tools.AfterLogin(function () {
-            Meteor.call("createBounty", amount, url, function (error, result) {
-                if (!Tools.HandleError(error))
-                    return;
+        Meteor.call("createBounty", amount, url, function (error, result) {
+            if (!Tools.HandleError(error))
+                return;
 
-                window.location.href = result;
-            });
+            window.location.href = result;
         });
     };
 
