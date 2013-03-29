@@ -15,14 +15,17 @@ CB.PayPal = (function () {
      */
     function execute(operation, fields, callback) {
         var headers = {
+            "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
             "X-PAYPAL-APPLICATION-ID": Meteor.settings["PAYPAL_APPLICATIONID"],
             "X-PAYPAL-SECURITY-USERID": Meteor.settings["PAYPAL_USERID"],
             "X-PAYPAL-SECURITY-PASSWORD": Meteor.settings["PAYPAL_PASSWORD"],
             "X-PAYPAL-SECURITY-SIGNATURE": Meteor.settings["PAYPAL_SIGNATURE"],
-            "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
             "X-PAYPAL-RESPONSE-DATA-FORMAT": "JSON",
             "Content-Type": "application/json"
         };
+
+        if (!Meteor.settings["PRODUCTION"])
+            headers["X-PAYPAL-SANDBOX-EMAIL-ADDRESS"] = Meteor.settings["SUPPORT_EMAIL"];
 
         request.post({
             headers: headers,
@@ -32,7 +35,7 @@ CB.PayPal = (function () {
             if (error)
                 callback(error);
             else if (data.responseEnvelope.ack !== "Success" && data.responseEnvelope.ack !== "SuccessWithWarning")
-                callback(data.responseEnvelope.error.message);
+                callback(data.error);
             else
                 callback(null, data);
         });
@@ -87,12 +90,42 @@ CB.PayPal = (function () {
         });
     };
 
-    my.Pay = function () {
+    //pay a set of users
 
+    /**
+     *
+     * @param preapprovalKey
+     * @param receiverList ex. [{email: "perl.jonathan@gmail.com", amount: 100.12}, ..]
+     * @param callback (error, data)
+     */
+    my.Pay = function (preapprovalKey, receiverList, callback) {
+        //details here https://www.x.com/developers/paypal/documentation-tools/api/Pay-api-operation
+        //note fee calculation here: https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
+
+        var rootUrl = Meteor.settings["ROOT_URL"];
+
+        //TODO pin? here and on preapproval store it
+        var params = {
+            actionType: "PAY",
+            currencyCode: "USD",
+            receiverList: receiverList,
+            feesPayer: "EACHRECEIVER",
+            preapprovalKey: preapprovalKey,
+            requestEnvelope: {
+                errorLanguage: "en_US"
+            },
+            //not used but required
+            cancelUrl: rootUrl,
+            returnUrl: rootUrl
+        };
+
+        execute("Pay", params, function (error, data) {
+            callback(error, data);
+        });
     };
 
-    //TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
-    //https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro
+//TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
+//https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro
 
     return my;
 })();

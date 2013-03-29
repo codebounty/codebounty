@@ -11,77 +11,24 @@ CB.Bounty = (function () {
      * @param bounty The bounty
      * @param callback (canReward) returns true if it is eligible, false if not
      */
-    my.canReward = function (bounty, callback) {
+    my.CanReward = function (bounty, callback) {
+        if (!bounty)
+            CB.Error.Bounty.DoesNotExist();
+
         if (bounty.reward) {
             callback(false);
             return;
         }
 
-        CB.Bounty.contributors(bounty, function (contributors) {
+        CB.Bounty.Contributors(bounty, function (contributors) {
             callback(contributors.length > 0);
         });
     };
 
-    /**
-     * all authors of code references on the issue excluding the user
-     * @param bounty to get the repo & issue to lookup contributors for
-     * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
-     */
-    my.contributors = function (bounty, callback) {
-        var gitHub = new CB.GitHub(Meteor.user());
-
-        gitHub.GetContributorsCommits(bounty.repo, bounty.issue, function (error, result) {
-            if (error)
-                throw error;
-
-            if (result) {
-                var authors = _.map(result, function (commit) {
-                    return commit.author;
-                });
-
-
-                callback(authors);
-            }
-        });
-    };
-
-    /**
-     * Pay a bounty
-     * @param id to retrieve the bounty so the data is up-to-date
-     */
-    my.pay = function (id) {
-        var bounty = Bounties.findOne({_id: id});
-
-        console.log("PAID ");
-        console.log(bounty);
-    };
-
-    /**
-     * Schedules payments to be made on reward planned date
-     * @param bounty
-     */
-    my.schedulePayment = function (bounty) {
-        CB.Schedule.on(bounty.reward.planned, function () {
-            CB.Bounty.pay(bounty._id);
-        });
-    };
-
-    /**
-     * used by the scheduler whenever the server restarts to re-schedule payments
-     * for bounties that are planned to be rewarded, that have not been paid, and are not on hold
-     */
-    my.reschedulePayments = function () {
-        var bounties = Bounties.find({"reward.planned": {$ne: null}, "reward.paid": null, "reward.hold": false}).fetch();
-        console.log("bounties schedules reloaded " + bounties.length);
-
-        _.each(bounties, function (bounty) {
-            CB.Bounty.schedulePayment(bounty);
-        });
-    };
 
     //parses bounty data from the url
     //callback passes an error or the bounty data
-    my.parse = function (amount, bountyUrl, callback) {
+    var parse = function (amount, bountyUrl, callback) {
         if ((!_.isNumber(amount)) || _.isNaN(amount)) {
             callback("Need to specify an amount");
             return;
@@ -114,6 +61,121 @@ CB.Bounty = (function () {
         };
 
         callback(null, bounty);
+    };
+
+    /**
+     * create a bounty
+     * @param userId User to create the bounty for
+     * @param amount
+     * @param bountyUrl The url of the bounty issue
+     * @param callback returns the paypal authorization url
+     */
+    my.Create = function (userId, amount, bountyUrl, callback) {
+        parse(amount, bountyUrl, function (error, bounty) {
+            if (error)
+                CB.Error.Bounty.Parsing();
+
+            //store the bounty
+            bounty.userId = userId;
+
+            var id = Bounties.insert(bounty);
+
+            var cancel = Meteor.settings["ROOT_URL"] + "cancelCreateBounty?id=" + id;
+            var confirm = Meteor.settings["ROOT_URL"] + "confirmBounty?id=" + id;
+
+            //Start pre-approval process
+            CB.PayPal.GetApproval(bounty.amount, bounty.desc, cancel, confirm, function (error, data, approvalUrl) {
+                if (error) {
+                    Bounties.remove({_id: id});
+                    CB.Error.PayPal.PreApproval();
+                }
+
+                Fiber(function () {
+                    Bounties.update({_id: id}, {$set: {preapprovalKey: data.preapprovalKey}})
+                }).run();
+
+                callback(approvalUrl);
+            });
+        });
+    };
+
+    /**
+     * all authors of code references on the issue excluding the user
+     * @param bounty to get the repo & issue to lookup contributors for
+     * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
+     */
+    my.Contributors = function (bounty, callback) {
+        if (!bounty)
+            CB.Error.Bounty.DoesNotExist();
+
+        var gitHub = new CB.GitHub(Meteor.user());
+
+        gitHub.GetContributorsCommits(bounty.repo, bounty.issue, function (error, result) {
+            if (error)
+                throw error;
+
+            if (result) {
+                var authors = _.map(result, function (commit) {
+                    return commit.author;
+                });
+
+
+                callback(authors);
+            }
+        });
+    };
+
+    /**
+     * Pay a bounty
+     * @param id to retrieve the bounty so the data is up-to-date
+     */
+    my.Pay = function (id) {
+        //for testing
+//        var bounty = id;
+
+        var bounty = Bounties.findOne({_id: id});
+
+        var receiverList = _.map(bounty.reward.payout, function (payout) {
+            var receiver = {email: payout.email, amount: bounty.amount * (payout.rate / 100)};
+
+            return receiver;
+        });
+
+        receiverList = {"receiver": receiverList};
+
+        CB.PayPal.Pay(bounty.preapprovalKey, receiverList, function (error, data) {
+            console.log("error");
+            console.log(error);
+            console.log("data");
+            console.log(data);
+        });
+
+        //TODO if there was an error, log it
+
+        console.log("PAID ");
+    };
+
+    /**
+     * Schedules payments to be made on reward planned date
+     * @param bounty
+     */
+    my.SchedulePayment = function (bounty) {
+        CB.Schedule.On(bounty.reward.planned, function () {
+            CB.Bounty.Pay(bounty._id);
+        });
+    };
+
+    /**
+     * used by the scheduler whenever the server restarts to re-schedule payments
+     * for bounties that are planned to be rewarded, that have not been paid, and are not on hold
+     */
+    my.ReschedulePayments = function () {
+        var bounties = Bounties.find({"reward.planned": {$ne: null}, "reward.paid": null, "reward.hold": false}).fetch();
+        console.log("bounties schedules reloaded " + bounties.length);
+
+        _.each(bounties, function (bounty) {
+            CB.Bounty.SchedulePayment(bounty);
+        });
     };
 
     return my;

@@ -1,42 +1,53 @@
-var contributors = [];
+var getContributors = function () {
+    var contributors = Session.get("contributors");
+    if (!contributors)
+        return [];
 
-Template.rewardBountyView.contributors = function () {
-    return Session.get("contributors");
+    return contributors;
+};
+Template.rewardBountyView.contributors = getContributors;
+
+var getTotalBounty = function () {
+    var openBounties = Session.get("openBounties");
+    if (!openBounties)
+        return 0;
+
+    return _.reduce(openBounties, function (memo, bounty) {
+        return memo + bounty.amount;
+    }, 0);
+};
+Template.rewardBountyView.totalBounty = getTotalBounty;
+
+/**
+ * TODO
+ * Whenever an amount is increased/decreased for a contributor
+ * adjust the other contributor's rewards equally by removing / adding the difference
+ */
+var setAmount = function () {
+
 };
 
 Template.rewardBountyView.rendered = function () {
-    Meteor.call("contributors", Session.get("url"), function (error, result) {
-        if (error) //TODO error handling
-            return;
+    var contributors = getContributors();
+    var total = getTotalBounty();
+    var numberContributors = contributors.length;
 
-        Session.set("contributors", result);
-    });
+    var equalSplit = total / numberContributors;
 
-    Meteor.call("openBounties", Session.get("url"), true, function (error, result) {
-        if (error) //TODO error handling
-            return;
-
-        console.log(result);
-
-        Session.set("myOpenBounties", result);
-    });
-
-    var bountyTotal = 200;
-    var currentVal = 45;
     $(".contributorRow").each(function (index) {
         var thisRow = this;
         $(this).find(".rewardSlider").slider({
             animate: "fast",
-            value: currentVal,
-            max: bountyTotal,
+            max: total,
             slide: function (event, ui) {
                 var max = $(this).slider("option", "max");
                 $(thisRow).find(".rewardInput").val(ui.value.toFixed(2));
                 $(thisRow).find(".rewardPercent").val(((ui.value / max) * 100).toFixed(2));
-            }
+            },
+            value: equalSplit
         });
         $(this).find(".rewardInput")
-            .val(currentVal)
+            .val(equalSplit)
             .change(function () {
                 var val = parseInt($(this).val());
                 var max = $(thisRow).find(".rewardSlider").slider("option", "max");
@@ -46,7 +57,7 @@ Template.rewardBountyView.rendered = function () {
             }
         );
         $(this).find(".rewardPercent")
-            .val(((currentVal / $(thisRow).find(".rewardSlider").slider("option", "max")) * 100).toFixed(2))
+            .val(((equalSplit / $(thisRow).find(".rewardSlider").slider("option", "max")) * 100).toFixed(2))
             .change(function () {
                 var max = $(thisRow).find(".rewardSlider").slider("option", "max");
                 var val = parseFloat(($(this).val() / 100) * max);
@@ -76,7 +87,7 @@ Template.rewardBountyView.events({
         });
 
         var url = Session.get("url");
-        var bounties = Session.get("myOpenBounties");
+        var bounties = Session.get("openBounties");
 
         var ids = _.pluck(bounties, "_id");
         Meteor.call("rewardBounty", ids, payout, function (error, result) {
