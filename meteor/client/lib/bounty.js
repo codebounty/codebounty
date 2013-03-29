@@ -4,25 +4,17 @@ var Bounty = (function () {
     var my = {};
 
     my.Create = function (amount, url) {
-        //TODO force the user to login everywhere and remove here
-        Meteor.autorun(function (handle) {
-            //force the user to login
-            if (!Meteor.userId()) {
-                Meteor.loginWithGithub({requestPermissions: ["user", "repo"]});
-            } else {
-                handle.stop();
+        Tools.AfterLogin(function () {
+            Meteor.call("createBounty", amount, url, function (error, result) {
+                if (!Tools.HandleError(error))
+                    return;
 
-                Meteor.call("createBounty", amount, url, function (error, result) {
-                    if (error) {
-                        debugger;
-                        //TODO error handling, route to some error page with details
-                    } else
-                        window.location.href = result;
-                });
-            }
+                window.location.href = result;
+            });
         });
     };
 
+    //TODO force the user to login everywhere
     my.Cancel = function (id, callback) {
         Meteor.call("cancelCreateBounty", id, callback);
     };

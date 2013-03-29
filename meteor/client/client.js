@@ -16,8 +16,10 @@ Meteor.Router.add({
         var id = window.url("?id");
 
         Bounty.Cancel(id, function (error) {
-            if (!error)
-                window.close();
+            if (!Tools.HandleError(error))
+                return;
+
+            window.close();
         });
 
         return "cancelCreateBountyView";
@@ -26,8 +28,10 @@ Meteor.Router.add({
         var id = window.url("?id");
 
         Bounty.Confirm(id, function (error) {
-            if (!error)
-                window.close();
+            if (!Tools.HandleError(error))
+                return;
+
+            window.close();
         });
 
         return "confirmBountyView";
@@ -44,6 +48,20 @@ Meteor.Router.add({
     "/rewardBounty": function () {
         var url = window.url("?url");
         Session.set("url", url);
+
+        Meteor.call("contributors", Session.get("url"), function (error, result) {
+            if (!Tools.HandleError(error))
+                return;
+
+            Session.set("contributors", result);
+        });
+
+        Meteor.call("openBounties", Session.get("url"), true, function (error, result) {
+            if (!Tools.HandleError(error))
+                return;
+
+            Session.set("openBounties", result);
+        });
 
         return "rewardBountyView";
     },

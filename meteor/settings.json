@@ -1,5 +1,7 @@
 {
+    "PRODUCTION": false,
     "ROOT_URL": "http://localhost:3000/",
+    "SUPPORT_EMAIL": "perl.jonathan@gmail.com",
     "GITHUB_CLIENTID": "a2087b445e1e1493bb7b",
     "GITHUB_SECRET": "74e9f41bd555149d3a546620f5a398ace8e1a34f",
     "PAYPAL_APPLICATIONID": "APP-80W284485P519543T",

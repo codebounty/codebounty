@@ -8,11 +8,11 @@ CB.Schedule = (function () {
     //load all the jobs from the database
     var initialize = function () {
         //TODO change this to be smart, and do a collection observechanges instead
-        CB.Bounty.reschedulePayments();
+        CB.Bounty.ReschedulePayments();
     };
 
     //schedule a function to run on the passed date
-    my.on = function (date, func) {
+    my.On = function (date, func) {
         new cronJob(date,
             function () {
                 //run function in the fiber
