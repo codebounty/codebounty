@@ -38,10 +38,12 @@ Meteor.Router.add({
     },
     //a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
-        Messenger.listen();
+        Tools.AfterLogin(function () {
+            Messenger.listen();
 
-        var url = window.url("?url");
-        Bounty.TrackReward(url);
+            var url = window.url("?url");
+            Bounty.TrackReward(url);
+        });
 
         return "messengerView";
     },
