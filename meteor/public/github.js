@@ -43,9 +43,13 @@ var CODEBOUNTY = (function (undefined) {
                 }
                 //if the message has a registered event, trigger it's callback function
                 else if (evt.data.event) {
-                    var eventMethod = eventRegistry[evt.data.event];
-                    if (eventMethod)
-                        eventMethod(evt.data);
+                    var eventCallback = eventRegistry[evt.data.event];
+                    if (eventCallback) {
+                        //pass a function (handle) to stop the listener and the message
+                        eventCallback(function () {
+                            delete eventRegistry[evt.data.event];
+                        }, evt.data);
+                    }
                 }
             }, false);
         },
@@ -203,15 +207,20 @@ var CODEBOUNTY = (function (undefined) {
     messenger.initialize();
     messenger.registerEvent("closeOverlay", ui.closeOverlay);
 
-    //synchronize the total bounty reward for this issue, and show it
-    messenger.registerEvent("rewardChanged", function (message) {
-        if (!message.amount)
-            return;
+    messenger.registerEvent("authorized", function (handle) {
+        //only handle authorization once
+        handle();
 
-        ui.setBountyAmount(message.amount);
+        //synchronize the total bounty reward for this issue, and show it
+        messenger.registerEvent("rewardChanged", function (handle, message) {
+            if (!message.amount)
+                return;
+
+            ui.setBountyAmount(message.amount);
+        });
+
+        ui.initialize();
     });
-
-    ui.initialize();
 
     return my;
 })();

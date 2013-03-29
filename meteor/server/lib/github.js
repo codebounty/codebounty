@@ -24,11 +24,14 @@ CB.GitHub = (function () {
     //Check we have access to the user and repo scopes
     GitHub.prototype.CheckAccess = function (callback) {
         this._client.user.get({}, function (err, res) {
-            if (err)
+            if (err) {
                 callback(false);
+                return;
+            }
 
             var scopes = res.meta["x-oauth-scopes"].replace(" ", "").split(",");
             var haveAccess = _.contains(scopes, "user") && _.contains(scopes, "repo");
+
             callback(haveAccess);
         });
     };

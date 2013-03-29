@@ -41,6 +41,8 @@ Meteor.Router.add({
         Tools.AfterLogin(function () {
             Messenger.listen();
 
+            Messenger.send({event: "authorized"});
+
             var url = window.url("?url");
             Bounty.TrackReward(url);
         });
