@@ -2,6 +2,21 @@ var Future = __meteor_bootstrap__.require("fibers/future");
 var Fiber = __meteor_bootstrap__.require("fibers");
 
 Meteor.methods({
+    //checks if the user has properly authorized codebounty
+    "checkAuthorization": function () {
+        var user = Meteor.user();
+        if (!user)
+            return false;
+
+        var fut = new Future();
+
+        var gitHub = new CB.GitHub(user);
+        gitHub.CheckAccess(function (hasAccess) {
+            fut.ret(hasAccess);
+        });
+
+        return fut.wait();
+    },
 
     //check if the bounty is eligible for rewarding by the current user
     "canReward": function (url) {
@@ -105,79 +120,21 @@ Meteor.methods({
     },
 
     /**
-     * sets the payout rates when a backer rewards a bounty
-     * post a comment on the issue with the payout rate
-     * and after one week if no one disputes, the bounty will automatically be paid out with this rate
+     * Initiate the reward payout process
      * @param ids the bounty ids to payout
-     * @param {Array.<{email, rate}>} payout [{email: "perl.jonathan@gmail.com", rate: 50}, ..] and their payouts
-     * Ex. {"email": percentageHere, "perl.jonathan@gmail.com": 50 }
+     * @param payout
+     * @returns {*}
      */
     "rewardBounty": function (ids, payout) {
         var fut = new Future();
-
-        //check the bounty payout totals to 100%
-        var totalPayout = _.reduce(_.pluck(payout, "rate"), function (memo, num) {
-            return memo + num;
-        }, 0);
-
-        if (totalPayout !== 100)
-            CB.Error.Bounty.Reward.NotOneHundredPercent();
 
         //get all the bounties with ids sent that the user has open on the issue
         var bounties = Bounties.find({_id: {$in: ids}, approved: true, reward: null, userId: this.userId}).fetch();
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             CB.Error.Bounty.DoesNotExist();
 
-        //TODO make sure each user gets paid > $0.30 so they can pay the fee (including us). maybe set that minimum higher
-        //TODO pay us and do all teh payment calculations
-
-        //confirm the payout rate is only to users who have contributed
-        //all the bounties on the issue will have the same contributors, so lookup the first bounty's contributors
-        CB.Bounty.Contributors(bounties[0], function (contributors) {
-            var assignedPayouts = _.pluck(payout, "email");
-
-            //make sure every user that has contributed code has been assigned a bounty (even if it is 0)
-            var allAssignedPayouts = _.every(contributors, function (contributor) {
-                var assignedPayout = _.some(assignedPayouts, function (payoutEmail) {
-                    return contributor.email === payoutEmail;
-                });
-
-                return assignedPayout;
-            });
-
-            //and no one else has been assigned a bounty
-            if (!(allAssignedPayouts && contributors.length === assignedPayouts.length))
-                CB.Error.Bounty.Reward.NotEligible();
-
-            //everything is a-okay
-            //distribute the percentages across each bounty
-            //schedule the payment with cron
-
-            var now = new Date();
-//            var oneWeek = new Date(now.setDate(now.getDate() + 7));
-            var oneWeek = now;
-            _.each(bounties, function (bounty) {
-                var reward = {
-                    updated: new Date(),
-                    planned: oneWeek,
-                    payout: payout,
-                    paid: null,
-                    hold: false
-                };
-
-                bounty.reward = reward;
-
-                //for testing
-//                CB.Bounty.Pay(bounty);
-
-                Fiber(function () {
-                    Bounties.update(bounty._id, {$set: {reward: reward}});
-                }).run();
-                CB.Bounty.SchedulePayment(bounty);
-            });
-
-            //TODO write a comment on the issue "paid out"
-        });
+        //TODO callback?
+        CB.Bounty.InitiatePayout(bounties, payout);
 
         return fut.wait();
     },

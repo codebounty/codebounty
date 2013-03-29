@@ -156,6 +156,77 @@ CB.Bounty = (function () {
     };
 
     /**
+     * Set the payout rates when a backer rewards a bounty
+     * post a comment on the issue with the payout rate
+     * and after one week if no one disputes, the bounty will automatically be paid out with this rate
+     * @param bounties the bounties to payout
+     * @param {Array.<{email, rate}>} payout [{email: "perl.jonathan@gmail.com", rate: 50}, ..] and their payouts
+     * Ex. {"email": percentageHere, "perl.jonathan@gmail.com": 50 }
+     */
+    my.InitiatePayout = function (bounties, payout) {
+        //check the bounty payout totals to 100%
+        var totalPayout = _.reduce(_.pluck(payout, "rate"), function (memo, num) {
+            return memo + num;
+        }, 0);
+
+        if (totalPayout !== 100)
+            CB.Error.Bounty.Reward.NotOneHundredPercent();
+
+
+        //TODO make sure each user gets paid > $0.30 so they can pay the fee (including us). maybe set that minimum higher
+        //TODO pay us and do all teh payment calculations
+
+        //confirm the payout rate is only to users who have contributed
+        //all the bounties on the issue will have the same contributors, so lookup the first bounty's contributors
+        CB.Bounty.Contributors(bounties[0], function (contributors) {
+            var assignedPayouts = _.pluck(payout, "email");
+
+            //make sure every user that has contributed code has been assigned a bounty (even if it is 0)
+            var allAssignedPayouts = _.every(contributors, function (contributor) {
+                var assignedPayout = _.some(assignedPayouts, function (payoutEmail) {
+                    return contributor.email === payoutEmail;
+                });
+
+                return assignedPayout;
+            });
+
+            //and no one else has been assigned a bounty
+            if (!(allAssignedPayouts && contributors.length === assignedPayouts.length))
+                CB.Error.Bounty.Reward.NotEligible();
+
+            //everything is a-okay
+            //distribute the percentages across each bounty
+            //schedule the payment with cron
+
+            var now = new Date();
+//            var oneWeek = new Date(now.setDate(now.getDate() + 7));
+            var oneWeek = now;
+            _.each(bounties, function (bounty) {
+                var reward = {
+                    updated: new Date(),
+                    planned: oneWeek,
+                    payout: payout,
+                    paid: null,
+                    hold: false
+                };
+
+                bounty.reward = reward;
+
+                //for testing
+//                CB.Bounty.Pay(bounty);
+
+                Fiber(function () {
+                    Bounties.update(bounty._id, {$set: {reward: reward}});
+                }).run();
+                CB.Bounty.SchedulePayment(bounty);
+            });
+
+            //TODO write a comment on the issue "paid out"
+        });
+    };
+
+
+    /**
      * Schedules payments to be made on reward planned date
      * @param bounty
      */

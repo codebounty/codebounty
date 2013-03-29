@@ -11,6 +11,7 @@ CB.GitHub = (function () {
         });
 
         var accessToken = user.services.github.accessToken;
+        this._accessToken = accessToken;
 
         githubApi.authenticate({
             type: "oauth",
@@ -19,6 +20,18 @@ CB.GitHub = (function () {
 
         this._client = githubApi;
     }
+
+    //Check we have access to the user and repo scopes
+    GitHub.prototype.CheckAccess = function (callback) {
+        this._client.user.get({}, function (err, res) {
+            if (err)
+                callback(false);
+
+            var scopes = res.meta["x-oauth-scopes"].replace(" ", "").split(",");
+            var haveAccess = _.contains(scopes, "user") && _.contains(scopes, "repo");
+            callback(haveAccess);
+        });
+    };
 
     /**
      * @param repo {user: "jperl", name: "codebounty"}
@@ -119,4 +132,5 @@ CB.GitHub = (function () {
     };
 
     return GitHub;
-})();
+})
+    ();

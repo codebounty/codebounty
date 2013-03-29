@@ -90,10 +90,8 @@ CB.PayPal = (function () {
         });
     };
 
-    //pay a set of users
-
     /**
-     *
+     * Make a payment to a set of receivers
      * @param preapprovalKey
      * @param receiverList ex. [{email: "perl.jonathan@gmail.com", amount: 100.12}, ..]
      * @param callback (error, data)
