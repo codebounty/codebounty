@@ -267,6 +267,10 @@ var CODEBOUNTY = (function (undefined) {
             }, "setupRewardBounty");
         },
 
+        removeRewardButton: function () {
+            $("#rewardBounty").remove();
+        },
+
         /**
          * Sets how much the total bounty is
          * @param amount
@@ -283,7 +287,8 @@ var CODEBOUNTY = (function (undefined) {
 
             ui.setupContainer();
 
-            //watch if the container gets removed (GitHub refreshes the page), then set it up again
+            //watch if the container gets removed / replaced (GitHub does it when a comment is updated)
+            //then set it up again
             setInterval(function () {
                 if (ui._container.closest('body').length <= 0)
                     ui.setupContainer();
@@ -310,6 +315,7 @@ var CODEBOUNTY = (function (undefined) {
 
     messenger.initialize();
     events.register("closeOverlay", ui.closeOverlay);
+    events.register("bountyRewarded", ui.removeRewardButton);
 
     events.register("authorized", function (handle) {
         //only handle authorization event once

@@ -123,7 +123,7 @@ Meteor.methods({
      * Initiate the reward payout process
      * @param ids the bounty ids to payout
      * @param payout
-     * @returns {*}
+     * @returns true if there is no error
      */
     "rewardBounty": function (ids, payout) {
         var fut = new Future();
@@ -133,8 +133,10 @@ Meteor.methods({
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             CB.Error.Bounty.DoesNotExist();
 
-        //TODO callback?
-        CB.Bounty.InitiatePayout(bounties, payout);
+        CB.Bounty.InitiatePayout(bounties, payout, function () {
+            fut.ret(true);
+        });
+
 
         return fut.wait();
     },
