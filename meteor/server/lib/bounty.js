@@ -200,6 +200,7 @@ CB.Bounty = (function () {
 
             var now = new Date();
 //            var oneWeek = new Date(now.setDate(now.getDate() + 7));
+            now.setSeconds(now.getSeconds() + 15);
             var oneWeek = now;
             _.each(bounties, function (bounty) {
                 var reward = {
