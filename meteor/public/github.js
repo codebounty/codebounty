@@ -262,14 +262,11 @@ var CODEBOUNTY = (function (undefined) {
     events.register("closeOverlay", ui.closeOverlay);
 
     events.register("authorized", function (handle) {
-        //only handle authorization once
+        //only handle authorization event once
         handle();
 
         //synchronize the total bounty reward for this issue, and show it
         events.register("rewardChanged", function (handle, message) {
-            if (!message.amount)
-                return;
-
             ui.setBountyAmount(message.amount);
         });
 
