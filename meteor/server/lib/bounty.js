@@ -161,9 +161,10 @@ CB.Bounty = (function () {
      * and after one week if no one disputes, the bounty will automatically be paid out with this rate
      * @param bounties the bounties to payout
      * @param {Array.<{email, rate}>} payout [{email: "perl.jonathan@gmail.com", rate: 50}, ..] and their payouts
+     * @param callback Called if there is no error
      * Ex. {"email": percentageHere, "perl.jonathan@gmail.com": 50 }
      */
-    my.InitiatePayout = function (bounties, payout) {
+    my.InitiatePayout = function (bounties, payout, callback) {
         //check the bounty payout totals to 100%
         var totalPayout = _.reduce(_.pluck(payout, "rate"), function (memo, num) {
             return memo + num;
@@ -223,6 +224,7 @@ CB.Bounty = (function () {
             });
 
             //TODO write a comment on the issue "paid out"
+            callback();
         });
     };
 

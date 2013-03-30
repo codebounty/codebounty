@@ -89,9 +89,18 @@ Template.rewardBountyView.events({
         var url = Session.get("url");
         var bounties = Session.get("openBounties");
 
+        //TODO show loading / waiting ui
         var ids = _.pluck(bounties, "_id");
-        Meteor.call("rewardBounty", ids, payout, function (error, result) {
+        Meteor.call("rewardBounty", ids, payout, function (error, success) {
+            //TODO stop loading / waiting ui
+            Messenger.send({event: "closeOverlay"});
+            if (!Tools.HandleError(error)) {
+                return;
+            }
 
+            if (success) {
+                Messenger.send({event: "bountyRewarded"});
+            }
         });
     }
 });
