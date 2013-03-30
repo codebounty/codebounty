@@ -8,14 +8,85 @@ var CODEBOUNTY = (function (undefined) {
 
     //region Messenger
 
+    var events = {
+        //where the callbacks are stored
+        _registry: [],
+        //store messages until callbacks are associated
+        _mailbox: [],
+        //get the event callback
+        _callback: function (name) {
+            var callback = events._registry[name];
+            return callback;
+        },
+        /**
+         * Trigger the callback for an event
+         * @param name The event name
+         * @param message
+         * @returns {Boolean} whether there is a registered callback
+         */
+        _triggerCallback: function (name, message) {
+            var callback = events._callback(name);
+
+            if (!callback)
+                return false;
+
+            //pass a function (handle) to stop the listener and the message
+            callback(function () {
+                delete events._registry[name];
+            }, message);
+
+            return true;
+        },
+
+        /**
+         * Called when an event message is received
+         * @param name
+         * @param message
+         */
+        received: function (name, message) {
+            if (!events._triggerCallback(name, message)) {
+                var mailbox = events._mailbox[name];
+                if (!mailbox)
+                    events._mailbox[name] = mailbox = [];
+
+                mailbox.push(message);
+            }
+        },
+
+        /**
+         * Register a codebounty app event
+         * and check the mailbox for that event to see if there are already any messages
+         * @param name the event to register ex. "close"
+         * @param {Function} callback returns the param (message)
+         */
+        register: function (name, callback) {
+            events._registry[name] = callback;
+
+            //check the mailbox
+            var mailbox = events._mailbox[name];
+            if (mailbox) {
+                mailbox.forEach(function (message) {
+                    events._triggerCallback(name, message);
+                });
+
+                delete events._mailbox[name];
+            }
+        }
+    };
+
     var messengerIFrame, messengerIFrameLoaded = false, messageId = 0,
     //any messages that haven't been sent yet because the iframe hasn't loaded yet
         messageQueue = [],
     //callbacks listed by their message id
-        messageCallbacks = [], eventRegistry = [];
+        messageCallbacks = [];
 
     var messenger = {
+        //internal function to do a postMessage
+        _post: function (message) {
+            messengerIFrame.contentWindow.postMessage(message, rootUrl + "/");
+        },
         initialize: function () {
+            var that = this;
             messengerIFrame = document.createElement("iframe");
             messengerIFrame.style.display = "none";
             messengerIFrame.src = rootUrl + "/messenger?url=" + thisIssueUrl;
@@ -25,7 +96,7 @@ var CODEBOUNTY = (function (undefined) {
                 var queueLength = messageQueue.length;
 
                 for (var i = 0; i < queueLength; i++)
-                    messenger.post(messageQueue.shift());
+                    messenger._post(messageQueue.shift());
 
                 messengerIFrameLoaded = true;
             };
@@ -35,27 +106,18 @@ var CODEBOUNTY = (function (undefined) {
                 if (evt.origin !== rootUrl)
                     return;
 
+                var message = evt.data;
+
                 //if the message has an id, find the stored callback
-                if (typeof evt.data.id !== "undefined") {
+                if (typeof message.id !== "undefined") {
                     var callback = messageCallbacks[evt.data.id];
                     if (callback)
-                        callback(evt.data);
+                        callback(message);
                 }
-                //if the message has a registered event, trigger it's callback function
-                else if (evt.data.event) {
-                    var eventCallback = eventRegistry[evt.data.event];
-                    if (eventCallback) {
-                        //pass a function (handle) to stop the listener and the message
-                        eventCallback(function () {
-                            delete eventRegistry[evt.data.event];
-                        }, evt.data);
-                    }
-                }
+                //if the message has an event, trigger events received
+                else if (message.event)
+                    events.received(message.event, message);
             }, false);
-        },
-        //internal function to do a postMessage
-        post: function (message) {
-            messengerIFrame.contentWindow.postMessage(message, rootUrl + "/");
         },
         /**
          * Communicates with the codebounty app (inside the hidden iframe)
@@ -68,19 +130,11 @@ var CODEBOUNTY = (function (undefined) {
             message.id = messageId;
 
             if (messengerIFrameLoaded)
-                messenger.post(message);
+                messenger._post(message);
             else
                 messageQueue.push(message);
 
             messageId++;
-        },
-        /**
-         * Register a codebounty app event
-         * @param event the event to register ex. "close"
-         * @param {Function} callback returns the param (message)
-         */
-        registerEvent: function (event, callback) {
-            eventRegistry[event] = callback;
         }
     };
 
@@ -205,14 +259,14 @@ var CODEBOUNTY = (function (undefined) {
     };
 
     messenger.initialize();
-    messenger.registerEvent("closeOverlay", ui.closeOverlay);
+    events.register("closeOverlay", ui.closeOverlay);
 
-    messenger.registerEvent("authorized", function (handle) {
+    events.register("authorized", function (handle) {
         //only handle authorization once
         handle();
 
         //synchronize the total bounty reward for this issue, and show it
-        messenger.registerEvent("rewardChanged", function (handle, message) {
+        events.register("rewardChanged", function (handle, message) {
             if (!message.amount)
                 return;
 

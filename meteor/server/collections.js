@@ -9,19 +9,17 @@ Meteor.publish("allUserData", function () {
 
 // publish the total reward for a bounty url
 Meteor.publish("totalReward", function (url) {
-    var self = this; //the collection to publish
-
-    var applicableBounties = Bounties.find({url: url, approved: true});
-
+    var self = this;
+    var uuid = Meteor.uuid();
     var totalReward = 0;
-
     var initializing = true;
-    var handle = applicableBounties.observe({
+
+    var handle = Bounties.find({url: url, approved: true, reward: null}).observe({
         added: function (bounty) {
             totalReward += parseFloat(bounty.amount);
 
-            if (!initializing)
-                self.changed("totalReward", url, {amount: totalReward});
+            if (!initializing) //need to wait until it is added
+                self.changed("totalReward", uuid, {amount: totalReward});
         },
         changed: function (newBounty, oldBounty) {
             //add the difference
@@ -29,27 +27,28 @@ Meteor.publish("totalReward", function (url) {
 
             if (difference !== 0) {
                 totalReward += difference;
-                self.changed("totalReward", url, {amount: totalReward});
+                self.changed("totalReward", uuid, {amount: totalReward});
             }
         },
         removed: function (bounty) {
             totalReward -= parseFloat(bounty.amount);
 
-            self.changed("totalReward", url, {amount: totalReward});
+            self.changed("totalReward", uuid, {amount: totalReward});
         }
         // don't care about moved
     });
 
-    // Observe only returns after the initial added callbacks have
-    // run. Now return an initial value and mark the subscription
-    // as ready.
     initializing = false;
-    self.added("totalReward", url, {amount: totalReward});
+
+    // publish the initial amount. observeChanges guaranteed not to return
+    // until the initial set of `added` callbacks have run, so the `totalReward`
+    // variable is up to date.
+    self.added("totalReward", uuid, {amount: totalReward});
+
+    // and signal that the initial document set is now available on the client
     self.ready();
 
-    // Stop observing the cursor when client unsubs.
-    // Stopping a subscription automatically takes
-    // care of sending the client any removed messages.
+    // turn off observe when client unsubs
     self.onStop(function () {
         handle.stop();
     });

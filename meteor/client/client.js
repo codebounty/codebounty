@@ -42,10 +42,11 @@ Meteor.Router.add({
             Messenger.listen();
 
             Messenger.send({event: "authorized"});
-
-            var url = window.url("?url");
-            Bounty.TrackReward(url);
         });
+
+        //track reward even before logged in
+        var url = window.url("?url");
+        Bounty.TrackReward(url);
 
         return "messengerView";
     },

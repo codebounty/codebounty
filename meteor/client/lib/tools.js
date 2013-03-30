@@ -10,7 +10,7 @@ var Tools = (function () {
      * Checks the user is logged in and has given the required scopes
      * otherwise prompt them to login once.
      * Should only be used by the messenger, because after UI will not be setup until authorization has been succesful
-     * @param func Run this after logged in
+     * @param func Run this after logged in. TODO figure out why func subscriptions seem to be cancelled
      */
     my.AfterLogin = function (func) {
         //wait till everything is loaded (startup + 1/2 second delay)
@@ -19,8 +19,9 @@ var Tools = (function () {
                 Meteor.autorun(function (handle) {
                     //if the current user has properly authorized this application: all is swell proceed
                     if (Session.get("UserAuthorized")) {
-                        func();
+                        //must do this before the function, or else it will stop calculations inside the function
                         handle.stop();
+                        func();
                     }
                     //if the current user has not logged in: prompt a login
                     else if (!Meteor.userId()) {
