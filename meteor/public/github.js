@@ -185,12 +185,39 @@ var CODEBOUNTY = (function (undefined) {
             $("#block").fadeOut();
         },
 
+        _renderFunctions: [],
         /**
-         * Sets how much the total bounty is
-         * @param amount
+         * Stores changes to the code bounty container
+         * so they can be reapplied when GitHub removes it (when a comment changes)
+         * then invokes the function
+         * @param func Render function to store / run that affects the container
+         * @param [tag] If there is a tag, it will only store the latest of this tag
          */
-        setBountyAmount: function (amount) {
-            $(".state-indicator.open").html("Open $" + amount);
+        render: function (func, tag) {
+            //if there is a tag, remove any render functions with the same tag
+            if (typeof tag !== "undefined" && tag !== null)
+                ui._renderFunctions = ui._renderFunctions.filter(function (renderObject) {
+                    return renderObject.tag !== tag
+                });
+
+            ui._renderFunctions.push({tag: tag, render: func});
+
+            //run the function
+            func();
+        },
+
+        _container: null,
+        /**
+         * Inject the code bounty element and re-render any changes
+         */
+        setupContainer: function () {
+            ui._container = $("<div id='codeBountyContainer'></div>");
+            ui._container.insertAfter(".discussion-stats .state-indicator");
+
+            //go through and run the render functions
+            ui._renderFunctions.forEach(function (renderFunction) {
+                renderFunction.render();
+            });
         },
 
         /**
@@ -198,47 +225,70 @@ var CODEBOUNTY = (function (undefined) {
          * @param {Number} initValue
          */
         setupAddBounty: function (initValue) {
-            var bountyDiv = "" +
-                "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
-                "<input id='bountyInput' type='number' value='" + initValue + "' min='0' step='5'/></div>" +
-                "<a id='addBounty' class='bountyButton button minibutton bigger' href='#'>" +
-                "Place Bounty" +
-                "</a>";
+            ui.render(function () {
+                var bountyDiv = "" +
+                    "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
+                    "<input id='bountyInput' type='number' value='" + initValue + "' min='0' step='5'/></div>" +
+                    "<a id='addBounty' class='bountyButton button minibutton bigger' href='#'>" +
+                    "Place Bounty" +
+                    "</a>";
 
-            $(bountyDiv).insertAfter(".discussion-stats .state-indicator");
+                $(bountyDiv).insertAfter(ui._container);
 
-            $("#addBounty").click(function (e) {
-                //TODO: Input validation.
-                var amount = $("#bountyInput").val();
-                var target = rootUrl + "/createBounty?amount=" + amount + "&url=" + thisIssueUrl;
-                ui.openWindow(target);
-                e.stopPropagation();
-                e.preventDefault();
-            });
+                $("#addBounty").click(function (e) {
+                    //TODO: Input validation.
+                    var amount = $("#bountyInput").val();
+                    var target = rootUrl + "/createBounty?amount=" + amount + "&url=" + thisIssueUrl;
+                    ui.openWindow(target);
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+            }, "setupAddBounty");
         },
 
         /**
          * Sets up the reward button
          */
         setupRewardBounty: function () {
-            var bountyDiv = "" +
-                "<a id='rewardBounty' class='bountyButton button minibutton bigger' style='text-align: center' href='#'>" +
-                "Reward" +
-                "</a>";
+            ui.render(function () {
+                var bountyDiv = "" +
+                    "<a id='rewardBounty' class='bountyButton button minibutton bigger' style='text-align: center' href='#'>" +
+                    "Reward" +
+                    "</a>";
 
-            $(bountyDiv).insertAfter(".discussion-stats .state-indicator");
+                $(bountyDiv).insertAfter(ui._container);
 
-            $("#rewardBounty").click(function (e) {
-                var target = rootUrl + "/rewardBounty?url=" + thisIssueUrl;
-                ui.openOverlay(target);
-                e.stopPropagation();
-                e.preventDefault();
-            });
+                $("#rewardBounty").click(function (e) {
+                    var target = rootUrl + "/rewardBounty?url=" + thisIssueUrl;
+                    ui.openOverlay(target);
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+            }, "setupRewardBounty");
+        },
+
+        /**
+         * Sets how much the total bounty is
+         * @param amount
+         */
+        setBountyAmount: function (amount) {
+            ui.render(function () {
+                $(".state-indicator.open").html("Open $" + amount);
+            }, "setBountyAmount");
         },
 
         initialize: function () {
             ui.setupStyles();
             ui.setupOverlay();
+
+            ui.setupContainer();
+
+            //watch if the container gets removed (GitHub refreshes the page), then set it up again
+            setInterval(function () {
+                if (ui._container.closest('body').length <= 0)
+                    ui.setupContainer();
+            }, 1000);
+
             ui.setupAddBounty(5);
 
             //check if the user can reward and setup the reward button if they can
