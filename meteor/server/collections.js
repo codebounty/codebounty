@@ -22,11 +22,11 @@ Meteor.publish("totalReward", function (url) {
                 self.changed("totalReward", uuid, {amount: totalReward});
         },
         changed: function (newBounty, oldBounty) {
-            //add the difference
-            var difference = parseFloat(newBounty.amount) - parseFloat(oldBounty.amount);
+            var oldBountyAmount = parseFloat(oldBounty.amount);
 
-            if (difference !== 0) {
-                totalReward += difference;
+            //if the new bounty now is rewarded, subtract it from the total (available) reward
+            if (newBounty.reward && !oldBounty.reward) {
+                totalReward -= oldBountyAmount.amount;
                 self.changed("totalReward", uuid, {amount: totalReward});
             }
         },

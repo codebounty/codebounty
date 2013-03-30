@@ -1,4 +1,4 @@
-//TODO before publish: remove Bounties subscription, packages: autosubscrib and insecure
+//TODO before publish: remove Bounties subscription, packages: autosubscribe and insecure
 Bounties = new Meteor.Collection("bounties");
 
 Meteor.subscribe("allUserData");
@@ -36,7 +36,7 @@ Meteor.Router.add({
 
         return "confirmBountyView";
     },
-    //a hidden iframe view inserted into the GitHub issue page
+    //used by a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
         Tools.AfterLogin(function () {
             Messenger.listen();
