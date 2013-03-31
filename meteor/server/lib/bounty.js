@@ -162,13 +162,14 @@ CB.Bounty = (function () {
      * @param bounties the bounties to payout
      * @param {Array.<{email, amount}>} payout [{email: "perl.jonathan@gmail.com", amount: 50}, ..] and their payouts
      * @param callback Called if there is no error
-     * Ex. {"email": percentageHere, "perl.jonathan@gmail.com": 50 }
+     * Ex. {"email": amount, "perl.jonathan@gmail.com": 51.50 }
      */
     my.InitiatePayout = function (bounties, payout, callback) {
+        var totalUserPayout = 0;
         //remove any extra decimals on the user payouts
         _.each(payout, function (userPayout) {
-            userPayout.amount = parseFloat(userPayout.amount.toFixed(2));
-            console.log(userPayout);
+            userPayout.amount = CB.Tools.Truncate(userPayout.amount, 2);
+            totalUserPayout += userPayout.amount;
         });
 
         CB.Payout.CheckValidity(bounties, payout);
@@ -178,11 +179,8 @@ CB.Bounty = (function () {
         CB.Bounty.Contributors(bounties[0], function (contributors) {
             var assignedPayouts = _.pluck(payout, "email");
 
-            var totalPayouts = 0;
             //make sure every user that has contributed code has been assigned a bounty (even if it is 0)
             var allAssignedPayouts = _.every(contributors, function (contributor) {
-                totalPayouts += contributor.amount;
-
                 var assignedPayout = _.some(assignedPayouts, function (payoutEmail) {
                     return contributor.email === payoutEmail;
                 });
@@ -197,11 +195,11 @@ CB.Bounty = (function () {
             //everything is a-okay
 
             //pay codebounty it's fee
-            var total = CB.Payout.Sum(bounties);
-            var fee = CB.Payout.Fee(total, {bounty: total, payout: totalPayouts});
+            var bountyAmount = CB.Payout.Sum(bounties);
+            var fee = CB.Payout.Fee(bountyAmount, totalUserPayout);
+            console.log("calculated fee ", fee);
             var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
             payout.push(codeBountyPayout);
-            console.log(payout);
 
             //schedule the payment with cron
 
