@@ -108,6 +108,8 @@ CB.PayPal = (function () {
             return receiver.amount > 0;
         });
 
+        receiverList = {"receiver": receiverList};
+
         //TODO pin? here and on preapproval store it
         var params = {
             actionType: "PAY",

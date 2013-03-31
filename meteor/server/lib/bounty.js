@@ -140,8 +140,6 @@ CB.Bounty = (function () {
             return receiver;
         });
 
-        receiverList = {"receiver": receiverList};
-
         CB.PayPal.Pay(bounty.preapprovalKey, receiverList, function (error, data) {
             if (error) {
                 //TODO if there was an error, log it
@@ -197,7 +195,6 @@ CB.Bounty = (function () {
             //pay codebounty it's fee
             var bountyAmount = CB.Payout.Sum(bounties);
             var fee = CB.Payout.Fee(bountyAmount, totalUserPayout);
-            console.log("calculated fee ", fee);
             var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
             payout.push(codeBountyPayout);
 
