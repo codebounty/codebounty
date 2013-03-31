@@ -20,8 +20,6 @@ CB.Schedule = (function () {
                     func();
                 }).run()
             }, null, true);
-
-        console.log("scheduled");
     };
 
     Meteor.startup(function () {

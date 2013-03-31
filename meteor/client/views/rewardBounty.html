@@ -6,15 +6,16 @@
         <ul>
             {{#each contributors}}
             <li class="contributorRow">
+                <input type="checkbox" class="shouldPay" checked/>
                 <div class="contributorName">{{name}}</div>
                 <div class="rewardInputGroup">
                     <div class="rewardSlider"></div>
                     <div class="inputWrapper">
                         <span class="dollarSign">$</span>
-                        <input type="number" min="0" value="0" max="{{totalBounty}}" class="rewardInput"/>
+                        <input type="number" min="{{minimum}}" max="{{totalBounty}}" class="rewardInput"/>
                     </div>
                     <div class="inputWrapper">
-                        <input class="rewardPercent" />
+                        <input class="rewardPercent"/>
                         <span class="percentSign">%</span>
                     </div>
                 </div>

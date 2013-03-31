@@ -131,59 +131,58 @@ CB.Bounty = (function () {
      */
     my.Pay = function (id) {
         //for testing
-//        var bounty = id;
+        //var bounty = id;
 
         var bounty = Bounties.findOne({_id: id});
 
         var receiverList = _.map(bounty.reward.payout, function (payout) {
-            var receiver = {email: payout.email, amount: bounty.amount * (payout.rate / 100)};
-
+            var receiver = {email: payout.email, amount: payout.amount};
             return receiver;
         });
 
         receiverList = {"receiver": receiverList};
 
         CB.PayPal.Pay(bounty.preapprovalKey, receiverList, function (error, data) {
-            console.log("error");
-            console.log(error);
-            console.log("data");
-            console.log(data);
+            if (error) {
+                //TODO if there was an error, log it
+                console.log("error");
+                console.log(error);
+            } else {
+                console.log("Paid");
+                console.log(receiverList);
+            }
         });
 
-        //TODO if there was an error, log it
-
-        console.log("PAID ");
     };
 
     /**
-     * Set the payout rates when a backer rewards a bounty
-     * post a comment on the issue with the payout rate
-     * and after one week if no one disputes, the bounty will automatically be paid out with this rate
+     * Set the payout amounts when a backer rewards a bounty
+     * post a comment on the issue with the payout amounts
+     * and after one week if no one disputes, the bounty will automatically be paid out with this amount
      * @param bounties the bounties to payout
-     * @param {Array.<{email, rate}>} payout [{email: "perl.jonathan@gmail.com", rate: 50}, ..] and their payouts
+     * @param {Array.<{email, amount}>} payout [{email: "perl.jonathan@gmail.com", amount: 50}, ..] and their payouts
      * @param callback Called if there is no error
      * Ex. {"email": percentageHere, "perl.jonathan@gmail.com": 50 }
      */
     my.InitiatePayout = function (bounties, payout, callback) {
-        //check the bounty payout totals to 100%
-        var totalPayout = _.reduce(_.pluck(payout, "rate"), function (memo, num) {
-            return memo + num;
-        }, 0);
+        //remove any extra decimals on the user payouts
+        _.each(payout, function (userPayout) {
+            userPayout.amount = parseFloat(userPayout.amount.toFixed(2));
+            console.log(userPayout);
+        });
 
-        if (totalPayout !== 100)
-            CB.Error.Bounty.Reward.NotOneHundredPercent();
+        CB.Payout.CheckValidity(bounties, payout);
 
-
-        //TODO make sure each user gets paid > $0.30 so they can pay the fee (including us). maybe set that minimum higher
-        //TODO pay us and do all teh payment calculations
-
-        //confirm the payout rate is only to users who have contributed
+        //confirm the payout amount is only to users who have contributed
         //all the bounties on the issue will have the same contributors, so lookup the first bounty's contributors
         CB.Bounty.Contributors(bounties[0], function (contributors) {
             var assignedPayouts = _.pluck(payout, "email");
 
+            var totalPayouts = 0;
             //make sure every user that has contributed code has been assigned a bounty (even if it is 0)
             var allAssignedPayouts = _.every(contributors, function (contributor) {
+                totalPayouts += contributor.amount;
+
                 var assignedPayout = _.some(assignedPayouts, function (payoutEmail) {
                     return contributor.email === payoutEmail;
                 });
@@ -196,7 +195,14 @@ CB.Bounty = (function () {
                 CB.Error.Bounty.Reward.NotEligible();
 
             //everything is a-okay
-            //distribute the percentages across each bounty
+
+            //pay codebounty it's fee
+            var total = CB.Payout.Sum(bounties);
+            var fee = CB.Payout.Fee(total, {bounty: total, payout: totalPayouts});
+            var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
+            payout.push(codeBountyPayout);
+            console.log(payout);
+
             //schedule the payment with cron
 
             var now = new Date();
@@ -245,7 +251,6 @@ CB.Bounty = (function () {
      */
     my.ReschedulePayments = function () {
         var bounties = Bounties.find({"reward.planned": {$ne: null}, "reward.paid": null, "reward.hold": false}).fetch();
-        console.log("bounties schedules reloaded " + bounties.length);
 
         _.each(bounties, function (bounty) {
             CB.Bounty.SchedulePayment(bounty);
