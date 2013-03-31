@@ -4,27 +4,26 @@ CB.Payout = (function () {
     var my = {};
 
     /**
-     * Calculate the CodeBounty fee.
-     * @param amount
-     * @param {{bounty, payout}} [fixDifference] if specified, round up any pennies
+     * Calculate the CodeBounty fee
+     * @param amount the bounty amount
+     * @param [payout] if specified, round up any pennies of the difference between the bounty and the payout
      * @returns {number}
      */
-    my.Fee = function (amount, fixDifference) {
-        if ((amount * 0.05) < 1)
+    my.Fee = function (amount, payout) {
+        var fee = CB.Tools.Round(amount * 0.05, 2);
+        if (fee < 1)
             return 1;
 
-        var fee = parseFloat((amount * 0.05).toFixed(2));
-        if (fixDifference) {
-            var difference = fixDifference.bounty - fixDifference.payout - fee;
+        if (payout) {
+            var difference = CB.Tools.Round(amount - payout - fee, 2);
             if (difference > 0)
                 fee += difference;
-
-            console.log("diff " + difference);
-            console.log("fee " + fee);
 
             if (difference > 1)
                 CB.Error.Bounty.Reward.FeeDifferenceLarge(difference);
         }
+
+        fee = CB.Tools.Round(fee, 2);
 
         return fee;
     };
@@ -51,7 +50,7 @@ CB.Payout = (function () {
 
     /**
      * Throw an error if these conditions are not met:
-     * - each payout has no more decimals than 2
+     * - each payout has no more than 2 decimals
      * - the total payout equals the total bounty amount - fee
      * - each payout is 0 or >= the minimum (4)
      * @param bounties
@@ -62,7 +61,7 @@ CB.Payout = (function () {
         var totalBounty = my.Sum(bounties);
 
         _.each(payout, function (userPayout) {
-            if (userPayout.amount % 0.001 != 0)
+            if (userPayout.amount * 100 % 1 != 0)
                 CB.Error.Bounty.Reward.GreaterTwoDecimals();
 
             if (!(userPayout.amount === 0 || userPayout.amount >= my.Minimum()))
@@ -71,7 +70,7 @@ CB.Payout = (function () {
             totalPayout += userPayout.amount;
         });
 
-        var fee = my.Fee(totalBounty, {bounty: totalBounty, payout: totalPayout});
+        var fee = my.Fee(totalBounty, totalPayout);
 
         if (totalBounty !== (totalPayout + fee))
             CB.Error.Bounty.Reward.NotEqual("payout ($" + totalPayout + ") + fee ($" + fee +

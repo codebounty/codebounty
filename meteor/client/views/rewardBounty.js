@@ -7,6 +7,10 @@ var getContributors = function () {
 };
 Template.rewardBountyView.contributors = getContributors;
 
+/**
+ * The bounty minus the fee
+ * @returns {number}
+ */
 var getTotalBounty = function () {
     var openBounties = Session.get("openBounties");
     if (!openBounties)
@@ -16,7 +20,9 @@ var getTotalBounty = function () {
         return memo + bounty.amount;
     }, 0);
 
-    return totalBounty - CB.Payout.Fee(totalBounty);
+    var minusFee = totalBounty - CB.Payout.Fee(totalBounty);
+
+    return CB.Tools.Truncate(minusFee, 2);
 };
 Template.rewardBountyView.totalBounty = getTotalBounty;
 
@@ -32,7 +38,7 @@ Template.rewardBountyView.rendered = function () {
     var numberContributors = contributors.length;
 
     //initialize with an equal split
-    var equalSplit = total / numberContributors;
+    var equalSplit = CB.Tools.Truncate(total / numberContributors, 2);
 
     var _setHandled;
     /**
@@ -45,7 +51,6 @@ Template.rewardBountyView.rendered = function () {
         //prevent infinite loop
         if (_setHandled)
             return;
-
         _setHandled = true;
 
         var row = $(row);
@@ -55,8 +60,13 @@ Template.rewardBountyView.rendered = function () {
         else if (amount < minimum)
             amount = minimum;
 
+        //truncate decimal past 2 for the amount
+        amount = CB.Tools.Truncate(amount, 2);
+        //for the percent truncate all decimals
+        var percent = CB.Tools.Truncate(amount / total * 100, 0);
+
         row.find(".rewardInput").val(amount);
-        row.find(".rewardPercent").val(((amount / total) * 100).toFixed(2));
+        row.find(".rewardPercent").val(percent);
         row.find(".rewardSlider").slider("value", amount);
 
         _setHandled = false;
@@ -64,29 +74,29 @@ Template.rewardBountyView.rendered = function () {
 
     $(".contributorRow").each(function (index) {
         var thisRow = this;
-        $(this).find(".rewardSlider").slider({
+        $(thisRow).find(".rewardSlider").slider({
             animate: "fast",
             max: total,
             slide: function (event, ui) {
-                var amount = ui.value.toFixed(2);
+                var amount = ui.value;
                 setAmount(thisRow, amount);
-            },
-            value: equalSplit
+            }
         });
-        $(this).find(".rewardInput")
-            .val(equalSplit)
+        $(thisRow).find(".rewardInput")
             .change(function () {
                 var amount = parseInt($(this).val());
                 setAmount(thisRow, amount);
             }
         );
-        $(this).find(".rewardPercent")
-            .val(((equalSplit / $(thisRow).find(".rewardSlider").slider("option", "max")) * 100).toFixed(2))
+        $(thisRow).find(".rewardPercent")
             .change(function () {
                 var amount = parseFloat(($(this).val() / 100) * total);
                 setAmount(thisRow, amount);
             }
         );
+
+        //set the row initially to an equal split
+        setAmount(thisRow, equalSplit);
     });
 };
 
@@ -115,7 +125,7 @@ Template.rewardBountyView.events({
         var totalBounty = getTotalBounty();
 
         var payout = [];
-        var equalSplit = parseFloat((totalBounty / contributors.length).toFixed(2));
+        var equalSplit = CB.Tools.Truncate(totalBounty / contributors.length, 2);
         contributors.forEach(function (contributor) {
             payout.push({email: contributor.email, amount: equalSplit});
         });
