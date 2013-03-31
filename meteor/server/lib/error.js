@@ -15,12 +15,21 @@ CB.Error = (function () {
             throw new Meteor.Error(404, "Could not parse the bounty");
         },
         Reward: {
-            NotOneHundredPercent: function () {
-                throw new Meteor.Error(404, "Total bounty reward must equal 100%");
+            NotEqual: function (description) {
+                throw new Meteor.Error(404, "The total reward + fee must equal the total bounty amount", description);
             },
             NotEligible: function () {
                 throw new Meteor.Error(404, "The user who created a bounty can reward it after a different user has " +
                     "committed code");
+            },
+            GreaterTwoDecimals: function () {
+                throw new Meteor.Error(404, "Rewards must not have more than 2 decimals");
+            },
+            NotZeroOrFive: function () {
+                throw new Meteor.Error(404, "Rewards must be $0 or >= $5");
+            },
+            FeeDifferenceLarge: function (difference) {
+                throw new Meteor.Error(404, "The fee difference is " + difference + " which is > $1. Investigate");
             }
         }
     };

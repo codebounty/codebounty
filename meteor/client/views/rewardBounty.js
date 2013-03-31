@@ -12,27 +12,55 @@ var getTotalBounty = function () {
     if (!openBounties)
         return 0;
 
-    return _.reduce(openBounties, function (memo, bounty) {
+    var totalBounty = _.reduce(openBounties, function (memo, bounty) {
         return memo + bounty.amount;
     }, 0);
+
+    return totalBounty - CB.Payout.Fee(totalBounty);
 };
 Template.rewardBountyView.totalBounty = getTotalBounty;
 
-/**
- * TODO
- * Whenever an amount is increased/decreased for a contributor
- * adjust the other contributor's rewards equally by removing / adding the difference
- */
-var setAmount = function () {
+Template.rewardBountyView.minimum = CB.Payout.Minimum;
 
-};
+//TODO if the total bounty can pay each person the minimum, check everyone
+//otherwise check no one
 
 Template.rewardBountyView.rendered = function () {
     var contributors = getContributors();
     var total = getTotalBounty();
+    var minimum = CB.Payout.Minimum();
     var numberContributors = contributors.length;
 
+    //initialize with an equal split
     var equalSplit = total / numberContributors;
+
+    var _setHandled;
+    /**
+     * Change the current row's values to this amount. Adjust it if is is < minimum or > total
+     * TODO adjust the other contributor's rewards equally by removing / adding the difference to the total
+     * @param row
+     * @param amount
+     */
+    var setAmount = function (row, amount) {
+        //prevent infinite loop
+        if (_setHandled)
+            return;
+
+        _setHandled = true;
+
+        var row = $(row);
+
+        if (amount > total)
+            amount = total;
+        else if (amount < minimum)
+            amount = minimum;
+
+        row.find(".rewardInput").val(amount);
+        row.find(".rewardPercent").val(((amount / total) * 100).toFixed(2));
+        row.find(".rewardSlider").slider("value", amount);
+
+        _setHandled = false;
+    };
 
     $(".contributorRow").each(function (index) {
         var thisRow = this;
@@ -40,36 +68,39 @@ Template.rewardBountyView.rendered = function () {
             animate: "fast",
             max: total,
             slide: function (event, ui) {
-                var max = $(this).slider("option", "max");
-                $(thisRow).find(".rewardInput").val(ui.value.toFixed(2));
-                $(thisRow).find(".rewardPercent").val(((ui.value / max) * 100).toFixed(2));
+                var amount = ui.value.toFixed(2);
+                setAmount(thisRow, amount);
             },
             value: equalSplit
         });
         $(this).find(".rewardInput")
             .val(equalSplit)
             .change(function () {
-                var val = parseInt($(this).val());
-                var max = $(thisRow).find(".rewardSlider").slider("option", "max");
-                //TODO: Input validation
-                $(".rewardSlider").slider('value', val);
-                $(thisRow).find(".rewardPercent").val(((val / max) * 100).toFixed(2));
+                var amount = parseInt($(this).val());
+                setAmount(thisRow, amount);
             }
         );
         $(this).find(".rewardPercent")
             .val(((equalSplit / $(thisRow).find(".rewardSlider").slider("option", "max")) * 100).toFixed(2))
             .change(function () {
-                var max = $(thisRow).find(".rewardSlider").slider("option", "max");
-                var val = parseFloat(($(this).val() / 100) * max);
-                //TODO: Input validation
-                $(".rewardSlider").slider('value', val);
-                $(thisRow).find(".rewardInput").val(val.toFixed(2));
+                var amount = parseFloat(($(this).val() / 100) * total);
+                setAmount(thisRow, amount);
             }
         );
     });
 };
 
 Template.rewardBountyView.events({
+    "click .shouldPay": function (event) {
+        var checkBox = $(event.toElement);
+        var rewardGroup = checkBox.siblings(".rewardInputGroup");
+
+        if (checkBox.is(":checked"))
+            rewardGroup.unblock();
+        else
+            rewardGroup.block({ message: null, overlayCSS: {cursor: 'default' }});
+    },
+
     "click #closeButton": function () {
         Messenger.send({event: "closeOverlay"});
     },
@@ -81,18 +112,21 @@ Template.rewardBountyView.events({
         if (contributors.length <= 0)
             return;
 
+        var totalBounty = getTotalBounty();
+
         var payout = [];
+        var equalSplit = parseFloat((totalBounty / contributors.length).toFixed(2));
         contributors.forEach(function (contributor) {
-            payout.push({email: contributor.email, rate: 100 / contributors.length});
+            payout.push({email: contributor.email, amount: equalSplit});
         });
 
         var url = Session.get("url");
         var bounties = Session.get("openBounties");
 
-        //TODO show loading / waiting ui
+        $.blockUI();
         var ids = _.pluck(bounties, "_id");
         Meteor.call("rewardBounty", ids, payout, function (error, success) {
-            //TODO stop loading / waiting ui
+            $.unblockUI();
             Messenger.send({event: "closeOverlay"});
             if (!Tools.HandleError(error)) {
                 return;
@@ -104,9 +138,3 @@ Template.rewardBountyView.events({
         });
     }
 });
-
-//Template.rewardBountyView.rendered = function () {
-//    alert("Reward!");
-//};
-
-//var id = window.url("?id");

@@ -129,7 +129,6 @@ CB.GitHub = (function () {
             }, function (err, res) {
                 //TODO error handling
                 console.log(err);
-                console.log(res);
             }
         );
     };

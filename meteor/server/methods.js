@@ -137,7 +137,6 @@ Meteor.methods({
             fut.ret(true);
         });
 
-
         return fut.wait();
     },
 

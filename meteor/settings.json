@@ -8,6 +8,7 @@
     "PAYPAL_REQURL": "https://svcs.sandbox.paypal.com/",
     "PAYPAL_REDURL": "https://www.sandbox.paypal.com/",
     "PAYPAL_USERID": "bmerch_1360785614_biz_api1.facebook.com",
+    "PAYPAL_PAYMENTS_EMAIL": "payments@codebounty.co",
     "PAYPAL_PASSWORD": "1360785637",
     "PAYPAL_SIGNATURE": "AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg"
 }

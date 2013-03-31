@@ -102,6 +102,12 @@ CB.PayPal = (function () {
 
         var rootUrl = Meteor.settings["ROOT_URL"];
 
+        //only need to pay the people getting > $0
+        //remove any decimals past 0.01
+        receiverList = _.filter(receiverList, function (receiver) {
+            return receiver.amount > 0;
+        });
+
         //TODO pin? here and on preapproval store it
         var params = {
             actionType: "PAY",
@@ -121,9 +127,6 @@ CB.PayPal = (function () {
             callback(error, data);
         });
     };
-
-//TODO setup Chained Payment https://www.x.com/developers/paypal/documentation-tools/api/pay-api-operation
-//https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro
 
     return my;
 })();
