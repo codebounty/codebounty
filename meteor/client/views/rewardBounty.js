@@ -63,7 +63,8 @@ Template.rewardBountyView.rendered = function () {
         //truncate decimal past 2 for the amount
         amount = CB.Tools.Truncate(amount, 2);
         //for the percent truncate all decimals
-        var percent = CB.Tools.Truncate(amount / total * 100, 0);
+        var percent = (amount / total) * 100;
+        percent = CB.Tools.Truncate(percent, 0);
 
         row.find(".rewardInput").val(amount);
         row.find(".rewardPercent").val(percent);
