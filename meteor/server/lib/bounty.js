@@ -2,32 +2,24 @@
 
 CB.Bounty = (function () {
     var my = {};
-
     var url = NodeModules.require("url");
 
+    //the # days bounties expire after
+    my.ExpiresAfterDays = 90;
+
     /**
-     * A bounty can be rewarded if the user has not yet rewarded the bounty
-     * and at least one commit from a different user is referenced on the issue
-     * @param bounty The bounty
-     * @param callback (canReward) returns true if it is eligible, false if not
+     * if the bounty created date is older (<) this date, it is expired
+     * @returns {Date} the first date where bounties are expired
      */
-    my.CanReward = function (bounty, callback) {
-        if (!bounty)
-            CB.Error.Bounty.DoesNotExist();
-
-        if (bounty.reward) {
-            callback(false);
-            return;
-        }
-
-        CB.Bounty.Contributors(bounty, function (contributors) {
-            callback(contributors.length > 0);
-        });
+    my.ExpiredDate = function () {
+        var now = new Date();
+        var expiredDate = now.setDate(now.getDate() - my.ExpiresAfterDays);
+        expiredDate = new Date(expiredDate);
+        return expiredDate;
     };
 
-
-    //parses bounty data from the url
-    //callback passes an error or the bounty data
+    //parses bounty data from the url, and creates a bounty
+    //callback passes an error or the bounty
     var parse = function (amount, bountyUrl, callback) {
         if ((!_.isNumber(amount)) || _.isNaN(amount)) {
             callback("Need to specify an amount");
@@ -51,6 +43,7 @@ CB.Bounty = (function () {
         //TODO check repo exists with GitHub
 
         var bounty = {
+            created: new Date(),
             type: "github",
             amount: amount,
             url: bountyUrl,
@@ -100,7 +93,7 @@ CB.Bounty = (function () {
     };
 
     /**
-     * all authors of code references on the issue excluding the user
+     * all authors of code references on the bounty issue excluding the user
      * @param bounty to get the repo & issue to lookup contributors for
      * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
      */
