@@ -18,14 +18,34 @@ Meteor.methods({
         return fut.wait();
     },
 
-    //check if the bounty is eligible for rewarding by the current user
+    /**
+     * Check if there is a bounty eligible for rewarding by the current user at the current url.
+     * A bounty can be rewarded if:
+     * - the bounty is not expired
+     * - the user has not yet rewarded the bounty
+     * - someone has contributed a solution
+     * @param url
+     * @returns {Boolean}
+     */
     "canReward": function (url) {
+        //find if there is a bounty that is eligible for this url
+        //(approved, not expired, no reward, this user, not expired)
+        var bounty = Bounties.findOne({
+            url: url,
+            approved: true,
+            reward: null,
+            userId: this.userId,
+            created: {"$gt": CB.Bounty.ExpiredDate()}
+        });
+        if (!bounty) {
+            return false;
+        }
+
         var fut = new Future();
 
-        var bounty = Bounties.findOne({url: url, approved: true, reward: null, userId: this.userId});
-
-        CB.Bounty.CanReward(bounty, function (canReward) {
-            fut.return(canReward);
+        //check someone has contributed a solution
+        CB.Bounty.Contributors(bounty, function (contributors) {
+            fut.return(contributors.length > 0);
         });
 
         return fut.wait();
@@ -37,7 +57,6 @@ Meteor.methods({
         var fut = new Future();
 
         var bounty = Bounties.findOne({url: url, approved: true, reward: null});
-
         CB.Bounty.Contributors(bounty, function (contributors) {
             fut.return(contributors);
         });
@@ -49,7 +68,13 @@ Meteor.methods({
     //if currentUser is true, only return bounties from the current user
     //TODO should this method be restricted to the bounty owner?
     "openBounties": function (url, currentUser) {
-        var selector = {url: url, approved: true, reward: null};
+        var selector = {
+            url: url,
+            approved: true,
+            reward: null,
+            created: {"$gt": CB.Bounty.ExpiredDate()}
+        };
+
         if (currentUser)
             selector.userId = this.userId;
 
@@ -81,8 +106,6 @@ Meteor.methods({
         //TODO check that there is not a approved payment
         Bounties.remove({_id: id, userId: this.userId});
     },
-
-    //TODO open bounties
 
     //TODO move confirm bounty to an IPN method instead. will be more stable
     //after a bounty payment has been authorized
@@ -129,6 +152,8 @@ Meteor.methods({
         var fut = new Future();
 
         //get all the bounties with ids sent that the user has open on the issue
+        //note: not filtered by expiration date so if they are trying to reward a bounty and it expires during
+        //when they have the reward screen open it will still allow them to reward the bounty
         var bounties = Bounties.find({_id: {$in: ids}, approved: true, reward: null, userId: this.userId}).fetch();
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             CB.Error.Bounty.DoesNotExist();

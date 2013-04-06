@@ -14,29 +14,34 @@ Meteor.publish("totalReward", function (url) {
     var totalReward = 0;
     var initializing = true;
 
-    var handle = Bounties.find({url: url, approved: true, reward: null}).observe({
-        added: function (bounty) {
-            totalReward += parseFloat(bounty.amount);
+    var handle = Bounties.find({
+        url: url,
+        approved: true,
+        reward: null,
+        created: {"$gt": CB.Bounty.ExpiredDate()}
+    }).observe({
+            added: function (bounty) {
+                totalReward += parseFloat(bounty.amount);
 
-            if (!initializing) //need to wait until it is added
-                self.changed("totalReward", uuid, {amount: totalReward});
-        },
-        changed: function (newBounty, oldBounty) {
-            var oldBountyAmount = parseFloat(oldBounty.amount);
+                if (!initializing) //need to wait until it is added
+                    self.changed("totalReward", uuid, {amount: totalReward});
+            },
+            changed: function (newBounty, oldBounty) {
+                var oldBountyAmount = parseFloat(oldBounty.amount);
 
-            //if the new bounty now is rewarded, subtract it from the total (available) reward
-            if (newBounty.reward && !oldBounty.reward) {
-                totalReward -= oldBountyAmount.amount;
+                //if the new bounty now is rewarded, subtract it from the total (available) reward
+                if (newBounty.reward && !oldBounty.reward) {
+                    totalReward -= oldBountyAmount.amount;
+                    self.changed("totalReward", uuid, {amount: totalReward});
+                }
+            },
+            removed: function (bounty) {
+                totalReward -= parseFloat(bounty.amount);
+
                 self.changed("totalReward", uuid, {amount: totalReward});
             }
-        },
-        removed: function (bounty) {
-            totalReward -= parseFloat(bounty.amount);
-
-            self.changed("totalReward", uuid, {amount: totalReward});
-        }
-        // don't care about moved
-    });
+            // don't care about moved
+        });
 
     initializing = false;
 
