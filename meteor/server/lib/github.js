@@ -2,6 +2,9 @@
 CB.GitHub = (function () {
     var GitHubApi = NodeModules.require("github"), async = NodeModules.require("async");
 
+    //TODO cache api responses
+    //var events = new Meteor.Collection("events");
+
     function GitHub(user) {
         var githubApi = new GitHubApi({
             // required
@@ -11,8 +14,6 @@ CB.GitHub = (function () {
         });
 
         var accessToken = user.services.github.accessToken;
-        this._accessToken = accessToken;
-
         githubApi.authenticate({
             type: "oauth",
             token: accessToken
@@ -127,12 +128,13 @@ CB.GitHub = (function () {
                 number: issue,
                 body: comment
             }, function (err, res) {
-                //TODO error handling
-                console.log(err);
+                //TODO log error
+                if (err) {
+                    console.log(err);
+                }
             }
         );
     };
 
     return GitHub;
-})
-    ();
+})();

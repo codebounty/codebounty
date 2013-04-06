@@ -1,5 +1,6 @@
 //Contains all the server collections and publishes
 
+//stores all the bounties and their associated information
 Bounties = new Meteor.Collection("bounties");
 
 //TODO before publish: remove this
@@ -9,6 +10,8 @@ Meteor.publish("allUserData", function () {
 
 // publish the total reward for a bounty url
 Meteor.publish("totalReward", function (url) {
+    url = CB.Tools.StripHash(url);
+
     var self = this;
     var uuid = Meteor.uuid();
     var totalReward = 0;

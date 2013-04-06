@@ -18,5 +18,16 @@ CB.Tools = (function () {
         return parseFloat(accounting.toFixed(number, precision));
     };
 
+    //return the url without a trailing hash
+    my.StripHash = function (url) {
+        var index = url.indexOf('#');
+
+        if (index > 0) {
+            url = url.substring(0, index);
+        }
+
+        return url;
+    };
+
     return my;
 })();

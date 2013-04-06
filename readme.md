@@ -17,6 +17,13 @@ OS X / Linux / Ubuntu
 		cd meteor
 		sudo npm install
 		sudo mv node_modules public/node_modules
+		
+Until [this pull request](https://github.com/mikedeboer/node-github/pull/80) is merged, need to use [this fork](https://github.com/piascikj/node-github-1).
+
+		cd public/node_modules
+		rm -R github
+		git clone https://github.com/piascikj/node-github-1.git
+		mv node-github-1 github
 
 4. Start meteor project (this will also install meteorite packages) `sudo mrt --settings ~/src/codebounty/meteor/settings.json`**
 

@@ -112,7 +112,6 @@ CB.Bounty = (function () {
                     return commit.author;
                 });
 
-
                 callback(authors);
             }
         });
@@ -120,30 +119,33 @@ CB.Bounty = (function () {
 
     /**
      * Pay a bounty
-     * @param id to retrieve the bounty so the data is up-to-date
+     * @param bounty
      */
-    my.Pay = function (id) {
-        //for testing
-        //var bounty = id;
-
-        var bounty = Bounties.findOne({_id: id});
-
+    my.Pay = function (bounty) {
         var receiverList = _.map(bounty.reward.payout, function (payout) {
             var receiver = {email: payout.email, amount: payout.amount};
             return receiver;
         });
 
         CB.PayPal.Pay(bounty.preapprovalKey, receiverList, function (error, data) {
+            var update = {};
+
             if (error) {
+                update["reward.error"] = error;
+
                 //TODO if there was an error, log it
-                console.log("error");
-                console.log(error);
+                console.log("error", error);
             } else {
+                update["reward.paid"] = new Date();
+
                 console.log("Paid");
                 console.log(receiverList);
             }
-        });
 
+            Fiber(function () {
+                Bounties.update(bounty._id, {$set: update});
+            }).run();
+        });
     };
 
     /**
@@ -191,59 +193,58 @@ CB.Bounty = (function () {
             var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
             payout.push(codeBountyPayout);
 
-            //schedule the payment with cron
-
+            //TODO change 15 seconds back to 72 hours
+            //var seventyTwoHours = new Date(now.setDate(now.getDate() + 7));
             var now = new Date();
-//            var oneWeek = new Date(now.setDate(now.getDate() + 7));
             now.setSeconds(now.getSeconds() + 15);
-            var oneWeek = now;
+            var seventyTwoHours = now;
             _.each(bounties, function (bounty) {
                 var reward = {
                     updated: new Date(),
-                    planned: oneWeek,
+                    planned: seventyTwoHours,
                     payout: payout,
                     paid: null,
+                    started: null,
                     hold: false
                 };
 
                 bounty.reward = reward;
 
-                //for testing
-//                CB.Bounty.Pay(bounty);
-
                 Fiber(function () {
                     Bounties.update(bounty._id, {$set: {reward: reward}});
                 }).run();
-                CB.Bounty.SchedulePayment(bounty);
             });
 
-            //TODO write a comment on the issue "paid out"
+            //TODO write a comment on the issue planned contribution split
             callback();
         });
     };
 
+    //check every 10 seconds for bounties that should be paid
+    var processBountyPayments = function () {
+        //todo when we scale: move this to separate process
+        Meteor.setInterval(function () {
+            //all bounties ready to be paid out
+            var bountiesToPay = Bounties.find({
+                "reward.paid": null,
+                "reward.hold": false,
+                "reward.planned": {$lte: new Date()},
+                "reward.started": null
+            }, {
+                limit: 10
+            }).fetch();
 
-    /**
-     * Schedules payments to be made on reward planned date
-     * @param bounty
-     */
-    my.SchedulePayment = function (bounty) {
-        CB.Schedule.On(bounty.reward.planned, function () {
-            CB.Bounty.Pay(bounty._id);
-        });
+            bountiesToPay.forEach(function (bounty) {
+                console.log("about to pay", bounty, bounty.reward);
+                Bounties.update(bounty._id, {$set: {"reward.started": new Date()}});
+                CB.Bounty.Pay(bounty);
+            });
+        }, 10000);
     };
 
-    /**
-     * used by the scheduler whenever the server restarts to re-schedule payments
-     * for bounties that are planned to be rewarded, that have not been paid, and are not on hold
-     */
-    my.ReschedulePayments = function () {
-        var bounties = Bounties.find({"reward.planned": {$ne: null}, "reward.paid": null, "reward.hold": false}).fetch();
-
-        _.each(bounties, function (bounty) {
-            CB.Bounty.SchedulePayment(bounty);
-        });
-    };
+    Meteor.startup(function () {
+        processBountyPayments();
+    });
 
     return my;
 })();
