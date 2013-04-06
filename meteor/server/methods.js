@@ -28,6 +28,8 @@ Meteor.methods({
      * @returns {Boolean}
      */
     "canReward": function (url) {
+        url = CB.Tools.StripHash(url);
+
         //find if there is a bounty that is eligible for this url
         //(approved, not expired, no reward, this user, not expired)
         var bounty = Bounties.findOne({
@@ -37,6 +39,7 @@ Meteor.methods({
             userId: this.userId,
             created: {"$gt": CB.Bounty.ExpiredDate()}
         });
+
         if (!bounty) {
             return false;
         }
@@ -54,6 +57,8 @@ Meteor.methods({
     //contributors for the current url
     //TODO should this method be restricted to the bounty owner?
     "contributors": function (url) {
+        url = CB.Tools.StripHash(url);
+
         var fut = new Future();
 
         var bounty = Bounties.findOne({url: url, approved: true, reward: null});
@@ -68,6 +73,8 @@ Meteor.methods({
     //if currentUser is true, only return bounties from the current user
     //TODO should this method be restricted to the bounty owner?
     "openBounties": function (url, currentUser) {
+        url = CB.Tools.StripHash(url);
+
         var selector = {
             url: url,
             approved: true,
@@ -84,15 +91,22 @@ Meteor.methods({
 
     //region Bounty Paypal Methods
 
-    //return the paypal pre-approval url
-    "createBounty": function (amount, bountyUrl) {
+    /**
+     * Create a bounty and return it's paypal pre-approval url
+     * @param amount the bounty amount
+     * @param url the url to create a bounty for
+     * @returns {String}
+     */
+    "createBounty": function (amount, url) {
+        url = CB.Tools.StripHash(url);
+
         var fut = new Future();
 
         var userId = this.userId;
         if (!userId)
             CB.Error.NotAuthorized();
 
-        CB.Bounty.Create(userId, amount, bountyUrl, function (preapprovalUrl) {
+        CB.Bounty.Create(userId, amount, url, function (preapprovalUrl) {
             fut.ret(preapprovalUrl);
         });
 
