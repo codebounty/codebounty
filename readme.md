@@ -1,5 +1,6 @@
 # Getting Started
 
+###Setup Project
 
 OS X / Linux / Ubuntu
 
@@ -18,23 +19,23 @@ OS X / Linux / Ubuntu
 		sudo npm install
 		sudo mv node_modules public/node_modules
 		
-Until [this pull request](https://github.com/mikedeboer/node-github/pull/80) is merged, need to use [this fork](https://github.com/piascikj/node-github-1).
+	Until [this pull request](https://github.com/mikedeboer/node-github/pull/80) is merged, need to use [this fork](https://github.com/piascikj/node-github-1).
 
 		cd public/node_modules
 		rm -R github
 		git clone https://github.com/piascikj/node-github-1.git
 		mv node-github-1 github
 
-4. Start meteor project (this will also install meteorite packages) `sudo mrt --settings ~/src/codebounty/meteor/settings.json`**
-
-**Need absolute path until [this](https://github.com/oortcloud/meteorite/issues/85) issue gets fixed.
-
-5. Start the https web server for the github.js file in another terminal**  
-
-		cd codebounty/tools
-		node web-server.js
-
-6. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer.
+4. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer.
 
 	- #####OS X  
 	Open `https://localhost` in safari, choose certificate details, and select always trust this certificate, then reopen chrome and test it by visiting `https://localhost`.
+
+###Run Project
+
+1. Start meteor project (this will also install meteorite packages) `sudo mrt --settings settings.json`
+
+2. Start the https web server for the github.js file in another terminal**  
+
+		cd codebounty/tools
+		node web-server.js

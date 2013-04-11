@@ -1,5 +1,6 @@
-//TODO before publish: remove Bounties subscription, packages: autosubscribe and insecure
+//TODO before publish: remove Bounties / Responses subscription, packages: autosubscribe and insecure
 Bounties = new Meteor.Collection("bounties");
+Responses = new Meteor.Collection("responses");
 
 Meteor.subscribe("allUserData");
 
