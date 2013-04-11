@@ -2,8 +2,10 @@
 CB.GitHub = (function () {
     var GitHubApi = NodeModules.require("github"), async = NodeModules.require("async");
 
-    //TODO cache api responses
-    //var events = new Meteor.Collection("events");
+    //used to cache api responses
+    var Responses = new Meteor.Collection("responses");
+
+    //TODO every response, update # requests remaining
 
     function GitHub(user) {
         var githubApi = new GitHubApi({
@@ -38,18 +40,64 @@ CB.GitHub = (function () {
     };
 
     /**
+     * Loads the issue events with a conditional request
+     * TODO paging go through each page
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
      * @param {function} callback (error, result)
      */
     GitHub.prototype.GetIssueEvents = function (repo, issue, callback) {
-        this._client.issues.getEvents(
-            {
+        var responseSelector = {
+            request: "Issues.getEvents",
+            user: repo.user,
+            repo: repo.name,
+            number: issue
+        };
+
+        var cachedResponse = Responses.findOne(responseSelector);
+
+        //update the cached response then return it
+        var updateCacheCallback = function (error, res) {
+            if (error || !res) {
+                //TODO error logging / handling
+                return;
+            }
+
+            var etag = null;
+            if (res)
+                etag = res.meta.etag;
+
+            //cache the result if the etag changed or if there is no cachedResponse
+            if (!cachedResponse || etag !== cachedResponse.meta.etag) {
+                Fiber(function () {
+                    if (cachedResponse) {
+                        cachedResponse.data = res;
+                        Responses.update(cachedResponse._id, {$set: {meta: res.meta, data: res}});
+                    } else {
+                        cachedResponse = responseSelector;
+                        cachedResponse.meta = res.meta;
+                        cachedResponse.data = res;
+                        Responses.insert(cachedResponse);
+                    }
+                }).run();
+            }
+            //return it
+            callback(null, cachedResponse.data);
+        };
+
+        //if there is a cached response perform a conditional request
+        var headers = {};
+        if (cachedResponse) {
+            headers["If-None-Match"] = cachedResponse.meta.etag;
+        }
+
+        this._client.issues.getEvents({
                 user: repo.user,
                 repo: repo.name,
                 number: issue
             },
-            callback
+            updateCacheCallback,
+            headers
         );
     };
 
@@ -130,7 +178,7 @@ CB.GitHub = (function () {
             }, function (err, res) {
                 //TODO log error
                 if (err) {
-                    console.log(err);
+                    console.log("ERROR: Posting GitHub comment", err);
                 }
             }
         );

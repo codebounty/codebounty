@@ -133,13 +133,9 @@ CB.Bounty = (function () {
             if (error) {
                 update["reward.error"] = error;
 
-                //TODO if there was an error, log it
-                console.log("error", error);
+                console.log("ERROR: PayPal Payment", error);
             } else {
                 update["reward.paid"] = new Date();
-
-                console.log("Paid");
-                console.log(receiverList);
             }
 
             Fiber(function () {
@@ -235,7 +231,6 @@ CB.Bounty = (function () {
             }).fetch();
 
             bountiesToPay.forEach(function (bounty) {
-                console.log("about to pay", bounty, bounty.reward);
                 Bounties.update(bounty._id, {$set: {"reward.started": new Date()}});
                 CB.Bounty.Pay(bounty);
             });
