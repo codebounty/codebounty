@@ -9,7 +9,23 @@ CB.GitHub = (function () {
     var pageSize = 100;
     //FOR DEBUGGING var pageSize = 5;
 
-    //TODO every response, update # requests remaining
+    var requestsRemaining = 5000;
+    /**
+     * Log the # requests remaining
+     * FOR DEBUGGING
+     * @param res
+     * @param name
+     */
+    var updateRequestsRemaining = function (res, name) {
+        var before = requestsRemaining;
+        var after = requestsRemaining = res.meta["x-ratelimit-remaining"];
+        if (before - after > 0) {
+            console.log("counted", name, res.meta.etag, res.meta.status);
+            console.log("before", before, "after", requestsRemaining);
+        } else {
+            console.log("not counted", name, res.meta.etag, res.meta.status);
+        }
+    };
 
     function GitHub(user) {
         var githubApi = new GitHubApi({
@@ -19,7 +35,9 @@ CB.GitHub = (function () {
             timeout: 5000
         });
 
-        var accessToken = user.services.github.accessToken;
+        this._userGitHub = user.services.github;
+
+        var accessToken = this._userGitHub.accessToken;
         githubApi.authenticate({
             type: "oauth",
             token: accessToken
@@ -27,21 +45,6 @@ CB.GitHub = (function () {
 
         this._client = githubApi;
     }
-
-    //Check we have access to the user and repo scopes
-    GitHub.prototype.CheckAccess = function (callback) {
-        this._client.user.get({}, function (err, res) {
-            if (err) {
-                callback(false);
-                return;
-            }
-
-            var scopes = res.meta["x-oauth-scopes"].replace(" ", "").split(",");
-            var haveAccess = _.contains(scopes, "user") && _.contains(scopes, "repo");
-
-            callback(haveAccess);
-        });
-    };
 
     /**
      * Run a request then trigger the callback
@@ -54,27 +57,40 @@ CB.GitHub = (function () {
     GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
         //clone data to use for request options
         var requestOptions = JSON.parse(JSON.stringify(data));
-        requestOptions.page = page || 1;
+        if (page >= 1)
+            requestOptions.page = page;
         requestOptions.per_page = pageSize;
 
         //if there is a cached response perform a conditional request
         var headers = {};
-        if (etag) {
+        if (etag)
             headers["If-None-Match"] = etag;
-        }
 
         var requestFunction;
-
-        if (name === "Issues.getEvents") {
-            requestFunction = this._client.issues.getEvents;
-        } else if (name === "GitData.getCommit") {
-            requestFunction = this._client.gitdata.getCommit;
-        } else {
-            throw "Not a known request: " + request;
+        switch (name) {
+            case "User.get":
+                requestFunction = this._client.user.get;
+                break;
+            case "Issues.getEvents":
+                requestFunction = this._client.issues.getEvents;
+                break;
+            case "GitData.getCommit":
+                requestFunction = this._client.gitdata.getCommit;
+                break;
+            default:
+                throw "Not a known request: " + name;
         }
 
         //run the request
-        requestFunction(requestOptions, callback, headers);
+        requestFunction(requestOptions, function (err, res) {
+            if (err)
+                callback(err);
+            else {
+                updateRequestsRemaining(res, name);
+
+                callback(null, res);
+            }
+        }, headers);
     };
 
     /**
@@ -211,7 +227,9 @@ CB.GitHub = (function () {
      * @param data the request data (no config options like page #)
      *             used as a lookup in the cache for existing responses
      * @param paging if the request can return multiple results
-     * @param callback (error, result) called after completed. passed the result pages concatenated
+     * @param callback (error, resultData) called after completed.
+     * resultData has properties - data: merged page data, - meta: the last page's meta data
+     * and the last pages metadata
      */
     GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, callback) {
         var that = this;
@@ -282,9 +300,27 @@ CB.GitHub = (function () {
                     merged = pageData;
                 }
 
-                callback(null, merged);
+                var lastPage = _.last(cachedResponse.pages);
+                callback(null, {data: merged, meta: lastPage.meta});
             }
         );
+    };
+
+    //Check we have access to the user and repo scopes
+    GitHub.prototype.CheckAccess = function (callback) {
+        var that = this;
+        that._conditionalCrawlAndCache("User.get", {
+            user: that._userGitHub.username
+        }, false, function (error, result) {
+            if (error) {
+                callback(false);
+                return;
+            }
+
+            var scopes = result.meta["x-oauth-scopes"].replace(" ", "").split(",");
+            var haveAccess = _.contains(scopes, "user") && _.contains(scopes, "repo");
+            callback(haveAccess);
+        });
     };
 
     /**
@@ -327,6 +363,7 @@ CB.GitHub = (function () {
         var that = this;
 
         that.GetIssueEvents(repo, issue, function (error, result) {
+            var result = result.data;
             if (error) {
                 callback(error);
                 return;
@@ -356,6 +393,7 @@ CB.GitHub = (function () {
                     if (error)
                         commitLoaded(error);
                     else {
+                        var result = result.data;
                         commitData.push(result[0]);
                         commitLoaded();
                     }
