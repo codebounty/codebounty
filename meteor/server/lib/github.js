@@ -67,6 +67,8 @@ CB.GitHub = (function () {
 
         if (name === "Issues.getEvents") {
             requestFunction = this._client.issues.getEvents;
+        } else if (name === "GitData.getCommit") {
+            requestFunction = this._client.gitdata.getCommit;
         } else {
             throw "Not a known request: " + request;
         }
@@ -80,7 +82,7 @@ CB.GitHub = (function () {
      * @param cachedResponse
      * @param res
      */
-    var addPageResponse = function (cachedResponse, res) {
+    GitHub.prototype._addPageResponse = function (cachedResponse, res) {
         var pageResponse = {
             meta: res.meta
         };
@@ -118,7 +120,7 @@ CB.GitHub = (function () {
                     //FOR DEBUGGING
                     console.log("New to cache", "1", res.meta.etag);
 
-                    addPageResponse(cachedResponse, res);
+                    that._addPageResponse(cachedResponse, res);
                     callback(null, cachedResponse);
                 });
 
@@ -197,7 +199,7 @@ CB.GitHub = (function () {
                 }
 
                 //store the page and keep crawling
-                addPageResponse(cachedResponse, res);
+                that._addPageResponse(cachedResponse, res);
                 that._crawlToEnd(cachedResponse, callback);
             });
     };
@@ -208,9 +210,10 @@ CB.GitHub = (function () {
      * @param request the request name
      * @param data the request data (no config options like page #)
      *             used as a lookup in the cache for existing responses
+     * @param paging if the request can return multiple results
      * @param callback (error, result) called after completed. passed the result pages concatenated
      */
-    GitHub.prototype.ConditionalCrawlAndCache = function (request, data, callback) {
+    GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, callback) {
         var that = this;
         async.waterfall([
             //update the cache
@@ -220,7 +223,10 @@ CB.GitHub = (function () {
 
             //then crawl until the last page
             function (cachedResponse, cb) {
-                that._crawlToEnd(cachedResponse, cb);
+                if (paging)
+                    that._crawlToEnd(cachedResponse, cb);
+                else
+                    cb(null, cachedResponse);
             }],
 
             //then store the result and return it
@@ -264,12 +270,18 @@ CB.GitHub = (function () {
                 }).run();
 
                 //merge the pages before returning them
-
                 var pageData = _.map(cachedResponse.pages, function (page) {
                     return page.data;
                 });
 
-                var merged = _.flatten(pageData);
+                var merged;
+                //if each page's data is an array, flatten the arrays
+                if (_.isArray(pageData[0]))
+                    merged = _.flatten(pageData);
+                else {
+                    merged = pageData;
+                }
+
                 callback(null, merged);
             }
         );
@@ -277,28 +289,30 @@ CB.GitHub = (function () {
 
     /**
      * Loads the issue events with a conditional request
-     * TODO paging go through each page
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {Number} issue 7
-     * @param {function} callback (error, result)
+     * @param {function} callback (error, result) result is an array
      */
     GitHub.prototype.GetIssueEvents = function (repo, issue, callback) {
-        this.ConditionalCrawlAndCache("Issues.getEvents", {
+        this._conditionalCrawlAndCache("Issues.getEvents", {
             user: repo.user,
             repo: repo.name,
             number: issue
-        }, callback);
+        }, true, callback);
     };
 
+    /**
+     * Loads the commit with a conditional request
+     * @param repo {user: "jperl", name: "codebounty"}
+     * @param {string} sha
+     * @param {function} callback (error, result) result is an array with one item
+     */
     GitHub.prototype.GetCommit = function (repo, sha, callback) {
-        this._client.gitdata.getCommit(
-            {
-                user: repo.user,
-                repo: repo.name,
-                sha: sha
-            },
-            callback
-        );
+        this._conditionalCrawlAndCache("GitData.getCommit", {
+            user: repo.user,
+            repo: repo.name,
+            sha: sha
+        }, false, callback);
     };
 
     /**
@@ -342,8 +356,7 @@ CB.GitHub = (function () {
                     if (error)
                         commitLoaded(error);
                     else {
-                        commitData.push(result);
-
+                        commitData.push(result[0]);
                         commitLoaded();
                     }
                 });
