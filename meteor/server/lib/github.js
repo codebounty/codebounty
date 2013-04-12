@@ -5,6 +5,10 @@ CB.GitHub = (function () {
     //used to cache api responses
     var Responses = new Meteor.Collection("responses");
 
+    //max allowed http://developer.github.com/v3/#pagination
+    var pageSize = 100;
+    //FOR DEBUGGING var pageSize = 5;
+
     //TODO every response, update # requests remaining
 
     function GitHub(user) {
@@ -51,8 +55,7 @@ CB.GitHub = (function () {
         //clone data to use for request options
         var requestOptions = JSON.parse(JSON.stringify(data));
         requestOptions.page = page || 1;
-        //max allowed http://developer.github.com/v3/#pagination
-        requestOptions.per_page = 100;
+        requestOptions.per_page = pageSize;
 
         //if there is a cached response perform a conditional request
         var headers = {};
@@ -70,6 +73,20 @@ CB.GitHub = (function () {
 
         //run the request
         requestFunction(requestOptions, callback, headers);
+    };
+
+    /**
+     * Takes a standard response and adds it to the cachedResponse
+     * @param cachedResponse
+     * @param res
+     */
+    var addPageResponse = function (cachedResponse, res) {
+        var pageResponse = {
+            meta: res.meta
+        };
+        delete res.meta;
+        pageResponse.data = res;
+        cachedResponse.pages.push(pageResponse);
     };
 
     /**
@@ -93,32 +110,37 @@ CB.GitHub = (function () {
                 };
 
                 that._runRequest(request, data, null, 1, function (err, res) {
-                    var pageResponse = {
-                        meta: res.meta
-                    };
-                    delete res.meta;
-                    pageResponse.data = res;
-
-                    cachedResponse.pages.push(pageResponse);
-
-                    if (err)
+                    if (err) {
                         callback(err);
-                    else
-                        callback(null, cachedResponse);
+                        return;
+                    }
+
+                    //FOR DEBUGGING
+                    console.log("New to cache", "1", res.meta.etag);
+
+                    addPageResponse(cachedResponse, res);
+                    callback(null, cachedResponse);
                 });
+
                 return;
             }
 
             //if there is a cached response do a conditional request for each cached page
             async.each(cachedResponse.pages, function (pageResponse, pageChecked) {
                 var pageIndex = _.indexOf(cachedResponse.pages, pageResponse);
-                that._runRequest(request, data, pageResponse.meta.etag, pageIndex, function (err, res) {
+                that._runRequest(request, data, pageResponse.meta.etag, pageIndex + 1, function (err, res) {
                     if (!err) {
                         //if the page changed, update it
                         if (res.meta.etag !== pageResponse.meta.etag) {
+                            //FOR DEBUGGING
+                            console.log("Changed", pageIndex + 1, pageResponse.meta.etag, "to", res.meta.etag);
+
                             pageResponse.meta = res.meta;
                             delete res.meta;
                             pageResponse.data = res;
+                        } else {
+                            //FOR DEBUGGING
+                            console.log("Not changed", pageIndex + 1, res.meta.etag);
                         }
                     }
 
@@ -131,6 +153,53 @@ CB.GitHub = (function () {
                     callback(null, cachedResponse);
             });
         }).run();
+    };
+
+    /**
+     * Makes requests until it hits the last page.
+     * Also remove any pages with 0 results
+     * @param cachedResponse the cachedResponse to crawl to the end to. Starts at the last page.
+     * @param callback (error, result) returns the cachedResponse
+     */
+    GitHub.prototype._crawlToEnd = function (cachedResponse, callback) {
+        var that = this;
+
+        //only keep one page with 0 results
+        var zeroResultPages = _.filter(cachedResponse.pages,function (page) {
+            return page.data.length === 0;
+        }).length;
+        var lastPage = _.last(cachedResponse.pages);
+        while (zeroResultPages > 1 && lastPage.data.length === 0) {
+            cachedResponse.pages.pop();
+            zeroResultPages--;
+            lastPage = _.last(cachedResponse.pages);
+        }
+
+        var nextPage = lastPage.data.length === pageSize;
+        //done crawling so return
+        if (!nextPage) {
+            //FOR DEBUGGING
+            console.log("at end", cachedResponse.pages.length);
+
+            callback(null, cachedResponse);
+            return;
+        }
+
+        //FOR DEBUGGING
+        console.log("crawling after page", cachedResponse.pages.length);
+
+        //load next page
+        that._runRequest(cachedResponse.request, cachedResponse.data, null, cachedResponse.pages.length + 1,
+            function (err, res) {
+                if (err) {
+                    callback(err);
+                    return;
+                }
+
+                //store the page and keep crawling
+                addPageResponse(cachedResponse, res);
+                that._crawlToEnd(cachedResponse, callback);
+            });
     };
 
     /**
@@ -151,8 +220,7 @@ CB.GitHub = (function () {
 
             //then crawl until the last page
             function (cachedResponse, cb) {
-                //TODO
-                cb(null, cachedResponse);
+                that._crawlToEnd(cachedResponse, cb);
             }],
 
             //then store the result and return it
@@ -161,6 +229,28 @@ CB.GitHub = (function () {
                     console.log("ERROR: ConditionalCrawlAndCache", err, request, data);
                     return;
                 }
+
+                //FOR DEBUGGING
+                var pageIndex = 1;
+                _.each(cachedResponse.pages, function (page) {
+                    var pageDataCounter = {};
+                    if (cachedResponse.request === "Issues.getEvents") {
+                        pageDataCounter.closed = 0;
+                        pageDataCounter.reopened = 0;
+                    }
+                    _.each(page.data, function (data) {
+                        if (cachedResponse.request === "Issues.getEvents") {
+                            if (data.event === "closed")
+                                pageDataCounter.closed++;
+                            else if (data.event === "reopened")
+                                pageDataCounter.reopened++;
+                        }
+                    });
+
+                    console.log("page", pageIndex, _.pairs(pageDataCounter));
+                    pageIndex++;
+                });
+                //END
 
                 Fiber(function () {
                     //update cached response if it already exists
