@@ -141,14 +141,6 @@ var CODEBOUNTY = (function (undefined) {
     //endregion
 
     var ui = {
-        setupStyles: function () {
-            //Inject css
-            var link = document.createElement("link");
-            link.href = "https://localhost/meteor/public/codebounty.css";
-            link.type = "text/css";
-            link.rel = "stylesheet";
-            document.getElementsByTagName("head")[0].appendChild(link);
-        },
         setupOverlay: function () {
             var overlayDiv = "" +
                 "<div id='block'></div>" +
@@ -282,7 +274,6 @@ var CODEBOUNTY = (function (undefined) {
         },
 
         initialize: function () {
-            ui.setupStyles();
             ui.setupOverlay();
 
             ui.setupContainer();
