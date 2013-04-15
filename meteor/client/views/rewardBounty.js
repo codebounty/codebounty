@@ -37,19 +37,7 @@ Template.rewardBountyView.rendered = function () {
     var minimum = CB.Payout.Minimum();
     var numberContributors = contributors.length;
 
-    //TODO Also check for invalid inputs.
-    //Sets a hard limit on max/min values for amount.
-    var parseAmount = function (amount) {
-        if (!amount) return 0;
-        if (amount > total)
-            amount = total;
-        else if (amount < minimum)
-            amount = minimum;
-        return amount;
-    };
-
     var setAmount = function (row, amount) {
-        amount = parseAmount(amount);
         //Move the current amount to previousAmount
         row.data("previousAmount", row.data("currentAmount"));
         //Set the currentAmount.
@@ -64,9 +52,10 @@ Template.rewardBountyView.rendered = function () {
     var updateOtherSliders = function (rowToExclude) {
         var currentAmount = rowToExclude.data("currentAmount");
         var previousAmount = rowToExclude.data("previousAmount");
+        var enabledContributors = $(".contributorRow.enabled").length;
 
         //Update all rows aside from the one being modified directly.
-        $(".contributorRow").not(rowToExclude).each(function (index, row) {
+        $(".contributorRow.enabled").not(rowToExclude).each(function (index, row) {
             row = $(row);
 
             var changedAmount;
@@ -75,7 +64,7 @@ Template.rewardBountyView.rendered = function () {
                 changedAmount = delta * row.data("currentAmount");
             } else {
                 //When max reached.
-                changedAmount = (total - currentAmount) / (numberContributors - 1)
+                changedAmount = (total - currentAmount) / (enabledContributors - 1)
             }
 
             setAmount(row, changedAmount);
@@ -97,10 +86,8 @@ Template.rewardBountyView.rendered = function () {
         row.find(".rewardSlider").slider("option", "disabled", disabled);
         row.find(".rewardInput").prop("disabled", disabled);
         row.find(".rewardPercent").prop("disabled", disabled);
-        updateContributors();
-    };
 
-    var updateContributors = function () {
+        //Redistribute contributor amounts
         $(".contributorRow").each(function (index, row) {
             row = $(row);
             var amount = 0;
@@ -109,14 +96,9 @@ Template.rewardBountyView.rendered = function () {
             }
             setAmount(row, amount);
         });
-        updateCheckboxes();
-    };
 
-    var updateCheckboxes = function () {
+        //Update checkboxes
         var usersEnabled = $(".contributorRow.enabled").length;
-        console.log(usersEnabled);
-        console.log(minimum*(usersEnabled+1));
-        console.log(total);
         if((minimum*(usersEnabled+1))>total){
             $(".shouldPay").not(":checked").prop("disabled", true);
         }else{
