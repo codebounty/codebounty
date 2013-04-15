@@ -36,8 +36,6 @@ Template.rewardBountyView.rendered = function () {
     var total = getTotalBounty();
     var minimum = 0;//CB.Payout.Minimum();
     var numberContributors = contributors.length;
-    //initialize with an equal split
-    var equalSplit = total / numberContributors; //CB.Tools.Truncate(total / numberContributors, 2);
 
     //TODO Also check for invalid inputs.
     //Sets a hard limit on max/min values for amount.
@@ -58,9 +56,9 @@ Template.rewardBountyView.rendered = function () {
         row.data("currentAmount", amount);//CB.Tools.Truncate(amount, 2));
 
         var percent = (amount / total) * 100;
-        row.find(".rewardSlider").slider("value", percent);//CB.Tools.Truncate(percent, 2));
-        row.find(".rewardInput").val(amount);//CB.Tools.Truncate(amount, 2));
-        row.find(".rewardPercent").val(percent);//CB.Tools.Truncate(percent, 2));
+        row.find(".rewardSlider").slider("value", CB.Tools.Truncate(percent, 2));
+        row.find(".rewardInput").val(CB.Tools.Truncate(amount, 2));
+        row.find(".rewardPercent").val(CB.Tools.Truncate(percent, 2));
     };
 
     var updateOtherSliders = function (rowToExclude) {
@@ -84,13 +82,33 @@ Template.rewardBountyView.rendered = function () {
         });
     };
 
+    var updateContributors = function () {
+        $(".contributorRow").each(function (index, row) {
+            row = $(row);
+            var amount = 0;
+            if (row.hasClass("enabled")) {
+                amount = getEqualSplit()
+            }
+            setAmount(row, amount);
+        });
+    };
+
+    var getEqualSplit = function () {
+        var usersEnabled = $(".contributorRow.enabled").length;
+        var equalSplit = 0;
+        if (usersEnabled !== 0) {
+            equalSplit = total / usersEnabled;
+        }
+        return equalSplit;
+    };
+
     var toggleRow = function (row) {
         row.toggleClass("enabled");
         var disabled = !row.hasClass("enabled");
         row.find(".rewardSlider").slider("option", "disabled", disabled);
         row.find(".rewardInput").prop("disabled", disabled);
         row.find(".rewardPercent").prop("disabled", disabled);
-        //TODO Update row amounts
+        updateContributors();
     };
 
     $(".contributorRow").each(function (index, row) {
@@ -134,6 +152,8 @@ Template.rewardBountyView.rendered = function () {
         );
 
         //Set the row initially to an equal split
+        var equalSplit = getEqualSplit();
+
         setAmount(row, equalSplit);
     });
 };
