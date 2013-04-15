@@ -34,7 +34,7 @@ Template.rewardBountyView.minimum = CB.Payout.Minimum;
 Template.rewardBountyView.rendered = function () {
     var contributors = getContributors();
     var total = getTotalBounty();
-    var minimum = 0;//CB.Payout.Minimum();
+    var minimum = CB.Payout.Minimum();
     var numberContributors = contributors.length;
 
     //TODO Also check for invalid inputs.
@@ -82,17 +82,6 @@ Template.rewardBountyView.rendered = function () {
         });
     };
 
-    var updateContributors = function () {
-        $(".contributorRow").each(function (index, row) {
-            row = $(row);
-            var amount = 0;
-            if (row.hasClass("enabled")) {
-                amount = getEqualSplit()
-            }
-            setAmount(row, amount);
-        });
-    };
-
     var getEqualSplit = function () {
         var usersEnabled = $(".contributorRow.enabled").length;
         var equalSplit = 0;
@@ -109,6 +98,30 @@ Template.rewardBountyView.rendered = function () {
         row.find(".rewardInput").prop("disabled", disabled);
         row.find(".rewardPercent").prop("disabled", disabled);
         updateContributors();
+    };
+
+    var updateContributors = function () {
+        $(".contributorRow").each(function (index, row) {
+            row = $(row);
+            var amount = 0;
+            if (row.hasClass("enabled")) {
+                amount = getEqualSplit()
+            }
+            setAmount(row, amount);
+        });
+        updateCheckboxes();
+    };
+
+    var updateCheckboxes = function () {
+        var usersEnabled = $(".contributorRow.enabled").length;
+        console.log(usersEnabled);
+        console.log(minimum*(usersEnabled+1));
+        console.log(total);
+        if((minimum*(usersEnabled+1))>total){
+            $(".shouldPay").not(":checked").prop("disabled", true);
+        }else{
+            $(".shouldPay").prop("disabled", false);
+        }
     };
 
     $(".contributorRow").each(function (index, row) {
