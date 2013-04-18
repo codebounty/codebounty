@@ -7,26 +7,29 @@ CB.GitHub = (function () {
 
     //max allowed http://developer.github.com/v3/#pagination
     var pageSize = 100;
-    //FOR DEBUGGING var pageSize = 5;
 
     var requestsRemaining = 5000;
     /**
      * Log the # requests remaining
-     * FOR DEBUGGING
      * @param res
      * @param name
      */
     var updateRequestsRemaining = function (res, name) {
         var before = requestsRemaining;
         var after = requestsRemaining = res.meta["x-ratelimit-remaining"];
-        if (before - after > 0) {
-            console.log("counted", name, res.meta.etag, res.meta.status);
-            console.log("before", before, "after", requestsRemaining);
-        } else {
-            console.log("not counted", name, res.meta.etag, res.meta.status);
-        }
+        if (before - after > 0) //{
+//          console.log("counted", name, res.meta.etag, res.meta.status);
+            console.log("remaining", requestsRemaining);
+//        } else {
+//            console.log("not counted", name, res.meta.etag, res.meta.status);
+//        }
     };
 
+    /**
+     * Need to pass either the user so we can always make (authenticated) github requests
+     * @param user
+     * @constructor
+     */
     function GitHub(user) {
         var githubApi = new GitHubApi({
             // required
@@ -35,13 +38,19 @@ CB.GitHub = (function () {
             timeout: 5000
         });
 
-        this._userGitHub = user.services.github;
+        if (user) {
+            this._userGitHub = user.services.github;
 
-        var accessToken = this._userGitHub.accessToken;
-        githubApi.authenticate({
-            type: "oauth",
-            token: accessToken
-        });
+            var accessToken = this._userGitHub.accessToken;
+            githubApi.authenticate({
+                type: "oauth",
+                token: accessToken
+            });
+        }
+        //we don't want unauthenticated api calls for now since they are extremely limited
+        else {
+            throw "No unauthenticated github clients allowed";
+        }
 
         this._client = githubApi;
     }
@@ -133,9 +142,6 @@ CB.GitHub = (function () {
                         return;
                     }
 
-                    //FOR DEBUGGING
-                    console.log("New to cache", "1", res.meta.etag);
-
                     that._addPageResponse(cachedResponse, res);
                     callback(null, cachedResponse);
                 });
@@ -150,15 +156,9 @@ CB.GitHub = (function () {
                     if (!err) {
                         //if the page changed, update it
                         if (res.meta.etag !== pageResponse.meta.etag) {
-                            //FOR DEBUGGING
-                            console.log("Changed", pageIndex + 1, pageResponse.meta.etag, "to", res.meta.etag);
-
                             pageResponse.meta = res.meta;
                             delete res.meta;
                             pageResponse.data = res;
-                        } else {
-                            //FOR DEBUGGING
-                            console.log("Not changed", pageIndex + 1, res.meta.etag);
                         }
                     }
 
@@ -196,15 +196,9 @@ CB.GitHub = (function () {
         var nextPage = lastPage.data.length === pageSize;
         //done crawling so return
         if (!nextPage) {
-            //FOR DEBUGGING
-            console.log("at end", cachedResponse.pages.length);
-
             callback(null, cachedResponse);
             return;
         }
-
-        //FOR DEBUGGING
-        console.log("crawling after page", cachedResponse.pages.length);
 
         //load next page
         that._runRequest(cachedResponse.request, cachedResponse.data, null, cachedResponse.pages.length + 1,
@@ -227,7 +221,7 @@ CB.GitHub = (function () {
      * @param data the request data (no config options like page #)
      *             used as a lookup in the cache for existing responses
      * @param paging if the request can return multiple results
-     * @param callback (error, resultData) called after completed.
+     * @param [callback] (error, resultData) called after completed.
      * resultData has properties - data: merged page data, - meta: the last page's meta data
      * and the last pages metadata
      */
@@ -251,30 +245,10 @@ CB.GitHub = (function () {
             function (err, cachedResponse) {
                 if (err) {
                     console.log("ERROR: ConditionalCrawlAndCache", err, request, data);
+                    if (callback)
+                        callback(err);
                     return;
                 }
-
-                //FOR DEBUGGING
-                var pageIndex = 1;
-                _.each(cachedResponse.pages, function (page) {
-                    var pageDataCounter = {};
-                    if (cachedResponse.request === "Issues.getEvents") {
-                        pageDataCounter.closed = 0;
-                        pageDataCounter.reopened = 0;
-                    }
-                    _.each(page.data, function (data) {
-                        if (cachedResponse.request === "Issues.getEvents") {
-                            if (data.event === "closed")
-                                pageDataCounter.closed++;
-                            else if (data.event === "reopened")
-                                pageDataCounter.reopened++;
-                        }
-                    });
-
-                    console.log("page", pageIndex, _.pairs(pageDataCounter));
-                    pageIndex++;
-                });
-                //END
 
                 Fiber(function () {
                     //update cached response if it already exists
@@ -301,7 +275,8 @@ CB.GitHub = (function () {
                 }
 
                 var lastPage = _.last(cachedResponse.pages);
-                callback(null, {data: merged, meta: lastPage.meta});
+                if (callback)
+                    callback(null, {data: merged, meta: lastPage.meta});
             }
         );
     };
@@ -325,23 +300,30 @@ CB.GitHub = (function () {
 
     /**
      * Loads the issue events with a conditional request
-     * @param repo {user: "jperl", name: "codebounty"}
-     * @param {Number} issue 7
-     * @param {function} callback (error, result) result is an array
+     * @param bounty
+     * @param {function} [callback] (error, result) result is an array
      */
-    GitHub.prototype.GetIssueEvents = function (repo, issue, callback) {
-        this._conditionalCrawlAndCache("Issues.getEvents", {
-            user: repo.user,
-            repo: repo.name,
-            number: issue
-        }, true, callback);
+    GitHub.prototype.GetIssueEvents = function (bounty, callback) {
+        var that = this;
+        that._conditionalCrawlAndCache("Issues.getEvents", {
+            user: bounty.repo.user,
+            repo: bounty.repo.name,
+            number: bounty.issue
+        }, true, function (error, result) {
+            _.each(_getIssueEventsCallbacks, function (cb) {
+                cb(that, bounty, error, result);
+            });
+
+            if (callback)
+                callback(error, result);
+        });
     };
 
     /**
      * Loads the commit with a conditional request
      * @param repo {user: "jperl", name: "codebounty"}
      * @param {string} sha
-     * @param {function} callback (error, result) result is an array with one item
+     * @param {function} [callback] (error, result) result is an array with one item
      */
     GitHub.prototype.GetCommit = function (repo, sha, callback) {
         this._conditionalCrawlAndCache("GitData.getCommit", {
@@ -354,15 +336,14 @@ CB.GitHub = (function () {
     /**
      * Get all the commit data from  "contributors" (users with associated commits) for an issue
      * TODO and exclude the current user
-     * NOTE: The commit or pull request must have a comment referencing the issue
-     * @param repo {user: "jperl", name: "codebounty"}
-     * @param {Number} issue 7
+     * NOTE: The commit or pull request must have a comment referencing the issue to count as a contributor
+     * @param bounty
      * @param {function} callback (error, result)
      */
-    GitHub.prototype.GetContributorsCommits = function (repo, issue, callback) {
+    GitHub.prototype.GetContributorsCommits = function (bounty, callback) {
         var that = this;
 
-        that.GetIssueEvents(repo, issue, function (error, result) {
+        that.GetIssueEvents(bounty, function (error, result) {
             var result = result.data;
             if (error) {
                 callback(error);
@@ -388,8 +369,7 @@ CB.GitHub = (function () {
             };
 
             async.each(referencedCommits, function (sha, commitLoaded) {
-
-                that.GetCommit(repo, sha, function (error, result) {
+                that.GetCommit(bounty.repo, sha, function (error, result) {
                     if (error)
                         commitLoaded(error);
                     else {
@@ -398,22 +378,20 @@ CB.GitHub = (function () {
                         commitLoaded();
                     }
                 });
-
             }, commitsLoaded);
         });
     };
 
     /**
-     * @param repo {user: "jperl", name: "codebounty"}
-     * @param {Number} issue 7
+     * @param bounty
      * @param {String} comment "Interesting issue!"
      */
-    GitHub.prototype.PostComment = function (repo, issue, comment) {
+    GitHub.prototype.PostComment = function (bounty, comment) {
         this._client.issues.createComment(
             {
-                user: repo.user,
-                repo: repo.name,
-                number: issue,
+                user: bounty.repo.user,
+                repo: bounty.repo.name,
+                number: bounty.issue,
                 body: comment
             }, function (err, res) {
                 //TODO log error
@@ -422,6 +400,15 @@ CB.GitHub = (function () {
                 }
             }
         );
+    };
+
+    var _getIssueEventsCallbacks = [];
+    /**
+     * Add an additional callback to GetIssueEvents
+     * @param callback (thisGitHubInstance, bounty, error, result)
+     */
+    GitHub.onGetIssueEvents = function (callback) {
+        _getIssueEventsCallbacks.push(callback);
     };
 
     return GitHub;

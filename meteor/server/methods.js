@@ -35,7 +35,7 @@ Meteor.methods({
         var bounty = Bounties.findOne({
             url: url,
             approved: true,
-            reward: null,
+            reward: null, //TODO or !paid && !user initiated
             userId: this.userId,
             created: {"$gt": CB.Bounty.ExpiredDate()}
         });
@@ -47,7 +47,7 @@ Meteor.methods({
         var fut = new Future();
 
         //check someone has contributed a solution
-        CB.Bounty.Contributors(bounty, function (contributors) {
+        CB.Bounty.Contributors(null, bounty, function (contributors) {
             fut.return(contributors.length > 0);
         });
 
@@ -62,7 +62,11 @@ Meteor.methods({
         var fut = new Future();
 
         var bounty = Bounties.findOne({url: url, approved: true, reward: null});
-        CB.Bounty.Contributors(bounty, function (contributors) {
+        CB.Bounty.Contributors(null, bounty, function (contributors) {
+            contributors = _.uniq(contributors, false, function (contributor) {
+                return contributor.email;
+            });
+
             fut.return(contributors);
         });
 
@@ -148,7 +152,7 @@ Meteor.methods({
             var commentBody = "I just added a " + bounty.desc +
                 ". [Download](http://codebounty.co/extension) the codebounty code extension to add your bounties.";
 
-            gitHub.PostComment(bounty.repo, bounty.issue, commentBody);
+            gitHub.PostComment(bounty, commentBody);
 
             fut.ret(true);
         });
@@ -172,7 +176,7 @@ Meteor.methods({
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             CB.Error.Bounty.DoesNotExist();
 
-        CB.Bounty.InitiatePayout(bounties, payout, function () {
+        CB.Bounty.InitiatePayout(bounties, payout, this.userId, function () {
             fut.ret(true);
         });
 
