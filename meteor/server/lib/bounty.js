@@ -94,16 +94,16 @@ CB.Bounty = (function () {
 
     /**
      * all authors of code references on the bounty issue excluding the user
+     * @param [gitHubInstance] If not passed, will create one with the current user
      * @param bounty to get the repo & issue to lookup contributors for
      * @param callback (authors) Ex. [{name: "Jonathan Perl", email: "perl.jonathan@gmail.com", date: '2013-03-17T00:27:42Z'}, ..]
      */
-    my.Contributors = function (bounty, callback) {
+    my.Contributors = function (gitHubInstance, bounty, callback) {
         if (!bounty)
             CB.Error.Bounty.DoesNotExist();
 
-        var gitHub = new CB.GitHub(Meteor.user());
-
-        gitHub.GetContributorsCommits(bounty.repo, bounty.issue, function (error, result) {
+        var gitHub = gitHubInstance || new CB.GitHub(Meteor.user());
+        gitHub.GetContributorsCommits(bounty, function (error, result) {
             if (error)
                 throw error;
 
@@ -136,6 +136,8 @@ CB.Bounty = (function () {
                 console.log("ERROR: PayPal Payment", error);
             } else {
                 update["reward.paid"] = new Date();
+
+                console.log("Paid", bounty);
             }
 
             Fiber(function () {
@@ -147,13 +149,15 @@ CB.Bounty = (function () {
     /**
      * Set the payout amounts when a backer rewards a bounty
      * post a comment on the issue with the payout amounts
-     * and after one week if no one disputes, the bounty will automatically be paid out with this amount
+     * and after 72 hours if no one disputes, the bounty will automatically be paid out with this amount
+     * @param [gitHubInstance] If not passed, will create one with the current user
      * @param bounties the bounties to payout
      * @param {Array.<{email, amount}>} payout [{email: "perl.jonathan@gmail.com", amount: 50}, ..] and their payouts
+     * @param by Who the reward was initiated by (the backer userId, "system", future: "moderator")
      * @param callback Called if there is no error
      * Ex. {"email": amount, "perl.jonathan@gmail.com": 51.50 }
      */
-    my.InitiatePayout = function (bounties, payout, callback) {
+    my.InitiatePayout = function (gitHubInstance, bounties, payout, by, callback) {
         var totalUserPayout = 0;
         //remove any extra decimals on the user payouts
         _.each(payout, function (userPayout) {
@@ -165,7 +169,7 @@ CB.Bounty = (function () {
 
         //confirm the payout amount is only to users who have contributed
         //all the bounties on the issue will have the same contributors, so lookup the first bounty's contributors
-        CB.Bounty.Contributors(bounties[0], function (contributors) {
+        CB.Bounty.Contributors(gitHubInstance, bounties[0], function (contributors) {
             var assignedPayouts = _.pluck(payout, "email");
 
             //make sure every user that has contributed code has been assigned a bounty (even if it is 0)
@@ -189,16 +193,30 @@ CB.Bounty = (function () {
             var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
             payout.push(codeBountyPayout);
 
-            //TODO change 15 seconds back to 72 hours
-            //var seventyTwoHours = new Date(now.setDate(now.getDate() + 7));
-            var now = new Date();
-            now.setSeconds(now.getSeconds() + 15);
-            var seventyTwoHours = now;
+            //TODO change 72 hours back from 1 minute
+            //var seventyTwoHours = CB.Tools.AddMinutes(60 * 72);
+            var seventyTwoHours = CB.Tools.AddMinutes(1);
+
+            var bountyIds = _.pluck(bounties, "_id").join(",");
+
+            console.log("Initiating payout for", bountyIds, "total", payout);
+
+            var payoutDistribution = CB.Payout.Distribute(bounties, payout);
+            var payoutIndex = 0;
+
+            //payout group id (for the aggregated comment)
+            var groupId = new Meteor.Collection.ObjectID();
+
+            //used for grouping
             _.each(bounties, function (bounty) {
+                var payout = payoutDistribution[payoutIndex];
+
                 var reward = {
+                    by: by,
                     updated: new Date(),
                     planned: seventyTwoHours,
                     payout: payout,
+                    group: groupId,
                     paid: null,
                     started: null,
                     hold: false
@@ -206,19 +224,39 @@ CB.Bounty = (function () {
 
                 bounty.reward = reward;
 
+                console.log("split for", bounty._id, "is", payout);
+
+                //after the reward is planned it will automatically be scheduled for payout in processBountyPayments
                 Fiber(function () {
                     Bounties.update(bounty._id, {$set: {reward: reward}});
                 }).run();
+
+                payoutIndex++;
             });
 
-            //TODO write a comment on the issue planned contribution split
+            //TODO comment on the issue w planned contribution split
             callback();
         });
     };
 
-    //check every 10 seconds for bounties that should be paid
+    /**
+     * Cancel a payout because an issue got reopened before the hold period was over
+     */
+    my.CancelPayout = function (bounties, callback) {
+        _.each(bounties, function (bounty) {
+            Bounties.update(bounty._id, {$set: {reward: null}});
+        });
+
+        if (callback)
+            callback();
+    };
+
+    /**
+     * check every 10 seconds for bounties that should be paid
+     * note: limited at 60 payments/minute (6/minute * 10/time)
+     * todo scalability: move this to separate process
+     */
     var processBountyPayments = function () {
-        //todo when we scale: move this to separate process
         Meteor.setInterval(function () {
             //all bounties ready to be paid out
             var bountiesToPay = Bounties.find({
@@ -237,8 +275,192 @@ CB.Bounty = (function () {
         }, 10000);
     };
 
+    //check if the status changed on any related bounties (whenever GitHub.GetIssueEvents is called)
+    //only check bounties that have not been paid, and have not been rewarded by the user
+    //then if the status changed to
+    // - closed: initiate the payout
+    // - reopened: cancel the payout (this will only happen during the hold period)
+    var watchStatusToInitiateOrCancelPayout = function () {
+        CB.GitHub.onGetIssueEvents(function (gitHubInstance, bounty, error, result) {
+            if (error)
+                return;
+
+            //find the last closed or reopened event
+            var last = _.last(_.filter(result.data, function (item) {
+                return item.event === "closed" || item.event === "reopened";
+            }));
+            if (!last || (last.event !== "closed" && last.event !== "reopened"))
+                return;
+
+            Fiber(function () {
+                //find all bounties that should be updated for the issue
+                var bounties = Bounties.find({
+                    approved: true,
+                    repo: bounty.repo,
+                    issue: bounty.issue,
+                    $and: [
+                        //the bounty is not paid
+                        {$or: [
+                            { reward: null },
+                            { "reward.paid": null }
+                        ]},
+                        //the system rewarded the bounty (not the backer)
+                        {$or: [
+                            {reward: null},
+                            {"reward.by": "system" }
+                        ]}
+                    ]
+                }).fetch();
+
+                if (bounties.length <= 0)
+                    return;
+
+                var changedBounties = [];
+
+                //update each bounty's status
+                //(also prevents infinite loop)
+                _.each(bounties, function (bounty) {
+                    if (!bounty.status || bounty.status.event !== last.event) {
+                        changedBounties.push(bounty);
+                        console.log("Bounty", bounty._id, "status changed to", last.event);
+                    }
+
+                    bounty.status = last.event;
+                    Bounties.update({_id: bounty._id}, {
+                        $set: {
+                            status: {
+                                updated: new Date(),
+                                event: last.event
+                            }
+                        }
+                    });
+                });
+
+                //only deal with bounties whose status has changed
+                bounties = changedBounties;
+                if (bounties.length <= 0)
+                    return;
+
+                var bountyIds = _.pluck(bounties, "_id").join(",");
+
+                //if the issue's status is closed: initiate an equal payout
+                if (last.event === "closed") {
+                    console.log("initiate payout", bounties);
+
+                    CB.Bounty.Contributors(gitHubInstance, bounties[0], function (contributors) {
+                        //if there are no contributors, do nothing
+                        if (contributors.length <= 0) {
+                            //TODO post comment or send email, there were no contributors when the issue was closed
+                            //please reopen the issue and associate code, to reward the bounty
+                            return;
+                        }
+
+                        //TODO remove the bounty backers?
+                        //split the total bounty amount
+                        contributors = _.uniq(contributors, false, function (contributor) {
+                            return contributor.email;
+                        });
+
+                        var total = CB.Payout.Sum(bounties);
+                        total -= CB.Payout.Fee(total);
+
+                        var split = total / contributors.length;
+
+                        //[{email: "perl.jonathan@gmail.com", amount: 50}, ..]
+                        var payout = [];
+
+                        //if the minimum is greater than the equal split
+                        //split the minimum it among as many as possible (based on who committed first)
+                        //TODO: think more on this?
+                        var minimum = CB.Payout.Minimum();
+                        if (split < minimum) {
+                            var numberContributorsToPayout = CB.Tools.Truncate(total / minimum);
+                            split = total / numberContributorsToPayout;
+                            split = CB.Tools.Truncate(split, 2);
+                            for (var i = 0; i < numberContributorsToPayout; i++) {
+                                payout.push({email: contributors[i].email, amount: split});
+                            }
+                        } else {
+                            split = CB.Tools.Truncate(split, 2);
+                            for (var j = 0; j < contributors.length; j++) {
+                                payout.push({email: contributors[j].email, amount: split});
+                            }
+                        }
+
+                        console.log("System initiated payout", bountyIds, payout);
+                        CB.Bounty.InitiatePayout(gitHubInstance, bounties, payout, "system", function () {
+                            //TODO do something?
+                        });
+                    });
+                }
+                //if the issue's status is reopened: cancel the payout
+                else if (last.event === "reopened") {
+                    CB.Bounty.CancelPayout(bounties, function () {
+                        console.log("payout cancelled, issue reopened", bountyIds);
+                    });
+                }
+            }).run();
+        });
+    };
+
+    /**
+     * check every 10 seconds for bounty's who's status should be updated
+     * note: limited at 300 updates/minute (6/minute * 50/time)
+     * todo scalability: move this to separate process
+     */
+    var updateBountyStatuses = function () {
+        Meteor.setInterval(function () {
+            var bountiesToUpdate = Bounties.find({
+                $and: [
+                    //the bounty is not paid
+                    {$or: [
+                        { reward: null },
+                        { "reward.paid": null }
+                    ]},
+                    //the system rewarded the bounty (not the backer)
+                    {$or: [
+                        {reward: null},
+                        {"reward.by": "system" }
+                    ]}
+                ],
+                //status has not been updated within the past 10 minutes
+                $or: [
+                    { status: null },
+                    { "status.updated": null },
+                    { "status.updated": { $lte: CB.Tools.AddMinutes(-10) }}
+                ]
+            }, {
+                limit: 50
+            }).fetch();
+
+            //only update one bounty for each unique issue
+            var uniqueIssueBounties = [];
+            _.each(bountiesToUpdate, function (bounty) {
+                var unique = !_.some(uniqueIssueBounties, function (uBounty) {
+                    return _.isEqual(uBounty.repo, bounty.repo) && _.isEqual(uBounty.issue, bounty.issue);
+                });
+
+                if (unique)
+                    uniqueIssueBounties.push(bounty);
+            });
+
+            //update the status by loading the issue events for the bounty
+            //whenever GetIssueEvents is called watchIssueEvents (above) will auto-update the statuses
+            uniqueIssueBounties.forEach(function (bounty) {
+                //use the backer's key to check the issue status
+                //TODO what happens if there are problems checking the status because the backer revoked access?
+                var bountyBacker = Meteor.users.findOne(bounty.userId);
+                var gitHub = new CB.GitHub(bountyBacker);
+                gitHub.GetIssueEvents(bounty);
+            });
+        }, 5000);
+    };
+
     Meteor.startup(function () {
         processBountyPayments();
+
+        watchStatusToInitiateOrCancelPayout();
+        updateBountyStatuses();
     });
 
     return my;

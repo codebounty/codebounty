@@ -61,8 +61,12 @@ CB.Payout = (function () {
         var totalBounty = my.Sum(bounties);
 
         _.each(payout, function (userPayout) {
-            if (userPayout.amount * 100 % 1 != 0)
+            //do this via string to prevent
+            var precision = CB.Tools.Precision(userPayout.amount);
+            if (precision > 2) {
+                console.log("my prob", precision);
                 CB.Error.Bounty.Reward.GreaterTwoDecimals();
+            }
 
             if (!(userPayout.amount === 0 || userPayout.amount >= my.Minimum()))
                 CB.Error.Bounty.Reward.NotZeroOrFive();
@@ -75,6 +79,58 @@ CB.Payout = (function () {
         if (totalBounty !== (totalPayout + fee))
             CB.Error.Bounty.Reward.NotEqual("payout ($" + totalPayout + ") + fee ($" + fee +
                 ") !== bounty ($" + totalBounty + ")");
+    };
+
+    //distribute the payouts among each bounty
+    my.Distribute = function (bounties, payout) {
+        var bountyPayoutsDistribution = [];
+
+        //clone the payout to manipulate in distribution logic below
+        var payoutToDistribute = EJSON.clone(payout);
+
+        //move through each payout to distribute, bounty by bounty
+        var currentPayoutToDistribute = payoutToDistribute.shift();
+        _.each(bounties, function (bounty) {
+            //the current bounty's payout to build
+            var bountyPayout = [],
+            //keeps track of how much is remaining on the current bounty
+                bountyAmountRemaining = bounty.amount;
+
+            while (bountyAmountRemaining > 0 && currentPayoutToDistribute !== null) {
+                var payoutForBounty = {
+                    email: currentPayoutToDistribute.email
+                };
+
+                //distribute part of the payout, if the bounty < bountyPayout
+                if (bountyAmountRemaining < currentPayoutToDistribute.amount) {
+                    payoutForBounty.amount = bountyAmountRemaining;
+
+                    //update how much still needs to be paid
+                    currentPayoutToDistribute.amount -= payoutForBounty.amount;
+                }
+                //distribute the rest of the payout, since the bounty > the bountyPayout
+                else {
+                    //distribute the entire amount
+                    payoutForBounty.amount = currentPayoutToDistribute.amount;
+
+                    //since it is distributed, remove it from the payout and
+                    //move to the next payout to distribute
+                    currentPayoutToDistribute = payoutToDistribute.shift();
+                }
+
+                //reduce the amount left on this bounty
+                bountyAmountRemaining -= payoutForBounty.amount;
+
+                if (bountyAmountRemaining < 0)
+                    throw "Problem with distributing bounty";
+
+                bountyPayout.push(payoutForBounty);
+            }
+
+            bountyPayoutsDistribution.push(bountyPayout);
+        });
+
+        return bountyPayoutsDistribution;
     };
 
     return my;

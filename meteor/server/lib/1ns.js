@@ -1,3 +1,3 @@
-//runs first because it is deepest directory and alphabetical
+//runs first because it is the deepest directory and alphabetical
 //root namespace
 var CB = {};

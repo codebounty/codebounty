@@ -3,9 +3,18 @@ var CB = CB || {};
 CB.Tools = (function () {
     var my = {};
 
+    /**
+     * Truncate to a precision
+     * @param number
+     * @param [precision] defaults to 0
+     */
     my.Truncate = function (number, precision) {
         var numS = number.toString(),
             decPos = numS.indexOf('.');
+
+        if (precision === null) {
+            precision = 0;
+        }
 
         var result = number;
         if (decPos > 0)
@@ -16,6 +25,26 @@ CB.Tools = (function () {
 
     my.Round = function (number, precision) {
         return parseFloat(accounting.toFixed(number, precision));
+    };
+
+    //return how many decimals are in a number
+    my.Precision = function (number) {
+        var numberString = number.toString();
+        //convert to string to prevent issues w javascript's messed up numbers
+        var decimalIndex = numberString.indexOf(".");
+
+        if (decimalIndex === -1)
+            return 0;
+
+        return numberString.length - decimalIndex - 1;
+    };
+
+    /**
+     * Add / subtract minutes from now
+     * @param minutes Can be negative
+     */
+    my.AddMinutes = function (minutes) {
+        return new Date(new Date().getTime() + minutes * 60000);
     };
 
     //return the url without a trailing hash
