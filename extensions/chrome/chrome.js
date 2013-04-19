@@ -4,6 +4,7 @@ function checkForValidUrl(tabId, changeInfo, tab) {
     if (tab.url.indexOf("github.com/jperl/codebounty/issues/") > -1) {
         // ... show the page action.
         chrome.pageAction.show(tabId);
+//        chrome.tabs.insertCSS(tabId, {file: "https://localhost/meteor/public/codebounty.css"});
     }
 }
 
