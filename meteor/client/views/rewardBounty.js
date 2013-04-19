@@ -28,52 +28,65 @@ Template.rewardBountyView.totalBounty = getTotalBounty;
 
 Template.rewardBountyView.minimum = CB.Payout.Minimum;
 
-//TODO if the total bounty can pay each person the minimum, check everyone
-//otherwise check no one
-
 Template.rewardBountyView.rendered = function () {
-    var contributors = getContributors();
     var total = getTotalBounty();
     var minimum = CB.Payout.Minimum();
-    var numberContributors = contributors.length;
+
+    var amountToPercent = function (amount) {
+        return ( (amount / total) * 100);
+    };
 
     var setAmount = function (row, amount) {
         //Move the current amount to previousAmount
         row.data("previousAmount", row.data("currentAmount"));
         //Set the currentAmount.
-        row.data("currentAmount", amount);//CB.Tools.Truncate(amount, 2));
+        row.data("currentAmount", amount);
 
-        var percent = (amount / total) * 100;
-        row.find(".rewardSlider").slider("value", CB.Tools.Truncate(percent, 2));
+        var percent;
+        if (total !== minimum) {
+            percent = amountToPercent(amount);
+        } else {
+            percent = 100;
+        }
+        row.find(".rewardSlider").slider("value", CB.Tools.Truncate(amount, 2));
         row.find(".rewardInput").val(CB.Tools.Truncate(amount, 2));
-        row.find(".rewardPercent").val(CB.Tools.Truncate(percent, 2));
+        row.find(".rewardPercent").text(CB.Tools.Truncate(percent, 2));
     };
 
-    var updateOtherSliders = function (rowToExclude) {
-        var currentAmount = rowToExclude.data("currentAmount");
-        var previousAmount = rowToExclude.data("previousAmount");
-        var enabledContributors = $(".contributorRow.enabled").length;
-
-        //Update all rows aside from the one being modified directly.
-        $(".contributorRow.enabled").not(rowToExclude).each(function (index, row) {
-            row = $(row);
-
-            var changedAmount;
-            if (previousAmount !== total) {
-                var delta = (total - currentAmount) / (total - previousAmount);
-                changedAmount = delta * row.data("currentAmount");
-            } else {
-                //When max reached.
-                changedAmount = (total - currentAmount) / (enabledContributors - 1)
-            }
-
-            setAmount(row, changedAmount);
-        });
-    };
+//    var updateOtherSliders = function (rowToExclude) {
+//        var currentAmount = rowToExclude.data("currentAmount");
+//        var previousAmount = rowToExclude.data("previousAmount");
+//        var enabledContributors = $(".contributorRow.enabled");
+//
+//        //Update all rows aside from the one being modified directly.
+//        var currentRemaining = total - currentAmount;
+//        var previousRemaining = total - previousAmount;
+//        enabledContributors.not(rowToExclude).each(function (index, row) {
+//            row = $(row);
+//
+////            var changedAmount;
+////            if (previousAmount !== total) {
+////                var delta = (total - currentAmount) / (total - previousAmount);
+////                changedAmount = delta * row.data("currentAmount");
+////            } else {
+////                //When max reached.
+////                changedAmount = (total - currentAmount) / (enabledContributors.length - 1)
+////            }
+////            if(changedAmount < minimum){
+////                changedAmount = minimum;
+////            }
+//            var changedAmount;
+//            if (previousAmount !== total) {
+//                changedAmount = (currentRemaining / previousRemaining) * row.data("currentAmount");
+//            }
+//
+//            setAmount(row, changedAmount);
+//        });
+//    };
 
     var getEqualSplit = function () {
         var usersEnabled = $(".contributorRow.enabled").length;
-        var equalSplit = 0;
+        var equalSplit = minimum;
         if (usersEnabled !== 0) {
             equalSplit = total / usersEnabled;
         }
@@ -85,24 +98,45 @@ Template.rewardBountyView.rendered = function () {
         var disabled = !row.hasClass("enabled");
         row.find(".rewardSlider").slider("option", "disabled", disabled);
         row.find(".rewardInput").prop("disabled", disabled);
-        row.find(".rewardPercent").prop("disabled", disabled);
 
+        var usersEnabled = $(".contributorRow.enabled").length;
         //Redistribute contributor amounts
         $(".contributorRow").each(function (index, row) {
             row = $(row);
+            var max = total - (minimum * (usersEnabled - 1));
+            row.find(".rewardSlider").slider("option", "max", max);
+
             var amount = 0;
             if (row.hasClass("enabled")) {
-                amount = getEqualSplit()
+                amount = getEqualSplit();
             }
             setAmount(row, amount);
         });
 
+        updateTotal();
+
         //Update checkboxes
-        var usersEnabled = $(".contributorRow.enabled").length;
-        if((minimum*(usersEnabled+1))>total){
+        if ((minimum * (usersEnabled + 1)) >= total) {
             $(".shouldPay").not(":checked").prop("disabled", true);
-        }else{
+        } else {
             $(".shouldPay").prop("disabled", false);
+        }
+    };
+
+    var updateTotal = function () {
+        var t = 0;
+        $(".contributorRow.enabled").each(function (index, row) {
+            row = $(row);
+            var amount = row.data("currentAmount");
+            t += amount;
+        });
+        var calcTotal = $(".calculatedTotal");
+        calcTotal.find(".calculatedTotalAmount").text(t);
+        if(t !== total){
+            calcTotal.addClass("invalid");
+            //TODO: Implement form validity
+        } else {
+            calcTotal.removeClass("invalid");
         }
     };
 
@@ -118,13 +152,13 @@ Template.rewardBountyView.rendered = function () {
 
         row.find(".rewardSlider").slider({
             animate: "fast",
-            min: 0,
-            max: 100,
+            min: minimum,
+            max: total,
             disabled: true,
             slide: function (event, ui) {
-                var amount = (ui.value / 100) * total;
+                var amount = ui.value;
                 setAmount(row, amount);
-                updateOtherSliders(row);
+                updateTotal();
             }
         });
 
@@ -133,23 +167,9 @@ Template.rewardBountyView.rendered = function () {
             .change(function () {
                 var amount = parseFloat($(this).val());
                 setAmount(row, amount);
-                updateOtherSliders(row);
+                updateTotal();
             }
         );
-
-        //Percent input change listener
-        row.find(".rewardPercent")
-            .change(function () {
-                var amount = (parseFloat($(this).val()) / 100) * total;
-                setAmount(row, amount);
-                updateOtherSliders(row);
-            }
-        );
-
-        //Set the row initially to an equal split
-        var equalSplit = getEqualSplit();
-
-        setAmount(row, equalSplit);
     });
 };
 

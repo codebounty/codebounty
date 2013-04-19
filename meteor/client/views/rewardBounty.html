@@ -15,17 +15,18 @@
                         <input type="number" min="{{minimum}}" max="{{total}}" class="rewardInput" disabled/>
                     </div>
                     <div class="inputWrapper">
-                        <input class="rewardPercent" disabled/>
+                        <label class="rewardPercent" label/>
                         <span class="percentSign">%</span>
                     </div>
                 </div>
             </li>
             {{/each}}
         </ul>
-
+        <div class="calculatedTotal">Total: <span class="currencySymbol">$</span><span class="calculatedTotalAmount">0</span></div>
         <div class="rewardButtonGroup">
             <button id="rewardButton">Reward the coders</button>
             <button id="closeButton">Cancel</button>
         </div>
     </div>
 </template>
+        
