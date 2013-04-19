@@ -18,12 +18,12 @@
     "permissions": [
         "tabs",
         "http://*.codebounty.co/*",
-        "https://localhost/meteor/public/github.js"
+        "https://localhost/meteor/public/github.js",
+        "https://localhost/meteor/public/codebounty.css"
     ],
     "content_scripts": [
         {
             "matches": ["https://github.com/*/*/issues/*"],
-            /*"css":     ["github.css"],*/
             "js":      ["jquery-1.9.1.min.js", "chromeContent.js"],
             "run_at":  "document_end"
         }
