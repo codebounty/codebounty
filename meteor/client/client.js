@@ -62,11 +62,11 @@ Meteor.Router.add({
             Session.set("contributors", result);
         });
 
-        Meteor.call("openBounties", Session.get("url"), true, function (error, result) {
+        Meteor.call("rewardableBounties", Session.get("url"), function (error, result) {
             if (!Tools.HandleError(error))
                 return;
 
-            Session.set("openBounties", result);
+            Session.set("rewardableBounties", result);
         });
 
         return "rewardBountyView";

@@ -193,9 +193,8 @@ CB.Bounty = (function () {
             var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
             payout.push(codeBountyPayout);
 
-            //TODO change 72 hours back from 1 minute
-            //var seventyTwoHours = CB.Tools.AddMinutes(60 * 72);
-            var seventyTwoHours = CB.Tools.AddMinutes(1);
+            var seventyTwoHours = CB.Tools.AddMinutes(60 * 72);
+//            var seventyTwoHours = CB.Tools.AddMinutes(1);
 
             var bountyIds = _.pluck(bounties, "_id").join(",");
 
@@ -252,6 +251,24 @@ CB.Bounty = (function () {
     };
 
     /**
+     * Various selectors to use for collection querying
+     */
+    my.Selectors = {
+        //the bounty has not yet been paid
+        //and the backer has not already rewarded the bounty
+        NotPaidOrManuallyRewarded: [
+            {$or: [
+                { reward: null },
+                { "reward.paid": null }
+            ]},
+            {$or: [
+                {reward: null},
+                {"reward.by": "system" }
+            ]}
+        ]
+    };
+
+    /**
      * check every 10 seconds for bounties that should be paid
      * note: limited at 60 payments/minute (6/minute * 10/time)
      * todo scalability: move this to separate process
@@ -298,18 +315,7 @@ CB.Bounty = (function () {
                     approved: true,
                     repo: bounty.repo,
                     issue: bounty.issue,
-                    $and: [
-                        //the bounty is not paid
-                        {$or: [
-                            { reward: null },
-                            { "reward.paid": null }
-                        ]},
-                        //the system rewarded the bounty (not the backer)
-                        {$or: [
-                            {reward: null},
-                            {"reward.by": "system" }
-                        ]}
-                    ]
+                    $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded
                 }).fetch();
 
                 if (bounties.length <= 0)
@@ -411,18 +417,7 @@ CB.Bounty = (function () {
     var updateBountyStatuses = function () {
         Meteor.setInterval(function () {
             var bountiesToUpdate = Bounties.find({
-                $and: [
-                    //the bounty is not paid
-                    {$or: [
-                        { reward: null },
-                        { "reward.paid": null }
-                    ]},
-                    //the system rewarded the bounty (not the backer)
-                    {$or: [
-                        {reward: null},
-                        {"reward.by": "system" }
-                    ]}
-                ],
+                $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
                 //status has not been updated within the past 10 minutes
                 $or: [
                     { status: null },
@@ -445,7 +440,7 @@ CB.Bounty = (function () {
             });
 
             //update the status by loading the issue events for the bounty
-            //whenever GetIssueEvents is called watchIssueEvents (above) will auto-update the statuses
+            //then watchStatusToInitiateOrCancelPayout (above) will auto-update the statuses
             uniqueIssueBounties.forEach(function (bounty) {
                 //use the backer's key to check the issue status
                 //TODO what happens if there are problems checking the status because the backer revoked access?
