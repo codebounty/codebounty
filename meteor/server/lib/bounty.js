@@ -1,5 +1,4 @@
 //contains all bounty logic
-
 CB.Bounty = (function () {
     var my = {};
     var url = NodeModules.require("url");
@@ -254,18 +253,32 @@ CB.Bounty = (function () {
      * Various selectors to use for collection querying
      */
     my.Selectors = {
-        //the bounty has not yet been paid
-        //and the backer has not already rewarded the bounty
-        NotPaidOrManuallyRewarded: [
-            {$or: [
-                { reward: null },
-                { "reward.paid": null }
-            ]},
-            {$or: [
-                {reward: null},
-                {"reward.by": "system" }
-            ]}
-        ]
+        /**
+         * the bounty is: approved, not expired, not yet been paid,
+         * the backer has not already rewarded the bounty
+         * @param [backerId] If passed, only return bounties from this backer id
+         */
+        CanBeManuallyRewarded: function (backerId) {
+            var selector = {
+                approved: true,
+                created: {"$gt": CB.Bounty.ExpiredDate()},
+                $and: [
+                    {$or: [
+                        { reward: null },
+                        { "reward.paid": null }
+                    ]},
+                    {$or: [
+                        {reward: null},
+                        {"reward.by": "system" }
+                    ]}
+                ]
+            };
+
+            if (backerId)
+                selector.userId = backerId;
+
+            return selector;
+        }
     };
 
     /**
@@ -311,12 +324,11 @@ CB.Bounty = (function () {
 
             Fiber(function () {
                 //find all bounties that should be updated for the issue
-                var bounties = Bounties.find({
-                    approved: true,
-                    repo: bounty.repo,
-                    issue: bounty.issue,
-                    $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded
-                }).fetch();
+                var selector = CB.Bounty.Selectors.CanBeManuallyRewarded();
+                selector.repo = bounty.repo;
+                selector.issue = bounty.issue;
+
+                var bounties = Bounties.find(selector).fetch();
 
                 if (bounties.length <= 0)
                     return;
@@ -416,15 +428,15 @@ CB.Bounty = (function () {
      */
     var updateBountyStatuses = function () {
         Meteor.setInterval(function () {
-            var bountiesToUpdate = Bounties.find({
-                $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
-                //status has not been updated within the past 10 minutes
-                $or: [
-                    { status: null },
-                    { "status.updated": null },
-                    { "status.updated": { $lte: CB.Tools.AddMinutes(-10) }}
-                ]
-            }, {
+            var selector = CB.Bounty.Selectors.CanBeManuallyRewarded();
+            //status has not been updated within the past 10 minutes
+            selector.$or = [
+                { status: null },
+                { "status.updated": null },
+                { "status.updated": { $lte: CB.Tools.AddMinutes(-10) }}
+            ];
+
+            var bountiesToUpdate = Bounties.find(selector, {
                 limit: 50
             }).fetch();
 
