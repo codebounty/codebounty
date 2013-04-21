@@ -138,9 +138,10 @@ Meteor.methods({
                 Bounties.update(bounty, {$set: {approved: true}});
             }).run();
 
-            //TODO Issue #21: prettify this comment with auto-generated image
-            var commentBody = "I just added a " + bounty.desc +
-                ". [Download](http://codebounty.co/extension) the codebounty code extension to add your bounties.";
+            //TODO need to use localtunnel url for local testing instead of root url
+            var rootUrl = Meteor.settings["ROOT_URL"];
+            var imageUrl = rootUrl + "bounty/" + id;
+            var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
 
             gitHub.PostComment(bounty, commentBody);
 
