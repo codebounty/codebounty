@@ -1,8 +1,6 @@
 //the injected github UI
 //isolated: all code / styles required for the extension should be in this file
 
-//bookmark for testing: javascript:(function(){document.body.appendChild(document.createElement("script")).src="https://localhost/meteor/public/github.js";})()
-
 var CODEBOUNTY = (function (undefined) {
     var my = {}, rootUrl = "http://localhost:3000", thisIssueUrl = encodeURI(window.location.href);
 
@@ -222,7 +220,7 @@ var CODEBOUNTY = (function (undefined) {
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
                     "<input id='bountyInput' type='number' value='" + initValue + "' min='0' step='5'/></div>" +
                     "<a id='addBounty' class='bountyButton button minibutton bigger' href='#'>" +
-                    "Place Bounty" +
+                    "Post Bounty" +
                     "</a>";
 
                 $(bountyDiv).insertAfter(ui._container);

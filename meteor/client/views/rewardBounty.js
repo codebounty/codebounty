@@ -12,11 +12,11 @@ Template.rewardBountyView.contributors = getContributors;
  * @returns {number}
  */
 var getTotalBounty = function () {
-    var openBounties = Session.get("openBounties");
-    if (!openBounties)
+    var rewardableBounties = Session.get("rewardableBounties");
+    if (!rewardableBounties)
         return 0;
 
-    var totalBounty = _.reduce(openBounties, function (memo, bounty) {
+    var totalBounty = _.reduce(rewardableBounties, function (memo, bounty) {
         return memo + bounty.amount;
     }, 0);
 
@@ -194,7 +194,7 @@ Template.rewardBountyView.events({
         });
 
         var url = Session.get("url");
-        var bounties = Session.get("openBounties");
+        var bounties = Session.get("rewardableBounties");
 
         $.blockUI();
         var ids = _.pluck(bounties, "_id");

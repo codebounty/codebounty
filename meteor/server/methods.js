@@ -19,10 +19,11 @@ Meteor.methods({
     },
 
     /**
-     * Check if there is a bounty eligible for rewarding by the current user at the current url.
+     * Check if there is a bounty the current user can reward at the current url
      * A bounty can be rewarded if:
-     * - the bounty is not expired
-     * - the user has not yet rewarded the bounty
+     * - it is not expired
+     * - it has not yet been paid
+     * - the backer has not rewarded the bounty (but the system could have)
      * - someone has contributed a solution
      * @param url
      * @returns {Boolean}
@@ -31,11 +32,11 @@ Meteor.methods({
         url = CB.Tools.StripHash(url);
 
         //find if there is a bounty that is eligible for this url
-        //(approved, not expired, no reward, this user, not expired)
+        //(approved, not expired, not yet rewarded, this user, not expired)
         var bounty = Bounties.findOne({
             url: url,
             approved: true,
-            reward: null, //TODO or !paid && !user initiated
+            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
             userId: this.userId,
             created: {"$gt": CB.Bounty.ExpiredDate()}
         });
@@ -54,14 +55,22 @@ Meteor.methods({
         return fut.wait();
     },
 
-    //contributors for the current url
-    //TODO should this method be restricted to the bounty owner?
+    //get contributors for the bounty at the current url
     "contributors": function (url) {
         url = CB.Tools.StripHash(url);
 
         var fut = new Future();
 
-        var bounty = Bounties.findOne({url: url, approved: true, reward: null});
+        /**
+         * find bounties
+         */
+        var bounty = Bounties.findOne({
+            url: url,
+            approved: true,
+            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
+            userId: this.userId
+        });
+
         CB.Bounty.Contributors(null, bounty, function (contributors) {
             contributors = _.uniq(contributors, false, function (contributor) {
                 return contributor.email;
@@ -73,21 +82,17 @@ Meteor.methods({
         return fut.wait();
     },
 
-    //open bounties for a url
-    //if currentUser is true, only return bounties from the current user
-    //TODO should this method be restricted to the bounty owner?
-    "openBounties": function (url, currentUser) {
+    //rewardable bounties for a url
+    "rewardableBounties": function (url) {
         url = CB.Tools.StripHash(url);
 
         var selector = {
             url: url,
             approved: true,
-            reward: null,
-            created: {"$gt": CB.Bounty.ExpiredDate()}
+            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
+            created: {"$gt": CB.Bounty.ExpiredDate()},
+            userId: this.userId
         };
-
-        if (currentUser)
-            selector.userId = this.userId;
 
         var bounties = Bounties.find(selector, {fields: {_id: true, amount: true, desc: true}}).fetch();
         return bounties;
@@ -172,7 +177,13 @@ Meteor.methods({
         //get all the bounties with ids sent that the user has open on the issue
         //note: not filtered by expiration date so if they are trying to reward a bounty and it expires during
         //when they have the reward screen open it will still allow them to reward the bounty
-        var bounties = Bounties.find({_id: {$in: ids}, approved: true, reward: null, userId: this.userId}).fetch();
+        var bounties = Bounties.find({
+            _id: {$in: ids},
+            approved: true,
+            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
+            userId: this.userId
+        }).fetch();
+
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             CB.Error.Bounty.DoesNotExist();
 
