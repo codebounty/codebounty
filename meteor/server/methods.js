@@ -32,15 +32,10 @@ Meteor.methods({
         url = CB.Tools.StripHash(url);
 
         //find if there is a bounty that is eligible for this url
-        //(approved, not expired, not yet rewarded, this user, not expired)
-        var bounty = Bounties.findOne({
-            url: url,
-            approved: true,
-            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
-            userId: this.userId,
-            created: {"$gt": CB.Bounty.ExpiredDate()}
-        });
+        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        selector.url = url;
 
+        var bounty = Bounties.findOne(selector);
         if (!bounty) {
             return false;
         }
@@ -61,15 +56,10 @@ Meteor.methods({
 
         var fut = new Future();
 
-        /**
-         * find bounties
-         */
-        var bounty = Bounties.findOne({
-            url: url,
-            approved: true,
-            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
-            userId: this.userId
-        });
+        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        selector.url = url;
+
+        var bounty = Bounties.findOne(selector);
 
         CB.Bounty.Contributors(null, bounty, function (contributors) {
             contributors = _.uniq(contributors, false, function (contributor) {
@@ -86,13 +76,8 @@ Meteor.methods({
     "rewardableBounties": function (url) {
         url = CB.Tools.StripHash(url);
 
-        var selector = {
-            url: url,
-            approved: true,
-            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
-            created: {"$gt": CB.Bounty.ExpiredDate()},
-            userId: this.userId
-        };
+        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        selector.url = url;
 
         var bounties = Bounties.find(selector, {fields: {_id: true, amount: true, desc: true}}).fetch();
         return bounties;
@@ -175,15 +160,10 @@ Meteor.methods({
         var fut = new Future();
 
         //get all the bounties with ids sent that the user has open on the issue
-        //note: not filtered by expiration date so if they are trying to reward a bounty and it expires during
-        //when they have the reward screen open it will still allow them to reward the bounty
-        var bounties = Bounties.find({
-            _id: {$in: ids},
-            approved: true,
-            $and: CB.Bounty.Selectors.NotPaidOrManuallyRewarded,
-            userId: this.userId
-        }).fetch();
+        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        selector._id = {$in: ids};
 
+        var bounties = Bounties.find(selector).fetch();
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             CB.Error.Bounty.DoesNotExist();
 
