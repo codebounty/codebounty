@@ -47,6 +47,16 @@ CB.Tools = (function () {
         return new Date(new Date().getTime() + minutes * 60000);
     };
 
+    /**
+     * Add / subtract days from now
+     * @param days Can be negative
+     */
+    my.AddDays = function (days) {
+        var endDate = new Date();
+        endDate.setDate(endDate.getDate() + days);
+        return endDate;
+    };
+
     //return the url without a trailing hash
     my.StripHash = function (url) {
         var index = url.indexOf('#');
