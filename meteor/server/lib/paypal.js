@@ -1,9 +1,6 @@
 //Contains all logic for interacting with paypal
 CB.PayPal = (function () {
-    var my = {}, request = require('request'),
-
-    //the longest a bounty can be open for
-        MAXDAYS = 90;
+    var my = {}, request = require('request');
 
     //https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro#id091QF0N0MPF__id092SH0050HS
 
@@ -44,8 +41,7 @@ CB.PayPal = (function () {
 //callback passes an error or the pre-approval of funds data and url
     my.GetApproval = function (amount, description, cancelUrl, confirmUrl, callback) {
         var startDate = new Date();
-        var endDate = new Date();
-        endDate.setDate(startDate.getDate() + MAXDAYS);
+        var endDate = CB.Tools.AddDays(CB.Bounty.ExpiresAfterDays);
 
         var params = {
             endingDate: endDate.toISOString(),
