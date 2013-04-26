@@ -8,9 +8,9 @@ Meteor.publish("allUserData", function () {
     return Meteor.users.find();
 });
 
-// publish the total reward for a bounty url
+// publish the total open reward for a bounty url
 Meteor.publish("totalReward", function (url) {
-    url = CB.Tools.StripHash(url);
+    url = Tools.stripHash(url);
 
     var self = this;
     var uuid = Meteor.uuid();
@@ -21,7 +21,7 @@ Meteor.publish("totalReward", function (url) {
         url: url,
         approved: true,
         reward: null,
-        created: {"$gt": CB.Bounty.ExpiredDate()}
+        created: {"$gt": Bounty.expiredDate()}
     }).observe({
             added: function (bounty) {
                 totalReward += parseFloat(bounty.amount);

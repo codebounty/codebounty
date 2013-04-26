@@ -20,17 +20,17 @@ var getTotalBounty = function () {
         return memo + bounty.amount;
     }, 0);
 
-    var minusFee = totalBounty - CB.Payout.Fee(totalBounty);
+    var minusFee = totalBounty - Payout.fee(totalBounty);
 
-    return CB.Tools.Truncate(minusFee, 2);
+    return Tools.truncate(minusFee, 2);
 };
 Template.rewardBountyView.totalBounty = getTotalBounty;
 
-Template.rewardBountyView.minimum = CB.Payout.Minimum;
+Template.rewardBountyView.minimum = Payout.minimum;
 
 Template.rewardBountyView.rendered = function () {
     var total = getTotalBounty();
-    var minimum = CB.Payout.Minimum();
+    var minimum = Payout.minimum();
 
     var amountToPercent = function (amount) {
         return ( (amount / total) * 100);
@@ -48,9 +48,9 @@ Template.rewardBountyView.rendered = function () {
         } else {
             percent = 100;
         }
-        row.find(".rewardSlider").slider("value", CB.Tools.Truncate(amount, 2));
-        row.find(".rewardInput").val(CB.Tools.Truncate(amount, 2));
-        row.find(".rewardPercent").text(CB.Tools.Truncate(percent, 2));
+        row.find(".rewardSlider").slider("value", Tools.truncate(amount, 2));
+        row.find(".rewardInput").val(Tools.truncate(amount, 2));
+        row.find(".rewardPercent").text(Tools.truncate(percent, 2));
     };
 
 //    var updateOtherSliders = function (rowToExclude) {
@@ -188,7 +188,7 @@ Template.rewardBountyView.events({
         var totalBounty = getTotalBounty();
 
         var payout = [];
-        var equalSplit = CB.Tools.Truncate(totalBounty / contributors.length, 2);
+        var equalSplit = Tools.truncate(totalBounty / contributors.length, 2);
         contributors.forEach(function (contributor) {
             payout.push({email: contributor.email, amount: equalSplit});
         });
@@ -201,7 +201,7 @@ Template.rewardBountyView.events({
         Meteor.call("rewardBounty", ids, payout, function (error, success) {
             $.unblockUI();
             Messenger.send({event: "closeOverlay"});
-            if (!Tools.HandleError(error)) {
+            if (!ErrorUtils.handle(error)) {
                 return;
             }
 

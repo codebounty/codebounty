@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "canvas": {
+      "version": "1.0.2",
+      "from": "canvas@1.0.2"
+    }
+  }
+}

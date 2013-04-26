@@ -1,0 +1,1 @@
+Canvas = Npm.require("canvas");
