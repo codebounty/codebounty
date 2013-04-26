@@ -10,6 +10,5 @@ accounts-base
 accounts-ui
 accounts-github
 router
-node-modules
 force-ssl
 underscore

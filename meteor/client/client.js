@@ -9,15 +9,15 @@ Meteor.Router.add({
         var amount = window.url("?amount");
         var url = window.url("?url");
 
-        Bounty.Create(parseFloat(amount), url);
+        Bounty.create(parseFloat(amount), url);
 
         return "processBountyView";
     },
     "/cancelCreateBounty": function () {
         var id = window.url("?id");
 
-        Bounty.Cancel(id, function (error) {
-            if (!Tools.HandleError(error))
+        Bounty.cancel(id, function (error) {
+            if (!ErrorUtils.handle(error))
                 return;
 
             window.close();
@@ -28,8 +28,8 @@ Meteor.Router.add({
     "/confirmBounty": function () {
         var id = window.url("?id");
 
-        Bounty.Confirm(id, function (error) {
-            if (!Tools.HandleError(error))
+        Bounty.confirm(id, function (error) {
+            if (!ErrorUtils.handle(error))
                 return;
 
             window.close();
@@ -39,7 +39,7 @@ Meteor.Router.add({
     },
     //used by a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
-        Tools.AfterLogin(function () {
+        AuthUtils.afterLogin(function () {
             Messenger.listen();
 
             Messenger.send({event: "authorized"});
@@ -47,7 +47,7 @@ Meteor.Router.add({
 
         //track reward even before logged in
         var url = window.url("?url");
-        Bounty.TrackReward(url);
+        Bounty.trackReward(url);
 
         return "messengerView";
     },
@@ -56,14 +56,14 @@ Meteor.Router.add({
         Session.set("url", url);
 
         Meteor.call("contributors", Session.get("url"), function (error, result) {
-            if (!Tools.HandleError(error))
+            if (!ErrorUtils.handle(error))
                 return;
 
             Session.set("contributors", result);
         });
 
         Meteor.call("rewardableBounties", Session.get("url"), function (error, result) {
-            if (!Tools.HandleError(error))
+            if (!ErrorUtils.handle(error))
                 return;
 
             Session.set("rewardableBounties", result);

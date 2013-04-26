@@ -1,5 +1,4 @@
 //TODO setup deploySettings.json
-
 Meteor.startup(function () {
     var githubServiceSetup = Accounts.loginServiceConfiguration.find({service: "github"}).count() === 1;
     if (!githubServiceSetup) {

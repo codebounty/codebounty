@@ -1,7 +1,5 @@
 Meteor.startup(function () {
-    var Canvas = NodeModules.require("canvas");
-
-    //setup the generated bounty image route
+    //the generated bounty image route
     Meteor.Router.add("/bounty/:id", function (id) {
         var response = this.response;
 
@@ -28,5 +26,12 @@ Meteor.startup(function () {
         var buffer = canvas.toBuffer();
         response.write(buffer);
         response.end();
+    });
+
+    //the paypal IPN callback
+    //https://www.x.com/developers/paypal/documentation-tools/ipn/integration-guide/IPNIntro
+    //http://jsfiddle.net/zkcb6/1/
+    Meteor.Router.add("/ipn", function () {
+        PayPal.Verify(this.request.body, this.response);
     });
 });

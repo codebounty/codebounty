@@ -1,5 +1,11 @@
-var Future = __meteor_bootstrap__.require("fibers/future");
-var Fiber = __meteor_bootstrap__.require("fibers");
+var Future = Npm.require("fibers/future");
+var Fiber = Npm.require("fibers");
+
+var errors = {
+    notAuthorized: function () {
+        throw new Meteor.Error(404, "Not authorized");
+    }
+};
 
 Meteor.methods({
     //checks if the user has properly authorized codebounty
@@ -10,8 +16,8 @@ Meteor.methods({
 
         var fut = new Future();
 
-        var gitHub = new CB.GitHub(user);
-        gitHub.CheckAccess(function (hasAccess) {
+        var gitHub = new GitHub(user);
+        gitHub.checkAccess(function (hasAccess) {
             fut.ret(hasAccess);
         });
 
@@ -29,10 +35,10 @@ Meteor.methods({
      * @returns {Boolean}
      */
     "canReward": function (url) {
-        url = CB.Tools.StripHash(url);
+        url = Tools.stripHash(url);
 
         //find if there is a bounty that is eligible for this url
-        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
         selector.url = url;
 
         var bounty = Bounties.findOne(selector);
@@ -43,7 +49,7 @@ Meteor.methods({
         var fut = new Future();
 
         //check someone has contributed a solution
-        CB.Bounty.Contributors(null, bounty, function (contributors) {
+        Bounty.contributors(null, bounty, function (contributors) {
             fut.return(contributors.length > 0);
         });
 
@@ -52,16 +58,16 @@ Meteor.methods({
 
     //get contributors for the bounty at the current url
     "contributors": function (url) {
-        url = CB.Tools.StripHash(url);
+        url = Tools.stripHash(url);
 
         var fut = new Future();
 
-        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
         selector.url = url;
 
         var bounty = Bounties.findOne(selector);
 
-        CB.Bounty.Contributors(null, bounty, function (contributors) {
+        Bounty.contributors(null, bounty, function (contributors) {
             contributors = _.uniq(contributors, false, function (contributor) {
                 return contributor.email;
             });
@@ -74,9 +80,9 @@ Meteor.methods({
 
     //rewardable bounties for a url
     "rewardableBounties": function (url) {
-        url = CB.Tools.StripHash(url);
+        url = Tools.stripHash(url);
 
-        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
         selector.url = url;
 
         var bounties = Bounties.find(selector, {fields: {_id: true, amount: true, desc: true}}).fetch();
@@ -92,15 +98,15 @@ Meteor.methods({
      * @returns {String}
      */
     "createBounty": function (amount, url) {
-        url = CB.Tools.StripHash(url);
+        url = Tools.stripHash(url);
 
         var fut = new Future();
 
         var userId = this.userId;
         if (!userId)
-            CB.Error.NotAuthorized();
+            errors.notAuthorized();
 
-        CB.Bounty.Create(userId, amount, url, function (preapprovalUrl) {
+        Bounty.create(userId, amount, url, function (preapprovalUrl) {
             fut.ret(preapprovalUrl);
         });
 
@@ -125,14 +131,14 @@ Meteor.methods({
         var bounty = Bounties.findOne({_id: id, userId: this.userId});
 
         if (!bounty)
-            CB.Error.Bounty.DoesNotExist();
+            Bounty.errors.doesNotExist();
 
-        var gitHub = new CB.GitHub(Meteor.user());
+        var gitHub = new GitHub(Meteor.user());
 
         //Start pre-approval process
-        CB.PayPal.ConfirmApproval(bounty.preapprovalKey, function (error, data) {
+        PayPal.confirmApproval(bounty.preapprovalKey, function (error, data) {
             if (!data.approved || parseFloat(data.maxTotalAmountOfAllPayments) !== bounty.amount)
-                CB.Error.PayPal.NotApproved();
+                PayPal.errors.notApproved();
 
             Fiber(function () {
                 Bounties.update(bounty, {$set: {approved: true}});
@@ -143,7 +149,7 @@ Meteor.methods({
             var imageUrl = rootUrl + "bounty/" + id;
             var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
 
-            gitHub.PostComment(bounty, commentBody);
+            gitHub.postComment(bounty, commentBody);
 
             fut.ret(true);
         });
@@ -161,14 +167,14 @@ Meteor.methods({
         var fut = new Future();
 
         //get all the bounties with ids sent that the user has open on the issue
-        var selector = CB.Bounty.Selectors.CanBeManuallyRewarded(this.userId);
+        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
         selector._id = {$in: ids};
 
         var bounties = Bounties.find(selector).fetch();
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
-            CB.Error.Bounty.DoesNotExist();
+            Bounty.errors.doesNotExist();
 
-        CB.Bounty.InitiatePayout(bounties, payout, this.userId, function () {
+        Bounty.initiatePayout(bounties, payout, this.userId, function () {
             fut.ret(true);
         });
 
