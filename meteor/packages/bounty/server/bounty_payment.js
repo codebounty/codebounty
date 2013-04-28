@@ -63,8 +63,8 @@ Bounty.initiatePayout = function (gitHubInstance, bounties, payout, by, callback
         var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
         payout.push(codeBountyPayout);
 
-        var seventyTwoHours = Tools.AddMinutes(60 * 72);
-//            var seventyTwoHours = Tools.AddMinutes(1);
+        var seventyTwoHours = Tools.addMinutes(60 * 72);
+//            var seventyTwoHours = Tools.addMinutes(1);
 
         var bountyIds = _.pluck(bounties, "_id").join(",");
 

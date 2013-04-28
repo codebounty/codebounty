@@ -135,7 +135,7 @@ Meteor.methods({
         if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
             Bounty.errors.doesNotExist();
 
-        Bounty.initiatePayout(bounties, payout, this.userId, function () {
+        Bounty.initiatePayout(null, bounties, payout, this.userId, function () {
             fut.ret(true);
         });
 
