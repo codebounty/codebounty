@@ -8,6 +8,7 @@ Npm.depends({
 
 Package.on_use(function (api) {
     api.use('fibers');
+    api.use('canvas');
     api.use('errorutils');
     api.use('tools');
     api.use('paypal');
@@ -20,6 +21,7 @@ Package.on_use(function (api) {
 
     api.add_files('server/payout.js', ['client', 'server']);
     api.add_files('server/bounty.js', 'server');
+    api.add_files('server/bounty_art.js', 'server');
     api.add_files('server/bounty_paypal.js', 'server');
     api.add_files('server/bounty_payment.js', 'server');
     api.add_files('server/bounty_status.js', 'server');

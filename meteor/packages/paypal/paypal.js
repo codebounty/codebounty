@@ -5,8 +5,9 @@ PayPal = {};
 var request = Npm.require("request"),
     ipn = Npm.require("paypal-ipn");
 
-//var ipnUrl = Meteor.settings["ROOT_URL"] + "ipn";
-var ipnUrl = "https://xtr-cbounty.fwd.wf" + "/ipn";
+var rootUrl = Meteor.settings["ROOT_URL"],
+    //note when testing, this must go through a tunnel (for PayPal)
+    ipnUrl = rootUrl + "ipn";
 
 PayPal.errors = {
     preapproval: function () {
@@ -109,8 +110,6 @@ PayPal.confirmApproval = function (preapprovalKey, callback) {
 PayPal.pay = function (preapprovalKey, receiverList, callback) {
     //details here https://www.x.com/developers/paypal/documentation-tools/api/Pay-api-operation
     //note fee calculation here: https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
-
-    var rootUrl = Meteor.settings["ROOT_URL"];
 
     //only need to pay the people getting > $0
     //remove any decimals past 0.01

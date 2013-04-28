@@ -1,8 +1,7 @@
 //contains paypal bounty interactions
 Bounty.PayPal = {};
 
-//need to use localtunnel url for local testing instead of root url
-
+//note when testing, this must go through a tunnel for the GitHub comment image
 var rootUrl = Meteor.settings["ROOT_URL"];
 
 /**
@@ -26,26 +25,6 @@ Bounty.PayPal.create = function (bounty, callback) {
         }).run();
 
         callback(approvalUrl);
-    });
-};
-
-Bounty.PayPal.pay = function (bounty, receiverList) {
-    PayPal.pay(bounty.preapprovalKey, receiverList, function (error, data) {
-        var update = {};
-
-        if (error) {
-            update["reward.error"] = error;
-
-            console.log("ERROR: PayPal Payment", error);
-        } else {
-            update["reward.paid"] = new Date();
-
-            console.log("PayPal Paid", bounty);
-        }
-
-        Fiber(function () {
-            Bounties.update(bounty._id, {$set: update});
-        }).run();
     });
 };
 
@@ -73,4 +52,24 @@ Bounty.PayPal.confirm = function (params) {
         var gitHub = new GitHub();
         gitHub.postComment(bounty, commentBody);
     }).run();
+};
+
+Bounty.PayPal.pay = function (bounty, receiverList) {
+    PayPal.pay(bounty.preapprovalKey, receiverList, function (error, data) {
+        var update = {};
+
+        if (error) {
+            update["reward.error"] = error;
+
+            console.log("ERROR: PayPal Payment", error);
+        } else {
+            update["reward.paid"] = new Date();
+
+            console.log("PayPal Paid", bounty);
+        }
+
+        Fiber(function () {
+            Bounties.update(bounty._id, {$set: update});
+        }).run();
+    });
 };
