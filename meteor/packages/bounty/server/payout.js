@@ -12,8 +12,8 @@ Payout.errors = {
     greaterTwoDecimals: function () {
         throw new Meteor.Error(404, "Rewards must not have more than 2 decimals");
     },
-    notZeroOrFive: function () {
-        throw new Meteor.Error(404, "Rewards must be $0 or >= $5");
+    notZeroOrMinimum: function (minimum) {
+        throw new Meteor.Error(404, "Rewards must be $0 or >= $", minimum);
     },
     feeDifferenceLarge: function (difference) {
         throw new Meteor.Error(404, "The fee difference is " + difference + " which is > $1. Investigate");
@@ -85,8 +85,10 @@ Payout.checkValidity = function (bounties, payout) {
             Payout.errors.greaterTwoDecimals();
         }
 
+        console.log(userPayout);
+
         if (!(userPayout.amount === 0 || userPayout.amount >= Payout.minimum()))
-            Payout.errors.notZeroOrFive();
+            Payout.errors.notZeroOrMinimum(Payout.minimum());
 
         totalPayout += userPayout.amount;
     });
