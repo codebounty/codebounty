@@ -6,7 +6,7 @@ var request = Npm.require("request"),
     ipn = Npm.require("paypal-ipn");
 
 //var ipnUrl = Meteor.settings["ROOT_URL"] + "ipn";
-var ipnUrl = "https://gdo-cbounty.fwd.wf" + "/ipn";
+var ipnUrl = "https://xtr-cbounty.fwd.wf" + "/ipn";
 
 PayPal.errors = {
     preapproval: function () {

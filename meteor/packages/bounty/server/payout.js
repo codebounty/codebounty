@@ -40,7 +40,7 @@ Payout.fee = function (amount, payout) {
             Payout.errors.feeDifferenceLarge(difference);
     }
 
-    fee = Tools.Round(fee, 2);
+    fee = Tools.round(fee, 2);
 
     return fee;
 };
