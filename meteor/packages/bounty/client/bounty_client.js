@@ -9,11 +9,11 @@ Bounty.create = function (amount, url) {
     });
 };
 
-//TODO force the user to login everywhere
 Bounty.cancel = function (id, callback) {
     Meteor.call("cancelCreateBounty", id, callback);
 };
 
+//TODO remove after done replacing with IPN method
 Bounty.confirm = function (id, callback) {
     Meteor.call("confirmBounty", id, callback);
 };

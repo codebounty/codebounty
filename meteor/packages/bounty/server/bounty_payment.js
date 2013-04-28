@@ -1,4 +1,5 @@
 //contains bounty payment logic
+//todo bitcoin this file contains bitcoin todos
 
 /**
  * Pay a bounty
@@ -10,25 +11,11 @@ Bounty.pay = function (bounty) {
         return receiver;
     });
 
-    PayPal.pay(bounty.preapprovalKey, receiverList, function (error, data) {
-        var update = {};
-
-        if (error) {
-            update["reward.error"] = error;
-
-            console.log("ERROR: PayPal Payment", error);
-        } else {
-            update["reward.paid"] = new Date();
-
-            console.log("Paid", bounty);
-        }
-
-        Fiber(function () {
-            Bounties.update(bounty._id, {$set: update});
-        }).run();
-    });
+    //todo bitcoin check type and choose bitcoin.pay here if the bounty type is bitcoin
+    Bounty.PayPal.pay(bounty, receiverList);
 };
 
+//todo bitcoin refactor out PayPal specific logic here
 /**
  * Set the payout amounts when a backer rewards a bounty
  * post a comment on the issue with the payout amounts
@@ -116,7 +103,6 @@ Bounty.initiatePayout = function (gitHubInstance, bounties, payout, by, callback
             payoutIndex++;
         });
 
-        //TODO comment on the issue w planned contribution split
         callback();
     });
 };
@@ -152,7 +138,7 @@ var processBountyPayments = function () {
 
         bountiesToPay.forEach(function (bounty) {
             Bounties.update(bounty._id, {$set: {"reward.started": new Date()}});
-            Bounty.Pay(bounty);
+            Bounty.pay(bounty);
         });
     }, 10000);
 };

@@ -5,6 +5,9 @@ PayPal = {};
 var request = Npm.require("request"),
     ipn = Npm.require("paypal-ipn");
 
+//var ipnUrl = Meteor.settings["ROOT_URL"] + "ipn";
+var ipnUrl = "https://gdo-cbounty.fwd.wf" + "/ipn";
+
 PayPal.errors = {
     preapproval: function () {
         throw new Meteor.Error(500, "Error with preapproval");
@@ -66,7 +69,7 @@ PayPal.getApproval = function (amount, description, endDate, cancelUrl, confirmU
         },
         displayMaxTotalAmount: true,
         memo: description,
-        ipnNotificationUrl: Meteor.settings["ROOT_URL"] + "ipn"
+        ipnNotificationUrl: ipnUrl
     };
 
     execute("Preapproval", params, function (error, data) {
@@ -145,14 +148,13 @@ PayPal.pay = function (preapprovalKey, receiverList, callback) {
  */
 PayPal.verify = function (request, response, callback) {
     var params = request.body;
-    //prevents paypal from continually sending message
-    //from http://stackoverflow.com/a/15847900/230462
-    response.send(200);
 
     ipn.verify(params, function (error, message) {
-        if (error)
-            console.log("Error verifying IPN", error);
+        if (error || message !== "VERIFIED")
+            console.log("Error verifying IPN", message, params);
 
-        callback(error, params, message);
+        if (callback) {
+            callback(error, params, message);
+        }
     });
 };

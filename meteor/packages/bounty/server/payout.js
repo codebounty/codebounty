@@ -1,3 +1,4 @@
+//TODO refactor to allow for bitcoin payments
 Payout = {};
 
 Payout.errors = {

@@ -26,15 +26,7 @@ Meteor.Router.add({
         return "cancelCreateBountyView";
     },
     "/confirmBounty": function () {
-        var id = window.url("?id");
-
-        Bounty.confirm(id, function (error) {
-            if (!ErrorUtils.handle(error))
-                return;
-
-            window.close();
-        });
-
+        window.close();
         return "confirmBountyView";
     },
     //used by a hidden iframe view inserted into the GitHub issue page
