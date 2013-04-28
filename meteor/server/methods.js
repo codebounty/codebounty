@@ -1,7 +1,4 @@
 //TODO BITCOIN this file contains bitcoin todos
-var Future = Npm.require("fibers/future");
-var Fiber = Npm.require("fibers");
-
 var errors = {
     notAuthorized: function () {
         throw new Meteor.Error(404, "Not authorized");

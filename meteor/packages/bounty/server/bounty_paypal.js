@@ -64,6 +64,8 @@ Bounty.PayPal.confirm = function (params) {
 
         Bounties.update(bounty, {$set: {approved: true}});
 
+        console.log("PayPal confirmed", bounty._id);
+
         var imageUrl = rootUrl + "bounty/" + bounty._id;
         var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
 
