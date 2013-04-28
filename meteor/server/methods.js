@@ -1,3 +1,4 @@
+//TODO BITCOIN this file contains bitcoin todos
 var Future = Npm.require("fibers/future");
 var Fiber = Npm.require("fibers");
 
@@ -117,44 +118,7 @@ Meteor.methods({
      * Called if the user cancels adding a new bounty in the paypal checkout
      */
     "cancelCreateBounty": function (id) {
-        //TODO check that there is not a approved payment
-        Bounties.remove({_id: id, userId: this.userId});
-    },
-
-    //TODO move confirm bounty to an IPN method instead. will be more stable
-    //after a bounty payment has been authorized
-    //test the the token and payer id are valid (since the client passed them)
-    //then store them to capture the payment later
-    "confirmBounty": function (id) {
-        var fut = new Future();
-
-        var bounty = Bounties.findOne({_id: id, userId: this.userId});
-
-        if (!bounty)
-            Bounty.errors.doesNotExist();
-
-        var gitHub = new GitHub(Meteor.user());
-
-        //Start pre-approval process
-        PayPal.confirmApproval(bounty.preapprovalKey, function (error, data) {
-            if (!data.approved || parseFloat(data.maxTotalAmountOfAllPayments) !== bounty.amount)
-                PayPal.errors.notApproved();
-
-            Fiber(function () {
-                Bounties.update(bounty, {$set: {approved: true}});
-            }).run();
-
-            //TODO need to use localtunnel url for local testing instead of root url
-            var rootUrl = Meteor.settings["ROOT_URL"];
-            var imageUrl = rootUrl + "bounty/" + id;
-            var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
-
-            gitHub.postComment(bounty, commentBody);
-
-            fut.ret(true);
-        });
-
-        return fut.wait();
+        Bounties.remove({_id: id, userId: this.userId, approved: false});
     },
 
     /**

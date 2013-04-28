@@ -26,8 +26,8 @@ var updateRequestsRemaining = function (res, name) {
 };
 
 /**
- * Need to pass either the user so we can always make (authenticated) github requests
- * @param user
+ * Creates an authenticated github client
+ * @param [user] The user to authorize the API with. If not passed, it will use the codebountycharlie
  * @constructor
  */
 GitHub = function (user) {
@@ -38,19 +38,20 @@ GitHub = function (user) {
         timeout: 5000
     });
 
+    var accessToken;
+
     if (user) {
         this._userGitHub = user.services.github;
 
-        var accessToken = this._userGitHub.accessToken;
-        githubApi.authenticate({
-            type: "oauth",
-            token: accessToken
-        });
+        accessToken = this._userGitHub.accessToken;
     }
-    //we don't want unauthenticated api calls for now since they are extremely limited
-    else {
-        throw "No unauthenticated github clients allowed";
-    }
+    else
+        accessToken = Meteor.settings["GITHUB_CHARLIE"];
+
+    githubApi.authenticate({
+        type: "oauth",
+        token: accessToken
+    });
 
     this._client = githubApi;
 };
@@ -395,9 +396,8 @@ GitHub.prototype.postComment = function (bounty, comment) {
             body: comment
         }, function (err, res) {
             //TODO log error
-            if (err) {
+            if (err)
                 console.log("ERROR: Posting GitHub comment", err);
-            }
         }
     );
 };

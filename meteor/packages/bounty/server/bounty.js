@@ -1,3 +1,4 @@
+//todo bitcoin this file contains bitcoin todos
 //contains all non-payment bounty functions / properties
 var url = Npm.require("url");
 
@@ -65,30 +66,12 @@ Bounty.create = function (userId, amount, bountyUrl, callback) {
         if (error)
             Bounty.errors.parsing();
 
-        //store the bounty
         bounty.userId = userId;
 
-        var id = Bounties.insert(bounty);
+        bounty._id = Bounties.insert(bounty);
 
-        var cancel = Meteor.settings["ROOT_URL"] + "cancelCreateBounty?id=" + id;
-        var confirm = Meteor.settings["ROOT_URL"] + "confirmBounty?id=" + id;
-
-        //TODO remove this
-        var endDate = Tools.addDays(Bounty.expiresAfterDays);
-
-        //Start pre-approval process
-        PayPal.getApproval(bounty.amount, bounty.desc, endDate, cancel, confirm, function (error, data, approvalUrl) {
-            if (error) {
-                Bounties.remove({_id: id});
-                PayPal.errors.preapproval();
-            }
-
-            Fiber(function () {
-                Bounties.update({_id: id}, {$set: {preapprovalKey: data.preapprovalKey}})
-            }).run();
-
-            callback(approvalUrl);
-        });
+        //todo bitcoin check type and choose bitcoin.create here if the bounty type is bitcoin
+        Bounty.PayPal.create(bounty, callback);
     });
 };
 
