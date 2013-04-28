@@ -13,11 +13,6 @@ Bounty.cancel = function (id, callback) {
     Meteor.call("cancelCreateBounty", id, callback);
 };
 
-//TODO remove after done replacing with IPN method
-Bounty.confirm = function (id, callback) {
-    Meteor.call("confirmBounty", id, callback);
-};
-
 TotalReward = new Meteor.Collection("totalReward");
 
 var observingTotalReward = false;
