@@ -15,20 +15,7 @@ OS X / Linux / Ubuntu
 		git clone https://github.com/jperl/codebounty codebounty
 		cd codebounty
 
-3. Install node packages and move them to `public` for [workaround](https://github.com/possibilities/meteor-node-modules#usage)  
-
-		cd meteor
-		sudo npm install
-		sudo mv node_modules public/node_modules
-		
-	Until [this pull request](https://github.com/mikedeboer/node-github/pull/80) is merged, need to use [this fork](https://github.com/piascikj/node-github-1)
-
-		cd public/node_modules
-		rm -R github
-		git clone https://github.com/piascikj/node-github-1.git
-		mv node-github-1 github
-
-4. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer
+3. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer
 
 	- #####OS X  
 	Open `https://localhost` in safari, choose certificate details, and select always trust this certificate, then reopen chrome and test it by visiting `https://localhost`.
@@ -41,3 +28,5 @@ OS X / Linux / Ubuntu
 
 		cd codebounty/tools
 		node web-server.js
+			
+3. If you are trying to test out the images use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json
