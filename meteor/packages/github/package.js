@@ -8,8 +8,9 @@ Npm.depends({
 });
 
 Package.on_use(function (api) {
-    api.use('fibers');
-    api.use('tools');
+    api.use("fibers");
+    api.use("tools");
 
-    api.add_files('github.js', 'server');
+    api.add_files("github.js", "server");
+    api.add_files("github_utils.js", "server");
 });

@@ -6,7 +6,7 @@
 // - closed: initiate the payout
 // - reopened: cancel the payout (this will only happen during the hold period)
 var watchStatusToInitiateOrCancelPayout = function () {
-    GitHub.onGetIssueEvents(function (gitHubInstance, bounty, error, result) {
+    GitHub.onGetBountyIssueEvents(function (gitHubInstance, bounty, error, result) {
         if (error)
             return;
 
@@ -153,7 +153,7 @@ var updateBountyStatuses = function () {
             //TODO what happens if there are problems checking the status because the backer revoked access?
             var bountyBacker = Meteor.users.findOne(bounty.userId);
             var gitHub = new GitHub(bountyBacker);
-            gitHub.getIssueEvents(bounty);
+            gitHub.getBountyIssueEvents(bounty);
         });
     }, 5000);
 };
