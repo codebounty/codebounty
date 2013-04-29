@@ -52,12 +52,12 @@ Bounty.statusImage = function (bountyId, callback) {
 //        ctx.drawImage(img, 0, 0, img.width, img.height);
 
         //Draw Bounty status
-        ctx.font = "60px Arial bold";
-        var statusHeader = "Bounty now " + status;
+        ctx.font = "bold 60px Western";
+        var statusHeader = "BOUNTY NOW " + status.toUpperCase() + "!";
         ctx.fillText(statusHeader, leftOffset, 130);
 
         //Draw bounty amount and expiration
-        ctx.font = "42px Arial bold";
+        ctx.font = "bold 42px Arial";
         var bountyAmount = "The bounty is posted for " + currencySymbol + bounty.amount;
         ctx.fillText(bountyAmount, leftOffset, 213);
         var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
@@ -65,7 +65,7 @@ Bounty.statusImage = function (bountyId, callback) {
 
         //Draw codebounty plug and link
         ctx.textAlign = "right";
-        ctx.font = "34px Arial bold";
+        ctx.font = "34px Arial";
         var sitePlug = "Get Code Bounty now"
         ctx.fillText(sitePlug, width-56, 505);
         ctx.font = "30px Arial";
