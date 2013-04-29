@@ -12,7 +12,7 @@ OS X / Linux / Ubuntu
 
 2. Clone this repo
 
-		git clone https://github.com/jperl/codebounty codebounty
+		git clone https://github.com/codebounty/codebounty codebounty
 		cd codebounty
 
 3. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer

@@ -3,5 +3,5 @@ Package.describe({
 });
 
 Package.on_use(function (api) {
-    api.add_files('tools.js', ['client', 'server']);
+    api.add_files("tools.js", ["client", "server"]);
 });
