@@ -301,23 +301,35 @@ GitHub.prototype.checkAccess = function (callback) {
 
 /**
  * Loads the issue events with a conditional request
+ * @param user The repository owner
+ * @param repo The repository name
+ * @param issue The issue number
+ * @param {function} [callback] (error, result) result is an array
+ */
+GitHub.prototype.getIssueEvents = function (user, repo, issue, callback) {
+    var that = this;
+    that._conditionalCrawlAndCache("Issues.getEvents", {
+        user: user,
+        repo: repo,
+        number: issue
+    }, true, callback);
+};
+
+/**
+ * Loads issue events for a bounty, and triggers the onGetBountyIssueEvents
  * @param bounty
  * @param {function} [callback] (error, result) result is an array
  */
-GitHub.prototype.getIssueEvents = function (bounty, callback) {
+GitHub.prototype.getBountyIssueEvents = function (bounty, callback) {
     var that = this;
-    that._conditionalCrawlAndCache("Issues.getEvents", {
-        user: bounty.repo.user,
-        repo: bounty.repo.name,
-        number: bounty.issue
-    }, true, function (error, result) {
-        _.each(_getIssueEventsCallbacks, function (cb) {
+    that.getIssueEvents(bounty.repo.user, bounty.repo.name, bounty.issue, function (error, result) {
+        _.each(_getBountyIssueEventsCallbacks, function (cb) {
             cb(that, bounty, error, result);
         });
 
         if (callback)
             callback(error, result);
-    });
+    })
 };
 
 /**
@@ -344,7 +356,7 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
 GitHub.prototype.getContributorsCommits = function (bounty, callback) {
     var that = this;
 
-    that.getIssueEvents(bounty, function (error, result) {
+    that.getBountyIssueEvents(bounty, function (error, result) {
         var result = result.data;
         if (error) {
             callback(error);
@@ -402,11 +414,11 @@ GitHub.prototype.postComment = function (bounty, comment) {
     );
 };
 
-var _getIssueEventsCallbacks = [];
+var _getBountyIssueEventsCallbacks = [];
 /**
- * Add an additional callback to GetIssueEvents
+ * Add an additional callback to GetBountyIssueEvents
  * @param callback (thisGitHubInstance, bounty, error, result)
  */
-GitHub.onGetIssueEvents = function (callback) {
-    _getIssueEventsCallbacks.push(callback);
+GitHub.onGetBountyIssueEvents = function (callback) {
+    _getBountyIssueEventsCallbacks.push(callback);
 };

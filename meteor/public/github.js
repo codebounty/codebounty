@@ -1,8 +1,7 @@
 //the injected github UI
-//isolated: all code / styles required for the extension should be in this file
-
-var CODEBOUNTY = (function (undefined) {
-    var my = {}, rootUrl = "http://localhost:3000", thisIssueUrl = encodeURI(window.location.href);
+(function (undefined) {
+    var rootUrl = "http://localhost:3000",
+        thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
 
@@ -211,10 +210,10 @@ var CODEBOUNTY = (function (undefined) {
         },
 
         /**
-         * Creates the add a bounty button and a numeric up / down (for setting the bounty amount)
+         * Creates the post a bounty button and a numeric up / down (for setting the bounty amount)
          * @param {Number} initValue
          */
-        setupAddBounty: function (initValue) {
+        setupPostBounty: function (initValue) {
             ui.render(function () {
                 var bountyDiv = "" +
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
@@ -233,12 +232,9 @@ var CODEBOUNTY = (function (undefined) {
                     e.stopPropagation();
                     e.preventDefault();
                 });
-            }, "setupAddBounty");
+            }, "setupPostBounty");
         },
 
-        /**
-         * Sets up the reward button
-         */
         setupRewardBounty: function () {
             ui.render(function () {
                 var bountyDiv = "" +
@@ -256,7 +252,6 @@ var CODEBOUNTY = (function (undefined) {
                 });
             }, "setupRewardBounty");
         },
-
         removeRewardButton: function () {
             $("#rewardBounty").remove();
         },
@@ -271,21 +266,36 @@ var CODEBOUNTY = (function (undefined) {
             }, "setBountyAmount");
         },
 
+        /**
+         * Initialize the ui (after the user is authenticated)
+         */
         initialize: function () {
             ui.setupOverlay();
-
             ui.setupContainer();
 
             //watch if the container gets removed / replaced (GitHub does it when a comment is updated)
             //then set it up again
             setInterval(function () {
-                if (ui._container.closest('body').length <= 0)
+                if (ui._container.closest("body").length <= 0)
                     ui.setupContainer();
             }, 1000);
 
-            ui.setupAddBounty(5);
+            //setup the post bounty button if the user can
+            messenger.sendMessage(
+                {
+                    method: "canPostBounty",
+                    params: [thisIssueUrl]
+                },
+                function (message) {
+                    if (message.error)
+                        return;
 
-            //check if the user can reward and setup the reward button if they can
+                    if (message.result)
+                        ui.setupPostBounty(5);
+                }
+            );
+
+            //setup the reward button if the user can
             messenger.sendMessage(
                 {
                     method: "canReward",
@@ -306,17 +316,15 @@ var CODEBOUNTY = (function (undefined) {
     events.register("closeOverlay", ui.closeOverlay);
     events.register("bountyRewarded", ui.removeRewardButton);
 
-    events.register("authorized", function (handle) {
-        //only handle authorization event once
+    events.register("authenticated", function (handle) {
+        //only handle authentication event once
         handle();
+
+        ui.initialize();
 
         //synchronize the total bounty reward for this issue, and show it
         events.register("rewardChanged", function (handle, message) {
             ui.setBountyAmount(message.amount);
         });
-
-        ui.initialize();
     });
-
-    return my;
 })();

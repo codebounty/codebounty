@@ -23,6 +23,36 @@ Meteor.methods({
     },
 
     /**
+     * Check if the user can post a bounty at this url
+     * - the issue is not closed
+     * - the issue is for a public repository
+     *   (we will not be able to get the event information if it is not)
+     * - TODO the user is not banned (not setup yet)
+     * @param url
+     * @returns {boolean}
+     */
+    "canPostBounty": function (url) {
+        var user = Meteor.user();
+        if (!user)
+            return false;
+
+        url = Tools.stripHash(url);
+        var repoIssue = GitHubUtils.parseUrl(url);
+
+        var fut = new Future();
+        var gitHub = new GitHub(user);
+        gitHub.getIssueEvents(repoIssue.repo.user, repoIssue.repo.name, repoIssue.issue, function (error, result) {
+            var last = _.last(_.filter(result.data, function (item) {
+                return item.event === "closed" || item.event === "reopened";
+            }));
+
+            fut.ret(!last || last.event !== "closed");
+        });
+
+        return fut.wait();
+    },
+
+    /**
      * Check if there is a bounty the current user can reward at the current url
      * A bounty can be rewarded if:
      * - it is not expired
