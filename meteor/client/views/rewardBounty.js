@@ -83,6 +83,30 @@ Template.rewardBountyView.rendered = function () {
 //            setAmount(row, changedAmount);
 //        });
 //    };
+    var showStatusBox = function () {
+        $(".statusBox").stop(false, true)
+            .addClass("invalid")
+            .fadeIn("fast");
+    };
+
+    var hideStatusBox = function () {
+        $(".statusBox").stop(true, false)
+            .fadeOut("fast", function () {
+                $(this).removeClass("invalid");
+            });
+    };
+
+    var enableSubmit = function () {
+        $(".rewardButton")
+            .prop("disabled", false)
+            .removeClass("disabled");
+    };
+
+    var disableSubmit = function () {
+        $(".rewardButton")
+            .prop("disabled", true)
+            .addClass("disabled");
+    };
 
     var getEqualSplit = function () {
         var usersEnabled = $(".contributorRow.enabled").length;
@@ -132,11 +156,14 @@ Template.rewardBountyView.rendered = function () {
         });
         var calcTotal = $(".calculatedTotal");
         calcTotal.find(".calculatedTotalAmount").text(t);
-        if(t !== total){
+        if (t !== total) {
             calcTotal.addClass("invalid");
-            //TODO: Implement form validity
+            showStatusBox();
+            disableSubmit();
         } else {
             calcTotal.removeClass("invalid");
+            hideStatusBox();
+            enableSubmit();
         }
     };
 
@@ -170,15 +197,17 @@ Template.rewardBountyView.rendered = function () {
                 updateTotal();
             }
         );
+
+        updateTotal();
     });
 };
 
 Template.rewardBountyView.events({
-    "click #closeButton": function () {
+    "click .closeButton": function () {
         Messenger.send({event: "closeOverlay"});
     },
 
-    "click #rewardButton": function (event) {
+    "click .rewardButton": function (event) {
         //for now hard code an equal reward for each person
         //TODO ui. ui should show prevent payout for people without email on commit
         var contributors = Session.get("contributors");

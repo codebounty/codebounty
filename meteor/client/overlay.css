@@ -1,3 +1,4 @@
+/* region general overrides */
 * {
     /*TODO: Find if there are prefixes for these.*/
     -webkit-box-sizing: border-box;
@@ -58,6 +59,30 @@ button:active {
     box-shadow: inset 0 1px 4px #cccccc;
 }
 
+button:hover.disabled, button:active.disabled {
+    color: #777777;
+    background: #dddddd;
+    cursor: default;
+}
+
+/* endregion */
+
+/* region utility classes */
+.invalid {
+    color: red;
+}
+
+.currencySymbol {
+    padding-right: 2px;
+}
+
+.disabled {
+    color: #777777;
+    background: #dddddd;
+}
+
+/* endregion */
+
 .container {
     position: relative;
     margin: 0 auto;
@@ -65,6 +90,19 @@ button:active {
     padding: 0 60px;
 }
 
+/* region Total label */
+.payoutTotalLabel {
+    float: right;
+}
+
+.payoutTotalAmount {
+    padding-left: 5px;
+    font-weight: normal;
+}
+
+/* endregion */
+
+/* region contributor row */
 .contributorRow {
     display: block;
     position: relative;
@@ -84,38 +122,13 @@ button:active {
     text-align: right;
 }
 
-.contributorName {
-    display: inline-block;
-}
-
-.rewardInputGroup {
+.contributorRow .rewardInputGroup {
     position: absolute;
     top: 0;
     right: 0;
 }
 
-.payoutTotalLabel {
-    float: right;
-}
-
-.payoutTotalAmount {
-    padding-left: 5px;
-    font-weight: normal;
-}
-
-.rewardButtonGroup {
-    position: relative;
-    width: 100%;
-    padding: 10px 0;
-    bottom: 0;
-    right: 0;
-    text-align: right;
-    border-top: 1px dashed #ccc;
-    background: #fcfcfc;
-
-}
-
-.rewardSlider {
+.contributorRow .rewardSlider {
     margin: 0 20px;
     display: inline-block;
     width: 200px;
@@ -135,27 +148,32 @@ button:active {
     padding-right: 20px;
 }
 
+/* endregion */
+
+/* region input formatting */
 .inputWrapper {
     position: relative;
     display: inline-block;
 }
 
-.dollarSign {
+.inputWrapper .currencySymbol {
     position: absolute;
     top: 5px;
     left: 8px;
 }
 
-.percentSign {
+.inputWrapper .percentSign {
     position: absolute;
     top: 4px;
     right: 6px;
 }
 
+/* endregion */
+
+/* region payout amount */
 .calculatedTotal {
     text-align: right;
-    padding-right: 104px;
-    padding-bottom: 5px;
+    padding-bottom: 10px;
     font-weight: bold;
 }
 
@@ -163,10 +181,29 @@ button:active {
     font-weight: normal;
 }
 
-.currencySymbol {
-    padding-right: 2px;
+/* endregion */
+
+/* region Bottom Bar */
+.bottomBar {
+    position: relative;
+    padding: 10px 0;
+    border-top: 1px dashed #ccc;
 }
 
-.invalid {
-    color: red;
+.statusBox, .rewardButtonGroup {
+    padding: 10px 0;
 }
+
+.statusBox {
+    display: none;
+    padding-right: 250px;
+    text-align: center;
+}
+
+.rewardButtonGroup {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+/* endregion */

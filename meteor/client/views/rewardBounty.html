@@ -1,32 +1,36 @@
 <template name="rewardBountyView">
     <div class="container">
         <h3>Contributor Payout:
-            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount">${{totalBounty}}</span></span>
+            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount"><span class="currencySymbol">$</span>{{totalBounty}}</span></span>
         </h3>
         <ul>
             {{#each contributors}}
             <li class="contributorRow">
                 <input type="checkbox" class="shouldPay"/>
-                <div class="contributorName">{{name}}</div>
+
+                <label name="contributorName" class="contributorName">{{name}}</label>
                 <div class="rewardInputGroup">
                     <div class="rewardSlider"></div>
                     <div class="inputWrapper">
-                        <span class="dollarSign">$</span>
+                        <span class="currencySymbol">$</span>
                         <input type="number" min="{{minimum}}" max="{{total}}" class="rewardInput" disabled/>
                     </div>
                     <div class="inputWrapper">
-                        <label class="rewardPercent" label/>
+                        <label class="rewardPercent"></label>
                         <span class="percentSign">%</span>
                     </div>
                 </div>
             </li>
             {{/each}}
         </ul>
-        <div class="calculatedTotal">Total: <span class="currencySymbol">$</span><span class="calculatedTotalAmount">0</span></div>
-        <div class="rewardButtonGroup">
-            <button id="rewardButton">Reward the coders</button>
-            <button id="closeButton">Cancel</button>
+        <div class="calculatedTotal">Payout Amount: <span class="currencySymbol">$</span><span
+                class="calculatedTotalAmount">0</span></div>
+        <div class="bottomBar">
+            <div class="statusBox">Please make sure the payout amount is equal to the total.</div>
+            <div class="rewardButtonGroup">
+                <button class="rewardButton">Reward the coders</button>
+                <button class="closeButton">Cancel</button>
+            </div>
         </div>
     </div>
 </template>
-        
