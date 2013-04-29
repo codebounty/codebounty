@@ -24,7 +24,9 @@ Bounty.statusImage = function (bountyId, callback) {
         status = "Error?";
     }
 
-    //TODO make this legit / pretty
+    var currencySymbol = "$";
+
+    //TODO make this pretty
     var canvas = new Canvas(1146, 592),
         ctx = canvas.getContext("2d");
 
@@ -36,9 +38,25 @@ Bounty.statusImage = function (bountyId, callback) {
 
         ctx.drawImage(img, 0, 0, img.width, img.height);
 
+        var leftOffset = 442;
+
+        ctx.font = "60px Arial bold";
+        var statusHeader = "Bounty now " + status;
+        ctx.fillText(statusHeader, leftOffset, 130);
+
+        ctx.font = "42px Arial bold";
+        var bountyAmount = "The bounty is posted for " + currencySymbol + bounty.amount;
+        ctx.fillText(bountyAmount, leftOffset, 213);
+        var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
+        ctx.fillText(bountyExpiration, leftOffset, 272);
+
+        ctx.font = "34px Arial bold";
+        var sitePlug = "Get Code Bounty now"
+        ctx.fillText(sitePlug, leftOffset+300, 505);
+
         ctx.font = "30px Arial";
-        var text = "Amount $" + bounty.amount + " " + status;
-        ctx.fillText(text, 500, 50);
+        var siteLink = "codebounty.co"
+        ctx.fillText(siteLink, leftOffset+445, 540);
 
         callback(canvas);
     });
