@@ -34,7 +34,7 @@ Meteor.Router.add({
         AuthUtils.afterLogin(function () {
             Messenger.listen();
 
-            Messenger.send({event: "authorized"});
+            Messenger.send({event: "authenticated"});
         });
 
         //track reward even before logged in

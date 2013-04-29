@@ -7,7 +7,7 @@ Tools = {};
  */
 Tools.truncate = function (number, precision) {
     var numS = number.toString(),
-        decPos = numS.indexOf('.');
+        decPos = numS.indexOf(".");
 
     if (precision === null) {
         precision = 0;
@@ -27,7 +27,7 @@ Tools.round = function (number, precision) {
 //return how many decimals are in a number
 Tools.precision = function (number) {
     var numberString = number.toString();
-    //convert to string to prevent issues w javascript's messed up numbers
+    //convert to string to prevent issues w javascript"s messed up numbers
     var decimalIndex = numberString.indexOf(".");
 
     if (decimalIndex === -1)
@@ -56,7 +56,7 @@ Tools.addDays = function (days) {
 
 //return the url without a trailing hash
 Tools.stripHash = function (url) {
-    var index = url.indexOf('#');
+    var index = url.indexOf("#");
 
     if (index > 0) {
         url = url.substring(0, index);

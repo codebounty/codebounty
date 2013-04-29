@@ -1,6 +1,5 @@
 //todo bitcoin this file contains bitcoin todos
 //contains all non-payment bounty functions / properties
-var url = Npm.require("url");
 
 //the # days bounties expire after
 Bounty.expiresAfterDays = 90;
@@ -24,30 +23,21 @@ var parse = function (amount, bountyUrl, callback) {
         return;
     }
 
-    var parsedUrl = url.parse(bountyUrl, true);
-    var path = parsedUrl.pathname;
-
-    if (parsedUrl.hostname !== "github.com" || path.indexOf("/issues") < 0) {
-        callback("Only accepting bounties for github issues currently");
-        return;
+    var repoIssue;
+    try {
+        repoIssue = GitHubUtils.parseUrl(bountyUrl);
+    } catch (error) {
+        callback(error);
     }
-
-    var paths = path.split("/");
-
-    //parse repository and issue
-    var repo = {user: paths[1], name: paths[2]};
-    var issue = parseFloat(paths[4]);
-
-    //TODO check repo exists with GitHub
 
     var bounty = {
         created: new Date(),
         type: "github",
         amount: amount,
         url: bountyUrl,
-        issue: issue,
-        repo: repo,
-        desc: "$" + amount + " bounty for Issue #" + issue + " in " + repo.name,
+        issue: repoIssue.issue,
+        repo: repoIssue.repo,
+        desc: "$" + amount + " bounty for Issue #" + repoIssue.issue + " in " + repoIssue.repo.name,
         reward: null
     };
 

@@ -7,5 +7,5 @@ Npm.depends({
 });
 
 Package.on_use(function (api) {
-    api.add_files('paypal.js', 'server');
+    api.add_files("paypal.js", "server");
 });
