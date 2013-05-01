@@ -1,8 +1,6 @@
 var fs = Npm.require("fs"), path = Npm.require("path"),
     basepath = path.resolve(".") + "/packages/bounty/";
 
-console.log(basepath);
-
 /**
  * generates the bounty status image
  * @param bountyId

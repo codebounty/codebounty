@@ -54,7 +54,7 @@ Payout.minimum = function () {
 };
 
 /**
- * Calculate the sum of the bounties (including the fee)
+ * Calculate the sum of the bounty payments (including the fee / the fee is not removed)
  * @param bounties
  */
 Payout.sum = function (bounties) {
@@ -81,11 +81,8 @@ Payout.checkValidity = function (bounties, payout) {
         //do this via string to prevent
         var precision = Tools.precision(userPayout.amount);
         if (precision > 2) {
-            console.log("Payout prob", precision);
             Payout.errors.greaterTwoDecimals();
         }
-
-        console.log(userPayout);
 
         if (!(userPayout.amount === 0 || userPayout.amount >= Payout.minimum()))
             Payout.errors.notZeroOrMinimum(Payout.minimum());

@@ -1,6 +1,11 @@
 //contains bounty payment logic
 //todo bitcoin this file contains bitcoin todos
 
+//how long (in minutes) to payout the bounty once it is rewarded
+var payoutWindow = 60 * 72; //72 hours
+//for testing
+//var payoutWindow = 2; //2 minutes
+
 /**
  * Pay a bounty
  * @param bounty
@@ -25,15 +30,9 @@ Bounty.pay = function (bounty) {
  * @param {Array.<{email, amount}>} payout [{email: "perl.jonathan@gmail.com", amount: 50}, ..] and their payouts
  * @param by Who the reward was initiated by (the backer userId, "system", future: "moderator")
  * @param callback Called if there is no error
- * Ex. {"email": amount, "perl.jonathan@gmail.com": 51.50 }
  */
 Bounty.initiatePayout = function (gitHubInstance, bounties, payout, by, callback) {
     var totalUserPayout = 0;
-    //remove any extra decimals on the user payouts
-    _.each(payout, function (userPayout) {
-        userPayout.amount = Tools.truncate(userPayout.amount, 2);
-        totalUserPayout += userPayout.amount;
-    });
 
     Payout.checkValidity(bounties, payout);
 
@@ -63,9 +62,6 @@ Bounty.initiatePayout = function (gitHubInstance, bounties, payout, by, callback
         var codeBountyPayout = {email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee};
         payout.push(codeBountyPayout);
 
-        var seventyTwoHours = Tools.addMinutes(60 * 72);
-//            var seventyTwoHours = Tools.addMinutes(1);
-
         var bountyIds = _.pluck(bounties, "_id").join(",");
 
         console.log("Initiating payout for", bountyIds, "total", payout);
@@ -83,7 +79,7 @@ Bounty.initiatePayout = function (gitHubInstance, bounties, payout, by, callback
             var reward = {
                 by: by,
                 updated: new Date(),
-                planned: seventyTwoHours,
+                planned: Tools.addMinutes(payoutWindow),
                 payout: payout,
                 group: groupId,
                 paid: null,
