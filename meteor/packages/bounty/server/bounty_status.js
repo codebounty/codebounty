@@ -54,12 +54,8 @@ var watchStatusToInitiateOrCancelPayout = function () {
             if (bounties.length <= 0)
                 return;
 
-            var bountyIds = _.pluck(bounties, "_id").join(",");
-
             //if the issue's status is closed: initiate an equal payout
             if (last.event === "closed") {
-                console.log("initiate payout", bounties);
-
                 Bounty.contributors(gitHubInstance, bounties[0], function (contributors) {
                     //if there are no contributors, do nothing
                     if (contributors.length <= 0) {
@@ -100,7 +96,8 @@ var watchStatusToInitiateOrCancelPayout = function () {
                         }
                     }
 
-                    console.log("System initiated payout", bountyIds, payout);
+                    var bountyIds = _.pluck(bounties, "_id").join(",");
+                    console.log("System initiated payout after issue closed", bountyIds, payout);
                     Bounty.initiatePayout(gitHubInstance, bounties, payout, "system", function () {
                         //TODO do something?
                     });
@@ -108,6 +105,12 @@ var watchStatusToInitiateOrCancelPayout = function () {
             }
             //if the issue's status is reopened: cancel the payout
             else if (last.event === "reopened") {
+                //only cancel payout for bounties that have a reward planned
+                bounties = _.filter(bounties, function (bounty) {
+                    return bounty.reward && bounty.reward.planned;
+                });
+
+                var bountyIds = _.pluck(bounties, "_id").join(",");
                 Bounty.cancelPayout(bounties, function () {
                     console.log("payout cancelled, issue reopened", bountyIds);
                 });
