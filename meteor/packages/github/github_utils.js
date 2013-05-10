@@ -19,6 +19,8 @@ GitHubUtils.parseUrl = function (githubUrl) {
     //parse repository and issue
     var repo = {user: paths[1], name: paths[2]};
     var issue = parseFloat(paths[4]);
+    if (isNaN(issue))
+        throw "Cannot parse issue number";
 
     return {repo: repo, issue: issue};
 };
