@@ -16,6 +16,6 @@ chrome.tabs.onUpdated.addListener(checkForValidUrl);
 
 // Add popup exception
 chrome.contentSettings.popups.set({
-    "primaryPattern": "http://localhost:3000/*",
+    "primaryPattern": "https://github.com/*",
     "setting": "allow"
 });
