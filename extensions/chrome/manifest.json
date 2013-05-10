@@ -25,6 +25,7 @@
     "content_scripts": [
         {
             "matches": ["https://github.com/*/*/issues/*"],
+            "exclude_matches": ["https://github.com/*/*/issues/new"],
             "js":      ["jquery-1.9.1.min.js", "chromeContent.js"],
             "run_at":  "document_end"
         }
