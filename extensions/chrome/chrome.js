@@ -1,3 +1,6 @@
+chrome = chrome || {};
+chrome.contentSettings = chrome.contentSettings || {};
+
 // Called when the url of a tab changes.
 function checkForValidUrl(tabId, changeInfo, tab) {
     // If the letter 'g' is found in the tab's URL...
@@ -10,3 +13,9 @@ function checkForValidUrl(tabId, changeInfo, tab) {
 
 // Listen for any changes to the URL of any tab.
 chrome.tabs.onUpdated.addListener(checkForValidUrl);
+
+// Add popup exception
+chrome.contentSettings.popups.set({
+    "primaryPattern": "http://localhost:3000/*",
+    "setting": "allow"
+});
