@@ -18,18 +18,20 @@
     "permissions": [
         "tabs",
         "contentSettings",
+        "https://github.com/*/*/issues/*",
         "http://*.codebounty.co/*",
         "https://localhost/meteor/public/github.js",
         "https://localhost/meteor/public/codebounty.css"
     ],
-    "content_scripts": [
-        {
-            "matches": ["https://github.com/*/*/issues/*"],
-            "exclude_matches": ["https://github.com/*/*/issues/new"],
-            "js":      ["jquery-1.9.1.min.js", "chromeContent.js"],
-            "run_at":  "document_end"
-        }
-    ],
+    // Content scripts now injects at chrome.js
+    // "content_scripts": [
+    //     {
+    //         "matches": ["https://github.com/*/*/issues/*"],
+    //         "exclude_matches": ["https://github.com/*/*/issues/new"],
+    //         "js":      ["jquery-1.9.1.min.js", "chromeContent.js"],
+    //         "run_at":  "document_end"
+    //     }
+    // ],
     "background": { "scripts": ["chrome.js"] },
     "homepage_url": "http://codebounty.co",
     "options_page": "options.html",
