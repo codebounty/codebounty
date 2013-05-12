@@ -49,8 +49,6 @@ Bounty.statusImage = function (bountyId, callback, size) {
         height = (size && size.height > _minHeight) ? size.height : _minHeight;
 
     var currencySymbol = "$";
-    var leftOffset = width - 444;
-    var rightOffset = 39;
     var backgroundColor = "#E0C39D";
     // var textColor = "#484640";
 
@@ -95,12 +93,33 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Reset color
     // ctx.fillStyle = textColor;
 
+    // Align elements
+    // Bounty Status
+    var bountyStatusOriginX = 25;
+    var bountyStatusOriginY = Math.floor((height - 336) / 2);   // horizontally center (bounty status image valid height is 328) 
+    
+    // Bounty Cash
+    var bountyCashOriginX = bountyStatusOriginX + 147;
+    var bountyCashOriginY = bountyStatusOriginY + 233;
+
+    // Bounty Header
+    var statusHeaderOriginX = width - 444;
+    var statusHeaderOriginY = bountyStatusOriginY + 65;
+
+    // Bounty Content
+    var leftOffsetIndent = 5;
+    var bountyContentOriginX = statusHeaderOriginX + leftOffsetIndent;
+    var bountyAmountOriginY = statusHeaderOriginY + 53;
+    var bountyExpirationOriginY = statusHeaderOriginY + 90;
+
+    // Bounty Footer
+    var footerOriginX = width - 39;
+    var posterUserOriginY = bountyStatusOriginY + 290;
+    var siteLinkOriginY = posterUserOriginY + 31;
+
     // Draw Bounty status
     // TODO: exclamation mark is not included in font Woodshop, so in the
     // original design, it is replaced by using Myriad Pro.
-    var statusHeaderOriginX = leftOffset;
-    var statusHeaderOriginY = 80;
-
     ctx.font = headerFontSize + " " + headerFontName;
     ctx.fillStyle = headerFontColor;
     var statusHeader;
@@ -115,11 +134,6 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
     // Draw bounty amount and expiration
-    var leftOffsetIndent = 5;
-    var bountyContentOriginX = leftOffset + leftOffsetIndent;
-    var bountyAmountOriginY = 133;
-    var bountyExpirationOriginY = 170;
-
     ctx.font = contentFontSize + " " + contentFontName;
     ctx.fillStyle = contentFontColor;
     var bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
@@ -128,11 +142,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
     ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
 
-    // Draw codebounty plug and link
-    var footerOriginX = width - rightOffset;
-    var posterUserOriginY = 305;
-    var siteLinkOriginY = 336;
-
+    // Draw codebounty plug and link (align right)
     ctx.textAlign = "right";
     ctx.fillStyle = footerFontColor;
     ctx.font = footerFontSize + " " + footerFontName;
@@ -142,10 +152,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var siteLink = "codebounty.co"
     ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
 
-    // Draw bounty status image
-    var bountyStatusOriginX = 25;
-    var bountyStatusOriginY = Math.floor((height - 328) / 2);   // horizontally center (bounty status image valid height is 328) 
-    
+    // Draw bounty status image    
     var bountyStatusImageFile;
     if (status == "open")
         bountyStatusImageFile = "banner-bounty-open.png";
@@ -160,9 +167,6 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
 
     // Draw bounty cash image
-    var bountyCashOriginX = bountyStatusOriginX + 127;
-    var bountyCashOriginY = bountyStatusOriginY + 233;
-
     var bountyCashImageFile;
     switch (bounty.cashLevel) {
         case 1:
