@@ -39,10 +39,10 @@ Bounty.statusImage = function (bountyId, callback) {
 
 
     var currencySymbol = "$";
-    var leftOffset = 271;
-    var rightOffset = 42;
     var width = 715;
     var height = 370;
+    var leftOffset = width - 444;
+    var rightOffset = 42;
     var backgroundColor = "#E0C39D";
     var textColor = "#484640";
 
@@ -118,6 +118,9 @@ Bounty.statusImage = function (bountyId, callback) {
     ctx.fillText(siteLink, width - rightOffset, 336);
 
     // Draw bounty status image
+    var bountyStatusOriginX = 24;
+    var bountyStatusOriginY = 16;
+    
     var bountyStatusImageFile;
     if (status == "open")
         bountyStatusImageFile = "banner-bounty-open.png";
@@ -129,9 +132,12 @@ Bounty.statusImage = function (bountyId, callback) {
         throw "Unknown bounty status";
     var bountyStatusImage = new Image;
     bountyStatusImage.src = fs.readFileSync(assetFile(bountyStatusImageFile));
-    ctx.drawImage(bountyStatusImage, 0, 0, bountyStatusImage.width, bountyStatusImage.height);
+    ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
 
     // Draw bounty cash image
+    var bountyCashOriginX = 171;
+    var bountyCashOriginY = 249;
+
     var bountyCashImageFile;
     switch (bounty.cashLevel) {
         case 1:
@@ -154,7 +160,7 @@ Bounty.statusImage = function (bountyId, callback) {
     }
     var bountyCashImage = new Image;
     bountyCashImage.src = fs.readFileSync(assetFile(bountyCashImageFile));
-    ctx.drawImage(bountyCashImage, 171, 249, bountyCashImage.width, bountyCashImage.height);
+    ctx.drawImage(bountyCashImage, bountyCashOriginX, bountyCashOriginY, bountyCashImage.width, bountyCashImage.height);
 
     callback(canvas);
 };
