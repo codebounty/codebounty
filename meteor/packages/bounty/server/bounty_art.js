@@ -56,28 +56,28 @@ Bounty.statusImage = function (bountyId, callback, size) {
 
     // Setup fonts     
     var headerFontName = "Woodshop";
-    var headerFontFile = "Woodshop-Regular.otf";
+    var headerFontFile = "woodshop-regular.otf";
     var headerFontColor = "#484640";
     var headerFontSize = "39px";
     var headerFont = new Font(headerFontName, assetFile(headerFontFile));
     ctx.addFont(headerFont);
 
     var headerFallbackFontName = '"Myriad Pro"';
-    var headerFallbackFontFile = "MyriadPro-Regular.otf";
+    var headerFallbackFontFile = "myriadpro-regular.otf";
     var headerFallbackFontColor = headerFontColor;
     var headerFallbackFontSize = headerFontSize;
     var headerFallbackFont = new Font(headerFallbackFontName, assetFile(headerFallbackFontFile));
     ctx.addFont(headerFallbackFont);
 
     var contentFontName = '"Futura LT Heavy"';
-    var contentFontFile = "Futura-LT-Heavy.otf";
+    var contentFontFile = "futura-lt-heavy.otf";
     var contentFontColor = "#78665A";
     var contentFontSize = "26px";
     var contentFont = new Font(contentFontName, assetFile(contentFontFile));
     ctx.addFont(contentFont);
 
     var footerFontName = '"Futura LT"';
-    var footerFontFile = "Futura-LT.ttf";
+    var footerFontFile = "futura-lt.ttf";
     var footerFontColor = "#484640";
     var footerFontSize = "26px";
     var footerSmallerFontSize = "19.5px";
