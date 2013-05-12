@@ -25,6 +25,10 @@ Bounty.statusImage = function (bountyId, callback, size) {
         "user": "JohnDoeUser"
     }
     var status = bounty.status;
+    size = {
+        "width": 1000,
+        "height": 1000
+    }
     // End debug code
 
     // var status;
@@ -140,7 +144,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
 
     // Draw bounty status image
     var bountyStatusOriginX = 25;
-    var bountyStatusOriginY = 17;
+    var bountyStatusOriginY = Math.floor((height - 328) / 2);   // horizontally center (bounty status image valid height is 328) 
     
     var bountyStatusImageFile;
     if (status == "open")
@@ -156,8 +160,8 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
 
     // Draw bounty cash image
-    var bountyCashOriginX = 172;
-    var bountyCashOriginY = 250;
+    var bountyCashOriginX = bountyStatusOriginX + 127;
+    var bountyCashOriginY = bountyStatusOriginY + 233;
 
     var bountyCashImageFile;
     switch (bounty.cashLevel) {
