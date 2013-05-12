@@ -63,14 +63,14 @@ Bounty.statusImage = function (bountyId, callback) {
     var contentFontName = '"Futura LT Heavy"';
     var contentFontFile = "Futura-LT-Heavy.otf";
     var contentFontColor = "#78665A";
-    var contentFontSize = "30.24px";
+    var contentFontSize = "26px";
     var contentFont = new Font(contentFontName, assetFile(contentFontFile));
     ctx.addFont(contentFont);
 
     var footerFontName = '"Futura LT"';
     var footerFontFile = "Futura-LT.ttf";
     var footerFontColor = "#484640";
-    var footerFontSize = "30.24px";
+    var footerFontSize = "26px";
     var footerSmallerFontSize = "20px";
     var footerFont = new Font(footerFontName, assetFile(footerFontFile));
     ctx.addFont(footerFont);
