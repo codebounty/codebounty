@@ -41,17 +41,8 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // }
 
     // Determine image size
-    var width, height;
-    if (size && size.width > _minWidth) {
-        width = size.width;
-    } else {
-        width = _minWidth;
-    }
-    if (size && size.height > _minHeight) {
-        height = size.height;
-    } else {
-        height = _minHeight;
-    }
+    var width = (size && size.width > _minWidth) ? size.width : _minWidth,
+        height = (size && size.height > _minHeight) ? size.height : _minHeight;
 
     var currencySymbol = "$";
     var leftOffset = width - 444;
