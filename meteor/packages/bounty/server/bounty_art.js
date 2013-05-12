@@ -13,9 +13,9 @@ Bounty.statusImage = function (bountyId, callback) {
     
     // TODO: debug purpose, remove it later
     var bounty = {
-        "status": "reopened",
+        "status": "open",
         "amount": "10",
-        "cashLevel": 3,
+        "cashLevel": 4,
         "user": "John Doe"
     }
     var status = bounty.status;
@@ -51,30 +51,30 @@ Bounty.statusImage = function (bountyId, callback) {
         ctx = canvas.getContext("2d");
 
     // Setup fonts     
-    var statusHeaderFontName = "Woodshop";
-    var statusHeaderFontFile = "Woodshop-Regular.otf";
-    var statusHeaderFontColor = "#484640";
-    var statusHeaderFontSize = "39px";
-    var statusHeaderFontFace = "normal";
-    var statusHeaderFont = new Font(statusHeaderFontName, assetFile(statusHeaderFontFile));
-    ctx.addFont(statusHeaderFont);
+    var headerFontName = "Woodshop";
+    var headerFontFile = "Woodshop-Regular.otf";
+    var headerFontColor = "#484640";
+    var headerFontSize = "39px";
+    var headerFontFace = "normal";
+    var headerFont = new Font(headerFontName, assetFile(headerFontFile));
+    ctx.addFont(headerFont);
 
-    var statusContentFontName = '"Futura LT Heavy"';
-    var statusContentFontFile = "Futura-LT-Heavy.otf";
-    var statusContentFontColor = "#78665A";
-    var statusContentFontSize = "30.24px";
-    var statusContentFontFace = "normal";
-    var statusContentFont = new Font(statusContentFontName, assetFile(statusContentFontFile));
-    ctx.addFont(statusContentFont);
+    var contentFontName = '"Futura LT Heavy"';
+    var contentFontFile = "Futura-LT-Heavy.otf";
+    var contentFontColor = "#78665A";
+    var contentFontSize = "30.24px";
+    var contentFontFace = "normal";
+    var contentFont = new Font(contentFontName, assetFile(contentFontFile));
+    ctx.addFont(contentFont);
 
-    var statusFooterFontName = '"Futura LT"';
-    var statusFooterFontFile = "Futura-LT.ttf";
-    var statusFooterFontColor = "#484640";
-    var statusFooterFontSize = "30.24px";
-    var statusFooterSmallerFontSize = "20px";
-    var statusFooterFontFace = "normal";
-    var statusFooterFont = new Font(statusFooterFontName, assetFile(statusFooterFontFile));
-    ctx.addFont(statusFooterFont);
+    var footerFontName = '"Futura LT"';
+    var footerFontFile = "Futura-LT.ttf";
+    var footerFontColor = "#484640";
+    var footerFontSize = "30.24px";
+    var footerSmallerFontSize = "20px";
+    var footerFontFace = "normal";
+    var footerFont = new Font(footerFontName, assetFile(footerFontFile));
+    ctx.addFont(footerFont);
 
      // Draw background
     ctx.fillStyle = backgroundColor;
@@ -86,8 +86,8 @@ Bounty.statusImage = function (bountyId, callback) {
     // Draw Bounty status
     // TODO: exclamation mark is not included in font Woodshop, so in the
     // original design, it is replaced by using Myriad Pro.
-    ctx.font = statusHeaderFontFace + " " + statusHeaderFontSize + " " + statusHeaderFontName;
-    ctx.fillStyle = statusHeaderFontColor;
+    ctx.font = headerFontFace + " " + headerFontSize + " " + headerFontName;
+    ctx.fillStyle = headerFontColor;
     var statusHeader;
     if (status == "open")
         statusHeader = "BOUNTY NOW OPEN!";
@@ -100,8 +100,8 @@ Bounty.statusImage = function (bountyId, callback) {
     ctx.fillText(statusHeader, leftOffset, 80);
 
     // Draw bounty amount and expiration
-    ctx.font = statusContentFontFace + " " + statusContentFontSize + " " + statusContentFontName;
-    ctx.fillStyle = statusContentFontColor;
+    ctx.font = contentFontFace + " " + contentFontSize + " " + contentFontName;
+    ctx.fillStyle = contentFontColor;
     var bountyAmount = "The bounty is posted for " + currencySymbol + bounty.amount;
     ctx.fillText(bountyAmount, leftOffset, 133);
     var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
@@ -109,11 +109,11 @@ Bounty.statusImage = function (bountyId, callback) {
 
     //Draw codebounty plug and link
     ctx.textAlign = "right";
-    ctx.fillStyle = statusFooterFontColor;
-    ctx.font = statusFooterFontFace + " " + statusFooterFontSize + " " + statusFooterFontName;
+    ctx.fillStyle = footerFontColor;
+    ctx.font = footerFontFace + " " + footerFontSize + " " + footerFontName;
     var posterUser = "Posted by " + bounty.user;
     ctx.fillText(posterUser, width - rightOffset, 305);
-    ctx.font = statusFooterFontFace + " " + statusFooterSmallerFontSize + " " + statusFooterFontName;
+    ctx.font = footerFontFace + " " + footerSmallerFontSize + " " + footerFontName;
     var siteLink = "codebounty.co"
     ctx.fillText(siteLink, width - rightOffset, 336);
 
