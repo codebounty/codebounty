@@ -48,7 +48,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var leftOffset = width - 444;
     var rightOffset = 39;
     var backgroundColor = "#E0C39D";
-    var textColor = "#484640";
+    // var textColor = "#484640";
 
     // TODO make this pretty
     var canvas = new Canvas(width, height),
@@ -61,6 +61,13 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var headerFontSize = "39px";
     var headerFont = new Font(headerFontName, assetFile(headerFontFile));
     ctx.addFont(headerFont);
+
+    var headerFallbackFontName = '"Myriad Pro"';
+    var headerFallbackFontFile = "MyriadPro-Regular.otf";
+    var headerFallbackFontColor = headerFontColor;
+    var headerFallbackFontSize = headerFontSize;
+    var headerFallbackFont = new Font(headerFallbackFontName, assetFile(headerFallbackFontFile));
+    ctx.addFont(headerFallbackFont);
 
     var contentFontName = '"Futura LT Heavy"';
     var contentFontFile = "Futura-LT-Heavy.otf";
@@ -82,11 +89,14 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.fillRect(0, 0, width, height);
 
     // Reset color
-    ctx.fillStyle = textColor;
+    // ctx.fillStyle = textColor;
 
     // Draw Bounty status
     // TODO: exclamation mark is not included in font Woodshop, so in the
     // original design, it is replaced by using Myriad Pro.
+    var statusHeaderOriginX = leftOffset;
+    var statusHeaderOriginY = 80;
+
     ctx.font = headerFontSize + " " + headerFontName;
     ctx.fillStyle = headerFontColor;
     var statusHeader;
@@ -98,7 +108,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
         statusHeader = "BOUNTY REOPENED";
     else
         throw "Unknown bounty status";
-    ctx.fillText(statusHeader, leftOffset, 80);
+    ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
     // Draw bounty amount and expiration
     var leftOffsetIndent = 5;
