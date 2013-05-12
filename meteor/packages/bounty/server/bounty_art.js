@@ -14,9 +14,9 @@ Bounty.statusImage = function (bountyId, callback) {
     // TODO: debug purpose, remove it later
     var bounty = {
         "status": "open",
-        "amount": "10",
-        "cashLevel": 4,
-        "user": "John Doe"
+        "amount": "50.00",
+        "cashLevel": 5,
+        "user": "JohnDoeUser"
     }
     var status = bounty.status;
 
@@ -57,7 +57,6 @@ Bounty.statusImage = function (bountyId, callback) {
     var headerFontFile = "Woodshop-Regular.otf";
     var headerFontColor = "#484640";
     var headerFontSize = "39px";
-    var headerFontFace = "normal";
     var headerFont = new Font(headerFontName, assetFile(headerFontFile));
     ctx.addFont(headerFont);
 
@@ -65,7 +64,6 @@ Bounty.statusImage = function (bountyId, callback) {
     var contentFontFile = "Futura-LT-Heavy.otf";
     var contentFontColor = "#78665A";
     var contentFontSize = "30.24px";
-    var contentFontFace = "normal";
     var contentFont = new Font(contentFontName, assetFile(contentFontFile));
     ctx.addFont(contentFont);
 
@@ -74,7 +72,6 @@ Bounty.statusImage = function (bountyId, callback) {
     var footerFontColor = "#484640";
     var footerFontSize = "30.24px";
     var footerSmallerFontSize = "20px";
-    var footerFontFace = "normal";
     var footerFont = new Font(footerFontName, assetFile(footerFontFile));
     ctx.addFont(footerFont);
 
@@ -88,7 +85,7 @@ Bounty.statusImage = function (bountyId, callback) {
     // Draw Bounty status
     // TODO: exclamation mark is not included in font Woodshop, so in the
     // original design, it is replaced by using Myriad Pro.
-    ctx.font = headerFontFace + " " + headerFontSize + " " + headerFontName;
+    ctx.font = headerFontSize + " " + headerFontName;
     ctx.fillStyle = headerFontColor;
     var statusHeader;
     if (status == "open")
@@ -102,9 +99,9 @@ Bounty.statusImage = function (bountyId, callback) {
     ctx.fillText(statusHeader, leftOffset, 80);
 
     // Draw bounty amount and expiration
-    ctx.font = contentFontFace + " " + contentFontSize + " " + contentFontName;
+    ctx.font = contentFontSize + " " + contentFontName;
     ctx.fillStyle = contentFontColor;
-    var bountyAmount = "The bounty is posted for " + currencySymbol + bounty.amount;
+    var bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
     ctx.fillText(bountyAmount, leftOffset, 133);
     var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
     ctx.fillText(bountyExpiration, leftOffset, 170);
@@ -112,10 +109,10 @@ Bounty.statusImage = function (bountyId, callback) {
     //Draw codebounty plug and link
     ctx.textAlign = "right";
     ctx.fillStyle = footerFontColor;
-    ctx.font = footerFontFace + " " + footerFontSize + " " + footerFontName;
+    ctx.font = footerFontSize + " " + footerFontName;
     var posterUser = "Posted by " + bounty.user;
     ctx.fillText(posterUser, width - rightOffset, 305);
-    ctx.font = footerFontFace + " " + footerSmallerFontSize + " " + footerFontName;
+    ctx.font = footerSmallerFontSize + " " + footerFontName;
     var siteLink = "codebounty.co"
     ctx.fillText(siteLink, width - rightOffset, 336);
 
