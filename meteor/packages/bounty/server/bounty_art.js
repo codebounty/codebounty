@@ -9,25 +9,26 @@ var fs = Npm.require("fs"), path = Npm.require("path"),
  */
 Bounty.statusImage = function (bountyId, callback, size) {
     var Font = Canvas.Font;
-    var _minWidth = 715,
-        _minHeight = 370;
+    var _minWidth = 712,
+        _minHeight = 368;
     var assetFile = function (name) {
         return path.join(basepath, "/assets/", name);
-    }
+    };
 
     // var bounty = Bounties.findOne(bountyId);
     
     // Start debug code
     var bounty = {
         "status": "open",
-        "amount": "50.00",
-        "cashLevel": 5,
-        "user": "JohnDoeUser"
+        "amount": "12.00",
+        "expiredDate": new Date(1945, 4, 1, 24),
+        "cashLevel": 3,
+        "userName": "JohnDoeUser"
     }
     var status = bounty.status;
     size = {
-        "width": 1000,
-        "height": 1000
+        "width": 0,
+        "height": 0
     }
     // End debug code
 
@@ -47,10 +48,11 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Determine image size
     var width = (size && size.width > _minWidth) ? size.width : _minWidth,
         height = (size && size.height > _minHeight) ? size.height : _minHeight;
+    var centerX = Math.floor(width / 2),
+        centerY = Math.floor(height / 2);
 
     var currencySymbol = "$";
     var backgroundColor = "#E0C39D";
-    // var textColor = "#484640";
 
     // TODO make this pretty
     var canvas = new Canvas(width, height),
@@ -64,6 +66,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var headerFont = new Font(headerFontName, assetFile(headerFontFile));
     ctx.addFont(headerFont);
 
+    // Not used so far
     var headerFallbackFontName = '"Myriad Pro"';
     var headerFallbackFontFile = "myriadpro-regular.otf";
     var headerFallbackFontColor = headerFontColor;
@@ -90,12 +93,9 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Reset color
-    // ctx.fillStyle = textColor;
-
     // Align elements
     // Bounty Status
-    var bountyStatusOriginX = 25;
+    var bountyStatusOriginX = centerX - 332;
     var bountyStatusOriginY = Math.floor((height - 336) / 2);   // horizontally center (bounty status image valid height is 328) 
     
     // Bounty Cash
@@ -103,7 +103,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var bountyCashOriginY = bountyStatusOriginY + 233;
 
     // Bounty Header
-    var statusHeaderOriginX = width - 444;
+    var statusHeaderOriginX = centerX - 86;
     var statusHeaderOriginY = bountyStatusOriginY + 65;
 
     // Bounty Content
@@ -113,7 +113,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var bountyExpirationOriginY = statusHeaderOriginY + 90;
 
     // Bounty Footer
-    var footerOriginX = width - 39;
+    var footerOriginX = centerX + 319;
     var posterUserOriginY = bountyStatusOriginY + 290;
     var siteLinkOriginY = posterUserOriginY + 31;
 
@@ -134,19 +134,55 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
     // Draw bounty amount and expiration
+    var formatDate = function (date) {
+        var m_names = new Array("Jan", "Feb", "Mar", "Apr", "May",
+        "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec");
+
+        // TODO: take care of timezone
+        var curr_date = date.getDate();
+        var curr_month = date.getMonth();
+        var curr_year = date.getFullYear();
+        var curr_hour = date.getHours();
+
+        var sup = "";
+        if (curr_date == 1 || curr_date == 21 || curr_date ==31) {
+            sup = "st";
+        } else if (curr_date == 2 || curr_date == 22) {
+            sup = "nd";
+        } else if (curr_date == 3 || curr_date == 23) {
+            sup = "rd";
+        } else {
+            sup = "th";
+        }
+
+        var a_p = "";
+        if (curr_hour < 12) {
+            a_p = "AM";
+        } else {
+            a_p = "PM";
+        }
+        if (curr_hour == 0) {
+            curr_hour = 12;
+        }
+        if (curr_hour > 12) {
+            curr_hour = curr_hour - 12;
+        }
+
+        return m_names[curr_month] + " " + curr_date + sup + ", " + curr_year + " at " + curr_hour + a_p;
+    };
+
     ctx.font = contentFontSize + " " + contentFontName;
     ctx.fillStyle = contentFontColor;
     var bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
     ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
-    // TODO: Get expiration date from date
-    var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
+    var bountyExpiration = "Expires: " + formatDate(bounty.expiredDate);
     ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
 
     // Draw codebounty plug and link (align right)
     ctx.textAlign = "right";
     ctx.fillStyle = footerFontColor;
     ctx.font = footerFontSize + " " + footerFontName;
-    var posterUser = "Posted by " + bounty.user;
+    var posterUser = "Posted by " + bounty.userName;
     ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
     ctx.font = footerSmallerFontSize + " " + footerFontName;
     var siteLink = "codebounty.co"
