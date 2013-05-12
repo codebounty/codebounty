@@ -5,13 +5,19 @@ var fs = Npm.require("fs"), path = Npm.require("path"),
  * generates the bounty status image
  * @param bountyId
  * @param callback passed a {Canvas}
+ * @param size object contains variable 'width' and 'height' (optional)
  */
-Bounty.statusImage = function (bountyId, callback) {
+Bounty.statusImage = function (bountyId, callback, size) {
     var Font = Canvas.Font;
+    var _minWidth = 715,
+        _minHeight = 370;
+    var assetFile = function (name) {
+        return path.join(basepath, "/assets/", name);
+    }
 
     // var bounty = Bounties.findOne(bountyId);
     
-    // TODO: debug purpose, remove it later
+    // Start debug code
     var bounty = {
         "status": "open",
         "amount": "50.00",
@@ -19,6 +25,7 @@ Bounty.statusImage = function (bountyId, callback) {
         "user": "JohnDoeUser"
     }
     var status = bounty.status;
+    // End debug code
 
     // var status;
     // if (bounty.reward) {
@@ -32,19 +39,23 @@ Bounty.statusImage = function (bountyId, callback) {
     // } else {
     //     status = "error?";
     // }
-    
-    var assetFile = function (name) {
-        return path.join(basepath, "/assets/", name);
+
+    // Determine image size
+    var width, height;
+    if (size && size.width > _minWidth) {
+        width = size.width;
+    } else {
+        width = _minWidth;
+    }
+    if (size && size.height > _minHeight) {
+        height = size.height;
+    } else {
+        height = _minHeight;
     }
 
-
     var currencySymbol = "$";
-    var width = 715;
-    var height = 370;
-    // var width = 1000;
-    // var height = 1000;
     var leftOffset = width - 444;
-    var rightOffset = 42;
+    var rightOffset = 39;
     var backgroundColor = "#E0C39D";
     var textColor = "#484640";
 
@@ -71,7 +82,7 @@ Bounty.statusImage = function (bountyId, callback) {
     var footerFontFile = "Futura-LT.ttf";
     var footerFontColor = "#484640";
     var footerFontSize = "26px";
-    var footerSmallerFontSize = "20px";
+    var footerSmallerFontSize = "19.5px";
     var footerFont = new Font(footerFontName, assetFile(footerFontFile));
     ctx.addFont(footerFont);
 
@@ -99,26 +110,36 @@ Bounty.statusImage = function (bountyId, callback) {
     ctx.fillText(statusHeader, leftOffset, 80);
 
     // Draw bounty amount and expiration
+    var leftOffsetIndent = 5;
+    var bountyContentOriginX = leftOffset + leftOffsetIndent;
+    var bountyAmountOriginY = 133;
+    var bountyExpirationOriginY = 170;
+
     ctx.font = contentFontSize + " " + contentFontName;
     ctx.fillStyle = contentFontColor;
     var bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
-    ctx.fillText(bountyAmount, leftOffset, 133);
+    ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
+    // TODO: Get expiration date from date
     var bountyExpiration = "Expires: " + "May 20th, 2013 at 12am";
-    ctx.fillText(bountyExpiration, leftOffset, 170);
+    ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
 
-    //Draw codebounty plug and link
+    // Draw codebounty plug and link
+    var footerOriginX = width - rightOffset;
+    var posterUserOriginY = 305;
+    var siteLinkOriginY = 336;
+
     ctx.textAlign = "right";
     ctx.fillStyle = footerFontColor;
     ctx.font = footerFontSize + " " + footerFontName;
     var posterUser = "Posted by " + bounty.user;
-    ctx.fillText(posterUser, width - rightOffset, 305);
+    ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
     ctx.font = footerSmallerFontSize + " " + footerFontName;
     var siteLink = "codebounty.co"
-    ctx.fillText(siteLink, width - rightOffset, 336);
+    ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
 
     // Draw bounty status image
-    var bountyStatusOriginX = 24;
-    var bountyStatusOriginY = 16;
+    var bountyStatusOriginX = 25;
+    var bountyStatusOriginY = 17;
     
     var bountyStatusImageFile;
     if (status == "open")
@@ -134,8 +155,8 @@ Bounty.statusImage = function (bountyId, callback) {
     ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
 
     // Draw bounty cash image
-    var bountyCashOriginX = 171;
-    var bountyCashOriginY = 249;
+    var bountyCashOriginX = 172;
+    var bountyCashOriginY = 250;
 
     var bountyCashImageFile;
     switch (bounty.cashLevel) {
@@ -161,5 +182,6 @@ Bounty.statusImage = function (bountyId, callback) {
     bountyCashImage.src = fs.readFileSync(assetFile(bountyCashImageFile));
     ctx.drawImage(bountyCashImage, bountyCashOriginX, bountyCashOriginY, bountyCashImage.width, bountyCashImage.height);
 
+    // Finish drawing canvas
     callback(canvas);
 };
