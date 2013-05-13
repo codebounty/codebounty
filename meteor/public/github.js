@@ -1,6 +1,7 @@
 //the injected github UI
 (function (undefined) {
     var rootUrl = "http://localhost:3000",
+        staticRootUrl = "https://localhost/meteor/public",
         thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
@@ -267,6 +268,62 @@
         },
 
         /**
+         * Show bounty status icon based on bounty amount
+         */
+        showBountyStatusIcon: function () {
+            var getBountyAmount = function () {
+                var openText = $(".state-indicator.open").text();
+                return openText.substring(openText.indexOf("$") + 1);
+            };
+
+            var getCashLevel = function (amount) {
+                if (amount < 20) {
+                    return 0;
+                } else if (20 <= amount && amount < 50) {
+                    return 1;
+                } else if (50 <= amount && amount < 100) {
+                    return 2;
+                } else if (100 <= amount && amount < 250) {
+                    return 3;
+                } else {
+                    return 4;
+                }
+            }
+
+            var getStatusIconUrl = function (cashLevel) {
+                if (cashLevel === 0) {
+                    return staticRootUrl + "/" + "status-coins.png";
+                } else if (cashLevel === 1) {
+                    return staticRootUrl + "/" + "status-moneybag.png";
+                } else if (cashLevel === 2) {
+                    return staticRootUrl + "/" + "status-moneybags.png";
+                } else if (cashLevel === 3) {
+                    return staticRootUrl + "/" + "status-bars.png";
+                } else if (cashLevel === 4) {
+                    return staticRootUrl + "/" + "status-jackpot.png";
+                } else {
+                    throw "Unknown cash level."
+                }
+            };
+            
+            ui.render(function () {
+                if ($(".state-indicator.open").length) {
+                    // If open
+                    var amount = getBountyAmount();
+                    var cashLevel = getCashLevel(amount);
+                    var statusIconUrl = getStatusIconUrl(cashLevel);
+
+                    $("#statusIcon").remove();
+                    var statusIcon = "" +
+                        "<img id='statusIcon' src='" + statusIconUrl + "' " +
+                        "width=100 height=100" +
+                        ">";
+                    $(statusIcon).insertBefore($("#addBounty"));
+                }
+            }, "showBountyStatusIcon");
+        },
+
+        /**
          * Initialize the ui (after the user is authenticated)
          */
         initialize: function () {
@@ -290,8 +347,10 @@
                     if (message.error)
                         return;
 
-                    if (message.result)
+                    if (message.result) {
                         ui.setupPostBounty(5);
+                        ui.showBountyStatusIcon();
+                    }
                 }
             );
 
