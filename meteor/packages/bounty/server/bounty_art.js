@@ -11,21 +11,64 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var Font = Canvas.Font;
     var _minWidth = 712,
         _minHeight = 368;
+    var currencySymbol = "$";
+    var backgroundColor = "#E0C39D";
+    
     var assetFile = function (name) {
         return path.join(basepath, "/assets/", name);
     };
+
+    var formatDate = function () {
+        var m_names = new Array("Jan", "Feb", "Mar", "Apr", "May",
+        "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec");
+
+        return function (date) {
+            // TODO: take care of timezone
+            var curr_date = date.getDate();
+            var curr_month = date.getMonth();
+            var curr_year = date.getFullYear();
+            var curr_hour = date.getHours();
+
+            var sup;
+            if (curr_date === 1 || curr_date === 21 || curr_date === 31) {
+                sup = "st";
+            } else if (curr_date === 2 || curr_date === 22) {
+                sup = "nd";
+            } else if (curr_date === 3 || curr_date === 23) {
+                sup = "rd";
+            } else {
+                sup = "th";
+            }
+
+            var a_p;
+            if (curr_hour < 12) {
+                a_p = "am";
+            } else {
+                a_p = "pm";
+            }
+            if (curr_hour === 0) {
+                curr_hour = 12;
+            }
+            if (curr_hour > 12) {
+                curr_hour = curr_hour - 12;
+            }
+
+            return m_names[curr_month] + " " + curr_date + sup + ", " +
+                   curr_year + " at " + curr_hour + a_p;
+        }
+    }();
 
     // var bounty = Bounties.findOne(bountyId);
     
     // Start debug code
     var bounty = {
-        "status": "open",
+        "status": "closed",
         "amount": "12.00",
         "expiredDate": new Date(1945, 4, 1, 24),
-        "cashLevel": 3,
         "userName": "JohnDoeUser"
     }
     var status = bounty.status;
+    var cashLevel = 3;
     size = {
         "width": 0,
         "height": 0
@@ -51,8 +94,25 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var centerX = Math.floor(width / 2),
         centerY = Math.floor(height / 2);
 
-    var currencySymbol = "$";
-    var backgroundColor = "#E0C39D";
+    // Setup variables based on status
+    var statusHeader;
+    var bountyAmount;
+    var bountyStatusImageFile;
+    if (status === "open") {
+        statusHeader = "BOUNTY NOW OPEN!";
+        bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
+        bountyStatusImageFile = "banner-bounty-open.png";
+    } else if (status === "closed") {
+        statusHeader = "BOUNTY CLOSED";
+        bountyAmount = "This bounty was posted for " + currencySymbol + bounty.amount;
+        bountyStatusImageFile = "banner-bounty-closed.png";
+    } else if (status === "reopened") {
+        statusHeader = "BOUNTY REOPENED";
+        bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
+        bountyStatusImageFile = "banner-bounty-reopened.png";
+    } else {
+        throw "Unknown bounty status";
+    }
 
     // TODO make this pretty
     var canvas = new Canvas(width, height),
@@ -122,58 +182,11 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // original design, it is replaced by using Myriad Pro.
     ctx.font = headerFontSize + " " + headerFontName;
     ctx.fillStyle = headerFontColor;
-    var statusHeader;
-    if (status == "open")
-        statusHeader = "BOUNTY NOW OPEN!";
-    else if (status == "closed")
-        statusHeader = "BOUNTY CLOSED";
-    else if (status == "reopened")
-        statusHeader = "BOUNTY REOPENED";
-    else
-        throw "Unknown bounty status";
     ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
     // Draw bounty amount and expiration
-    var formatDate = function (date) {
-        var m_names = new Array("Jan", "Feb", "Mar", "Apr", "May",
-        "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec");
-
-        // TODO: take care of timezone
-        var curr_date = date.getDate();
-        var curr_month = date.getMonth();
-        var curr_year = date.getFullYear();
-        var curr_hour = date.getHours();
-
-        var sup = "";
-        if (curr_date == 1 || curr_date == 21 || curr_date ==31) {
-            sup = "st";
-        } else if (curr_date == 2 || curr_date == 22) {
-            sup = "nd";
-        } else if (curr_date == 3 || curr_date == 23) {
-            sup = "rd";
-        } else {
-            sup = "th";
-        }
-
-        var a_p = "";
-        if (curr_hour < 12) {
-            a_p = "AM";
-        } else {
-            a_p = "PM";
-        }
-        if (curr_hour == 0) {
-            curr_hour = 12;
-        }
-        if (curr_hour > 12) {
-            curr_hour = curr_hour - 12;
-        }
-
-        return m_names[curr_month] + " " + curr_date + sup + ", " + curr_year + " at " + curr_hour + a_p;
-    };
-
     ctx.font = contentFontSize + " " + contentFontName;
     ctx.fillStyle = contentFontColor;
-    var bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
     ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
     var bountyExpiration = "Expires: " + formatDate(bounty.expiredDate);
     ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
@@ -188,23 +201,14 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var siteLink = "codebounty.co"
     ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
 
-    // Draw bounty status image    
-    var bountyStatusImageFile;
-    if (status == "open")
-        bountyStatusImageFile = "banner-bounty-open.png";
-    else if (status == "closed")
-        bountyStatusImageFile = "banner-bounty-closed.png";
-    else if (status == "reopened")
-        bountyStatusImageFile = "banner-bounty-reopened.png";
-    else
-        throw "Unknown bounty status";
+    // Draw bounty status image
     var bountyStatusImage = new Image;
     bountyStatusImage.src = fs.readFileSync(assetFile(bountyStatusImageFile));
     ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
 
     // Draw bounty cash image
     var bountyCashImageFile;
-    switch (bounty.cashLevel) {
+    switch (cashLevel) {
         case 1:
             bountyCashImageFile = "cash-coins.png";
             break;
