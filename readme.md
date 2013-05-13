@@ -24,6 +24,9 @@ OS X / Linux / Ubuntu
 
 1. Start meteor project (this will also install meteorite packages) `sudo mrt --settings settings.json`
 
+	- #####OS X
+	If you have `homebrew` installed, you have to run `export PKG_CONFIG_PATH=/usr/X11/lib/pkgconfig` before running the command above, otherwise package canvas will fail to build.
+
 2. Start the https web server for the github.js file in another terminal**  
 
 		cd codebounty/tools

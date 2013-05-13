@@ -9,7 +9,7 @@ Meteor.Router.add({
         var amount = window.url("?amount");
         var url = window.url("?url");
 
-        Bounty.create(parseFloat(amount), url);
+        Bounty.create(parseFloat(amount), url, "usd");
 
         return "processBountyView";
     },
@@ -37,9 +37,9 @@ Meteor.Router.add({
             Messenger.send({event: "authenticated"});
         });
 
-        //track reward even before logged in
+        //track the total reward even before logged in
         var url = window.url("?url");
-        Bounty.trackReward(url);
+        Bounty.trackTotalReward(url);
 
         return "messengerView";
     },
@@ -47,18 +47,12 @@ Meteor.Router.add({
         var url = window.url("?url");
         Session.set("url", url);
 
-        Meteor.call("contributors", Session.get("url"), function (error, result) {
+        Meteor.call("getRewards", url, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
 
-            Session.set("contributors", result);
-        });
-
-        Meteor.call("rewardableBounties", Session.get("url"), function (error, result) {
-            if (!ErrorUtils.handle(error))
-                return;
-
-            Session.set("rewardableBounties", result);
+            //TODO change this to accept multiple rewards
+            Session.set("reward", result[0]);
         });
 
         return "rewardBountyView";

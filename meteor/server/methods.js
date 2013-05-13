@@ -1,8 +1,6 @@
-//TODO BITCOIN this file contains bitcoin todos
-var errors = {
-    notAuthorized: function () {
+var requireAuthentication = function (userId) {
+    if (!userId)
         throw new Meteor.Error(404, "Not authorized");
-    }
 };
 
 Meteor.methods({
@@ -28,20 +26,19 @@ Meteor.methods({
      * - the issue is for a public repository
      *   (we will not be able to get the event information if it is not)
      * - TODO the user is not banned (not setup yet)
-     * @param url
+     * @param issueUrl
      * @returns {boolean}
      */
-    "canPostBounty": function (url) {
+    "canPostBounty": function (issueUrl) {
+        issueUrl = Tools.stripHash(issueUrl);
+
         var user = Meteor.user();
         if (!user)
             return false;
 
-        url = Tools.stripHash(url);
-        var repoIssue = GitHubUtils.parseUrl(url);
-
         var fut = new Future();
         var gitHub = new GitHub(user);
-        gitHub.getIssueEvents(repoIssue.repo.user, repoIssue.repo.name, repoIssue.issue, function (error, result) {
+        gitHub.getIssueEvents(issueUrl, function (error, result) {
             var last = _.last(_.filter(result.data, function (item) {
                 return item.event === "closed" || item.event === "reopened";
             }));
@@ -53,89 +50,89 @@ Meteor.methods({
     },
 
     /**
-     * Check if there is a bounty the current user can reward at the current url
-     * A bounty can be rewarded if:
-     * - it is not expired
-     * - it has not yet been paid
-     * - the backer has not rewarded the bounty (but the system could have)
-     * - someone has contributed a solution
-     * @param url
+     * Check if the user can manually reward the issueUrl
+     * @param issueUrl
      * @returns {Boolean}
      */
-    "canReward": function (url) {
-        url = Tools.stripHash(url);
-
-        //find if there is a bounty that is eligible for this url
-        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
-        selector.url = url;
-
-        var bounty = Bounties.findOne(selector);
-        if (!bounty) {
-            return false;
-        }
+    "canReward": function (issueUrl) {
+        issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
 
-        //check someone has contributed a solution
-        Bounty.contributors(null, bounty, function (contributors) {
-            fut.return(contributors.length > 0);
+        Meteor.call("getRewards", issueUrl, function (err, rewards) {
+            if (err)
+                throw err;
+
+            fut.ret(rewards.length > 0);
         });
 
         return fut.wait();
     },
 
-    //get contributors for the bounty at the current url
-    "contributors": function (url) {
-        url = Tools.stripHash(url);
+    /**
+     * Get the rewards that can be manually rewarded by the current user
+     * for the issue url which have contributors
+     * @param issueUrl
+     * @returns {Array.<Reward>}
+     */
+    "getRewards": function (issueUrl) {
+        requireAuthentication(this.userId);
+        issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
 
-        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
-        selector.url = url;
+        var selector = {
+            userId: this.userId
+        };
 
-        var bounty = Bounties.findOne(selector);
+        var user = Meteor.users.findOne({_id: this.userId});
+        var gitHub = new GitHub(user);
 
-        Bounty.contributors(null, bounty, function (contributors) {
-            contributors = _.uniq(contributors, false, function (contributor) {
-                return contributor.email;
-            });
-
-            fut.return(contributors);
+        RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributors) {
+            fut.ret(contributors && contributors.length > 0 ? rewards : []);
         });
 
         return fut.wait();
     },
-
-    //rewardable bounties for a url
-    "rewardableBounties": function (url) {
-        url = Tools.stripHash(url);
-
-        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
-        selector.url = url;
-
-        var bounties = Bounties.find(selector, {fields: {_id: true, amount: true, desc: true}}).fetch();
-        return bounties;
-    },
-
-    //region Bounty Paypal Methods
 
     /**
      * Create a bounty and return it's paypal pre-approval url
      * @param amount the bounty amount
-     * @param url the url to create a bounty for
+     * @param issueUrl the url to create a bounty for
+     * @param currency
      * @returns {String}
      */
-    "createBounty": function (amount, url) {
-        url = Tools.stripHash(url);
+    "createBounty": function (amount, issueUrl, currency) {
+        requireAuthentication(this.userId);
+        issueUrl = Tools.stripHash(issueUrl);
+
+        if ((!_.isNumber(amount)) || _.isNaN(amount))
+            throw "Need to specify an amount";
+
+        var bounty = {
+            amount: amount,
+            created: new Date(),
+            currency: currency,
+            reward: null,
+            issueUrl: issueUrl,
+            userId: this.userId
+        };
+        bounty._id = Bounties.insert(bounty);
+
+        if (currency === "btc")
+            throw "not implemented yet";
+
+        //TODO remove (for debugging w/o tunnel)
+//        bounty.approved = true;
 
         var fut = new Future();
-
-        var userId = this.userId;
-        if (!userId)
-            errors.notAuthorized();
-
-        Bounty.create(userId, amount, url, function (preapprovalUrl) {
+        Bounty.PayPal.create(bounty, function (preapprovalUrl) {
             fut.ret(preapprovalUrl);
+
+            //TODO remove (for debugging w/o tunnel)
+//            Fiber(function () {
+//                RewardUtils.addBounty(bounty);
+//            }).run();
         });
 
         return fut.wait();
@@ -145,27 +142,22 @@ Meteor.methods({
      * Called if the user cancels adding a new bounty in the paypal checkout
      */
     "cancelCreateBounty": function (id) {
+        //approved: false to prevent someone cancelling an approved bounty
         Bounties.remove({_id: id, userId: this.userId, approved: false});
     },
 
+    //TODO change to update reward? then just have them set status to payout....
+    //and validate make sure status is not sent to paid / reopened by the user or some shit like dat
     /**
      * Initiate the reward payout process
-     * @param ids the bounty ids to payout
-     * @param payout
+     * @param reward
      * @returns true if there is no error
      */
-    "rewardBounty": function (ids, payout) {
+    "rewardBounty": function (reward) {
+        requireAuthentication(this.userId);
+
         var fut = new Future();
-
-        //get all the bounties with ids sent that the user has open on the issue
-        var selector = Bounty.selectors.canBeManuallyRewarded(this.userId);
-        selector._id = {$in: ids};
-
-        var bounties = Bounties.find(selector).fetch();
-        if (bounties.length <= 0 || bounties.length !== ids.length) //make sur every bounty was found
-            Bounty.errors.doesNotExist();
-
-        Bounty.initiatePayout(null, bounties, payout, this.userId, function () {
+        Bounty.initiatePayout(null, reward, this.userId, function () {
             fut.ret(true);
         });
 

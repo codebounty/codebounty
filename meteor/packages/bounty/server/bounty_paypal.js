@@ -13,10 +13,13 @@ Bounty.PayPal.create = function (bounty, callback) {
     var cancel = rootUrl + "cancelCreateBounty?id=" + bounty._id;
     var confirm = rootUrl + "confirmBounty?id=" + bounty._id;
 
-    var endDate = Tools.addDays(Bounty.expiresAfterDays);
+    var endDate = Tools.addDays(BountyUtils.expiresAfterDays);
+
+    var issue = GitHubUtils.getIssue(bounty.issueUrl);
+    var description = "$" + bounty.amount + " bounty for Issue #" + issue.number + " in " + issue.repo.name;
 
     //Start pre-approval process
-    PayPal.getApproval(bounty.amount, bounty.desc, endDate, cancel, confirm, function (error, data, approvalUrl) {
+    PayPal.getApproval(bounty.amount, description, endDate, cancel, confirm, function (error, data, approvalUrl) {
         if (error)
             PayPal.errors.preapproval();
 
@@ -42,30 +45,24 @@ Bounty.PayPal.confirm = function (params) {
             PayPal.errors.notApproved();
 
         Bounties.update(bounty, {$set: {approved: true}});
-
         console.log("PayPal confirmed", bounty._id);
 
-        var imageUrl = rootUrl + "bounty/" + bounty._id;
-        var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
-
-        //post comment the comment using codebounty charlie
-        var gitHub = new GitHub();
-        gitHub.postComment(bounty, commentBody);
+        //create the reward
+        RewardUtils.addBounty(bounty);
     }).run();
 };
 
 Bounty.PayPal.pay = function (bounty, receiverList) {
+    console.log("Pay bounty", bounty._id, receiverList);
     PayPal.pay(bounty.preapprovalKey, receiverList, function (error, data) {
         var update = {};
 
         if (error) {
-            update["reward.error"] = error;
-
+            update["paymentError"] = error;
             console.log("ERROR: PayPal Payment", error);
         } else {
-            update["reward.paid"] = new Date();
-
-            console.log("PayPal Paid", bounty);
+            update["paid"] = new Date();
+            console.log("PayPal paid", bounty._id);
         }
 
         Fiber(function () {
