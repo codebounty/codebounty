@@ -1,4 +1,4 @@
-//Contains all the server collections and publishes
+//Contains all the server publishes
 
 //stores all the bounties and their associated information
 Bounties = new Meteor.Collection("bounties");
@@ -8,40 +8,32 @@ Meteor.publish("allUserData", function () {
     return Meteor.users.find();
 });
 
-// publish the total open reward for a bounty url
-Meteor.publish("totalReward", function (url) {
-    url = Tools.stripHash(url);
+// publish the total available reward for an issue url
+Meteor.publish("totalReward", function (issueUrl) {
+    issueUrl = Tools.stripHash(issueUrl);
 
     var self = this;
     var uuid = Meteor.uuid();
-    var totalReward = 0;
+    var totalReward = new Big(0);
     var initializing = true;
 
-    var handle = Bounties.find({
-        url: url,
-        approved: true,
-        reward: null,
-        created: {"$gt": Bounty.expiredDate()}
+    //TODO do only not expired
+    var handle = Rewards.find({
+        issueUrl: issueUrl,
+        "status": { $nin: [ "initiated", "paid", "hold" ] }
     }).observe({
-            added: function (bounty) {
-                totalReward += parseFloat(bounty.amount);
+            added: function (reward) {
+                var totalBounties = BigUtils.sum(reward.bountyAmounts);
+                totalReward = totalReward.plus(totalBounties);
 
                 if (!initializing) //need to wait until it is added
-                    self.changed("totalReward", uuid, {amount: totalReward});
+                    self.changed("totalReward", uuid, {amount: totalReward.toString()});
             },
-            changed: function (newBounty, oldBounty) {
-                var oldBountyAmount = parseFloat(oldBounty.amount);
+            removed: function (reward) {
+                var totalBounties = BigUtils.sum(reward.bountyAmounts);
+                totalReward = totalReward.minus(totalBounties);
 
-                //if the new bounty now is rewarded, subtract it from the total (available) reward
-                if (newBounty.reward && !oldBounty.reward) {
-                    totalReward -= oldBountyAmount.amount;
-                    self.changed("totalReward", uuid, {amount: totalReward});
-                }
-            },
-            removed: function (bounty) {
-                totalReward -= parseFloat(bounty.amount);
-
-                self.changed("totalReward", uuid, {amount: totalReward});
+                self.changed("totalReward", uuid, {amount: totalReward.toString()});
             }
             // don't care about moved
         });
@@ -51,12 +43,12 @@ Meteor.publish("totalReward", function (url) {
     // publish the initial amount. observeChanges guaranteed not to return
     // until the initial set of `added` callbacks have run, so the `totalReward`
     // variable is up to date.
-    self.added("totalReward", uuid, {amount: totalReward});
+    self.added("totalReward", uuid, {amount: totalReward.toString()});
 
     // and signal that the initial document set is now available on the client
     self.ready();
 
-    // turn off observe when client unsubs
+    // turn off observe when client unsubscribes
     self.onStop(function () {
         handle.stop();
     });

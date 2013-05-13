@@ -1,7 +1,7 @@
 //contains all bounty related logic for the client
 
-Bounty.create = function (amount, url) {
-    Meteor.call("createBounty", amount, url, function (error, result) {
+Bounty.create = function (amount, url, currency) {
+    Meteor.call("createBounty", amount, url, currency, function (error, result) {
         if (!ErrorUtils.handle(error))
             return;
 
@@ -16,8 +16,8 @@ Bounty.cancel = function (id, callback) {
 TotalReward = new Meteor.Collection("totalReward");
 
 var observingTotalReward = false;
-//track the bounty size of the url and send a "rewardChanged" event initially and whenever it changes
-Bounty.trackReward = function (url) {
+//track the total open reward for the url and send a "rewardChanged" event initially and whenever it changes
+Bounty.trackTotalReward = function (url) {
     if (!observingTotalReward) {
         TotalReward.find().observe({
             added: function (total) {

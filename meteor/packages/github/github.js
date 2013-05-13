@@ -1,6 +1,6 @@
 //TODO make this a public package
 
-var GitHubApi = Npm.require("github"), async = Npm.require("async");
+var GitHubApi = Npm.require("github"), async = Npm.require("async"), signals = Npm.require("signals");
 
 //used to cache api responses
 var Responses = new Meteor.Collection("responses");
@@ -8,21 +8,35 @@ var Responses = new Meteor.Collection("responses");
 //max allowed http://developer.github.com/v3/#pagination
 var pageSize = 100;
 
-var requestsRemaining = 5000;
+var remainingRequests = 5000;
 /**
  * Log the # requests remaining
  * @param res
  * @param name
  */
-var updateRequestsRemaining = function (res, name) {
-    var before = requestsRemaining;
-    var after = requestsRemaining = res.meta["x-ratelimit-remaining"];
+var logRemainingRequests = function (res, name) {
+    var before = remainingRequests;
+    var after = remainingRequests = res.meta["x-ratelimit-remaining"];
     if (before - after > 0) //{
 //          console.log("counted", name, res.meta.etag, res.meta.status);
-        console.log("remaining", requestsRemaining);
+        console.log("remaining", remainingRequests);
 //        } else {
 //            console.log("not counted", name, res.meta.etag, res.meta.status);
 //        }
+};
+
+GitHubEvents = {
+    User: {
+        loaded: new signals.Signal()
+    },
+    Issues: {
+        loaded: new signals.Signal()
+    },
+    GitData: {
+        Commit: {
+            loaded: new signals.Signal()
+        }
+    }
 };
 
 /**
@@ -54,10 +68,25 @@ GitHub = function (user) {
     });
 
     this._client = githubApi;
+
+    this._requestMapping = {
+        "User.get": {
+            request: this._client.user.get,
+            signal: GitHubEvents.User.loaded
+        },
+        "Issues.getEvents": {
+            request: this._client.issues.getEvents,
+            signal: GitHubEvents.Issues.loaded
+        },
+        "GitData.getCommit": {
+            request: this._client.gitdata.getCommit,
+            signal: GitHubEvents.GitData.Commit.loaded
+        }
+    };
 };
 
 /**
- * Run a request then trigger the callback
+ * Run a request then trigger the callback & signal
  * @param name the request name
  * @param data the request data
  * @param [etag] will run a conditional request if passed
@@ -65,6 +94,7 @@ GitHub = function (user) {
  * @param callback (error, result)
  */
 GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
+    var that = this;
     //clone data to use for request options
     var requestOptions = JSON.parse(JSON.stringify(data));
     if (page >= 1)
@@ -76,29 +106,18 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
     if (etag)
         headers["If-None-Match"] = etag;
 
-    var requestFunction;
-    switch (name) {
-        case "User.get":
-            requestFunction = this._client.user.get;
-            break;
-        case "Issues.getEvents":
-            requestFunction = this._client.issues.getEvents;
-            break;
-        case "GitData.getCommit":
-            requestFunction = this._client.gitdata.getCommit;
-            break;
-        default:
-            throw "Not a known request: " + name;
-    }
+    var requestFunction = that._requestMapping[name].request;
+    var signal = that._requestMapping[name].signal;
 
     //run the request
     requestFunction(requestOptions, function (err, res) {
         if (err)
             callback(err);
         else {
-            updateRequestsRemaining(res, name);
-
+            logRemainingRequests(res, name);
             callback(null, res);
+            if (signal)
+                signal.dispatch(that, err, res);
         }
     }, headers);
 };
@@ -301,40 +320,22 @@ GitHub.prototype.checkAccess = function (callback) {
 
 /**
  * Loads the issue events with a conditional request
- * @param user The repository owner
- * @param repo The repository name
- * @param issue The issue number
+ * @param {string} issueUrl
  * @param {function} [callback] (error, result) result is an array
  */
-GitHub.prototype.getIssueEvents = function (user, repo, issue, callback) {
-    var that = this;
-    that._conditionalCrawlAndCache("Issues.getEvents", {
-        user: user,
-        repo: repo,
-        number: issue
+GitHub.prototype.getIssueEvents = function (issueUrl, callback) {
+    var issue = GitHubUtils.getIssue(issueUrl);
+
+    this._conditionalCrawlAndCache("Issues.getEvents", {
+        user: issue.repo.user,
+        repo: issue.repo.name,
+        number: issue.number
     }, true, callback);
 };
 
 /**
- * Loads issue events for a bounty, and triggers the onGetBountyIssueEvents
- * @param bounty
- * @param {function} [callback] (error, result) result is an array
- */
-GitHub.prototype.getBountyIssueEvents = function (bounty, callback) {
-    var that = this;
-    that.getIssueEvents(bounty.repo.user, bounty.repo.name, bounty.issue, function (error, result) {
-        _.each(_getBountyIssueEventsCallbacks, function (cb) {
-            cb(that, bounty, error, result);
-        });
-
-        if (callback)
-            callback(error, result);
-    })
-};
-
-/**
  * Loads the commit with a conditional request
- * @param repo {user: "jperl", name: "codebounty"}
+ * @param repo {user: String, name: String}
  * @param {string} sha
  * @param {function} [callback] (error, result) result is an array with one item
  */
@@ -350,14 +351,16 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
  * Get all the commit data from  "contributors" (users with associated commits) for an issue
  * TODO and exclude the current user
  * NOTE: The commit or pull request must have a comment referencing the issue to count as a contributor
- * @param bounty
- * @param {function} callback (error, result)
+ * @param {string} issueUrl
+ * @param {function} callback (error, eventsResult, commitsResult)
  */
-GitHub.prototype.getContributorsCommits = function (bounty, callback) {
+GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
     var that = this;
 
-    that.getBountyIssueEvents(bounty, function (error, result) {
-        var result = result.data;
+    var issue = GitHubUtils.getIssue(issueUrl);
+
+    that.getIssueEvents(issueUrl, function (error, issueEvents) {
+        issueEvents = issueEvents.data;
         if (error) {
             callback(error);
             return;
@@ -365,7 +368,7 @@ GitHub.prototype.getContributorsCommits = function (bounty, callback) {
 
         //load the commit data for each referenced commit
         var commitData = [];
-        var referencedCommits = _.map(result, function (event) {
+        var referencedCommits = _.map(issueEvents, function (event) {
             return event.commit_id;
         });
 
@@ -378,15 +381,15 @@ GitHub.prototype.getContributorsCommits = function (bounty, callback) {
             if (err)
                 callback(err);
             else
-                callback(null, commitData);
+                callback(null, issueEvents, commitData);
         };
 
         async.each(referencedCommits, function (sha, commitLoaded) {
-            that.getCommit(bounty.repo, sha, function (error, result) {
+            that.getCommit(issue.repo, sha, function (error, result) {
                 if (error)
                     commitLoaded(error);
                 else {
-                    var result = result.data;
+                    result = result.data;
                     commitData.push(result[0]);
                     commitLoaded();
                 }
@@ -396,15 +399,18 @@ GitHub.prototype.getContributorsCommits = function (bounty, callback) {
 };
 
 /**
- * @param bounty
+ * Post a comment on an issue
+ * @param {string} issueUrl
  * @param {String} comment "Interesting issue!"
  */
-GitHub.prototype.postComment = function (bounty, comment) {
+GitHub.prototype.postComment = function (issueUrl, comment) {
+    var issue = GitHubUtils.getIssue(issueUrl);
+
     this._client.issues.createComment(
         {
-            user: bounty.repo.user,
-            repo: bounty.repo.name,
-            number: bounty.issue,
+            user: issue.repo.user,
+            repo: issue.repo.name,
+            number: issue.number,
             body: comment
         }, function (err, res) {
             //TODO log error
@@ -412,13 +418,4 @@ GitHub.prototype.postComment = function (bounty, comment) {
                 console.log("ERROR: Posting GitHub comment", err);
         }
     );
-};
-
-var _getBountyIssueEventsCallbacks = [];
-/**
- * Add an additional callback to GetBountyIssueEvents
- * @param callback (thisGitHubInstance, bounty, error, result)
- */
-GitHub.onGetBountyIssueEvents = function (callback) {
-    _getBountyIssueEventsCallbacks.push(callback);
 };

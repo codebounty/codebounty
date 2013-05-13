@@ -1,39 +1,29 @@
-var getContributors = function () {
-    var contributors = Session.get("contributors");
-    if (!contributors)
-        return [];
-
-    return contributors;
+var getReward = Template.rewardBountyView.reward = function () {
+    return Session.get("reward");
 };
-Template.rewardBountyView.contributors = getContributors;
 
-/**
- * The bounty minus the fee
- * @returns {number}
- */
-var getTotalBounty = function () {
-    var rewardableBounties = Session.get("rewardableBounties");
-    if (!rewardableBounties)
-        return 0;
-
-    var totalBounty = _.reduce(rewardableBounties, function (memo, bounty) {
-        return memo + bounty.amount;
-    }, 0);
-
-    var minusFee = totalBounty - Payout.fee(totalBounty);
-
-    return Tools.truncate(minusFee, 2);
+var getMinimum = function () {
+    var reward = getReward();
+    return reward ? ReceiverUtils.minimum(reward.currency) : new Big(0);
 };
-Template.rewardBountyView.totalBounty = getTotalBounty;
+Template.rewardBountyView.minimum = function () {
+    return getMinimum();
+};
 
-Template.rewardBountyView.minimum = Payout.minimum;
+var getTotal = function () {
+    var reward = getReward();
+    return reward ? reward.total() : new Big(0);
+};
+Template.rewardBountyView.total = function () {
+    return getTotal().toString();
+};
 
 Template.rewardBountyView.rendered = function () {
-    var total = getTotalBounty();
-    var minimum = Payout.minimum();
+    var total = getTotal();
+    var minimum = getMinimum();
 
     var amountToPercent = function (amount) {
-        return ( (amount / total) * 100);
+        return amount.div(total).times(100);
     };
 
     var setAmount = function (row, amount) {
@@ -43,14 +33,15 @@ Template.rewardBountyView.rendered = function () {
         row.data("currentAmount", amount);
 
         var percent;
-        if (total !== minimum) {
+        if (total.cmp(minimum) !== 0) {
             percent = amountToPercent(amount);
         } else {
-            percent = 100;
+            percent = new Big(100);
         }
-        row.find(".rewardSlider").slider("value", Tools.truncate(amount, 2));
-        row.find(".rewardInput").val(Tools.truncate(amount, 2));
-        row.find(".rewardPercent").text(Tools.truncate(percent, 2));
+
+        row.find(".rewardSlider").slider("value", amount.toFixed(2));
+        row.find(".rewardInput").val(amount.toFixed(2));
+        row.find(".rewardPercent").text(percent.toFixed(2));
     };
 
 //    var updateOtherSliders = function (rowToExclude) {
@@ -112,7 +103,7 @@ Template.rewardBountyView.rendered = function () {
         var usersEnabled = $(".contributorRow.enabled").length;
         var equalSplit = minimum;
         if (usersEnabled !== 0) {
-            equalSplit = total / usersEnabled;
+            equalSplit = total.div(usersEnabled);
         }
         return equalSplit;
     };
@@ -127,10 +118,10 @@ Template.rewardBountyView.rendered = function () {
         //Redistribute contributor amounts
         $(".contributorRow").each(function (index, row) {
             row = $(row);
-            var max = total - (minimum * (usersEnabled - 1));
-            row.find(".rewardSlider").slider("option", "max", max);
+            var max = total.minus(minimum.times(usersEnabled - 1));
+            row.find(".rewardSlider").slider("option", "max", max.toString());
 
-            var amount = 0;
+            var amount = new Big(0);
             if (row.hasClass("enabled")) {
                 amount = getEqualSplit();
             }
@@ -140,7 +131,7 @@ Template.rewardBountyView.rendered = function () {
         updateTotal();
 
         //Update checkboxes
-        if ((minimum * (usersEnabled + 1)) >= total) {
+        if ((minimum.times(usersEnabled + 1)).cmp(total) >= 0) {
             $(".shouldPay").not(":checked").prop("disabled", true);
         } else {
             $(".shouldPay").prop("disabled", false);
@@ -148,15 +139,15 @@ Template.rewardBountyView.rendered = function () {
     };
 
     var updateTotal = function () {
-        var t = 0;
+        var t = new Big(0);
         $(".contributorRow.enabled").each(function (index, row) {
             row = $(row);
             var amount = row.data("currentAmount");
-            t += amount;
+            t = t.plus(amount);
         });
         var calcTotal = $(".calculatedTotal");
         calcTotal.find(".calculatedTotalAmount").text(t);
-        if (t !== total) {
+        if (t.cmp(total) !== 0) {
             calcTotal.addClass("invalid");
             showStatusBox();
             disableSubmit();
@@ -179,12 +170,12 @@ Template.rewardBountyView.rendered = function () {
 
         row.find(".rewardSlider").slider({
             animate: "fast",
-            min: minimum,
-            max: total,
+            min: parseFloat(minimum.toString()),
+            max: parseFloat(total.toString()),
             disabled: true,
             slide: function (event, ui) {
                 var amount = ui.value;
-                setAmount(row, amount);
+                setAmount(row, new Big(amount));
                 updateTotal();
             }
         });
@@ -192,7 +183,7 @@ Template.rewardBountyView.rendered = function () {
         //Input change listener
         row.find(".rewardInput")
             .change(function () {
-                var amount = parseFloat($(this).val());
+                var amount = new Big($(this).val());
                 setAmount(row, amount);
                 updateTotal();
             }
@@ -208,26 +199,10 @@ Template.rewardBountyView.events({
     },
 
     "click .rewardButton": function (event) {
-        //for now hard code an equal reward for each person
-        //TODO ui. ui should show prevent payout for people without email on commit
-        var contributors = Session.get("contributors");
-        if (contributors.length <= 0)
-            return;
-
-        var totalBounty = getTotalBounty();
-
-        var payout = [];
-        var equalSplit = Tools.truncate(totalBounty / contributors.length, 2);
-        contributors.forEach(function (contributor) {
-            payout.push({email: contributor.email, amount: equalSplit});
-        });
-
         var url = Session.get("url");
-        var bounties = Session.get("rewardableBounties");
 
         $.blockUI();
-        var ids = _.pluck(bounties, "_id");
-        Meteor.call("rewardBounty", ids, payout, function (error, success) {
+        Meteor.call("rewardBounty", getReward(), function (error, success) {
             $.unblockUI();
             Messenger.send({event: "closeOverlay"});
             if (!ErrorUtils.handle(error)) {

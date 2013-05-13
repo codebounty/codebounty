@@ -1,14 +1,14 @@
 <template name="rewardBountyView">
     <div class="container">
         <h3>Contributor Payout:
-            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount"><span class="currencySymbol">$</span>{{totalBounty}}</span></span>
+            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount"><span class="currencySymbol">$</span>{{total}}</span></span>
         </h3>
         <ul>
-            {{#each contributors}}
+            {{#each reward.receivers}}
             <li class="contributorRow">
                 <input type="checkbox" class="shouldPay"/>
 
-                <label name="contributorName" class="contributorName">{{name}}</label>
+                <label name="contributorName" class="contributorName">{{email}}</label>
                 <div class="rewardInputGroup">
                     <div class="rewardSlider"></div>
                     <div class="inputWrapper">

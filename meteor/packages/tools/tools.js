@@ -64,3 +64,24 @@ Tools.stripHash = function (url) {
 
     return url;
 };
+
+/**
+ * Check if two arrays have equal elements in the same order
+ * @param a
+ * @param b
+ * @param [compare] An optional function that takes two objects and returns if they are equal
+ */
+Tools.arraysAreEqual = function (a, b, compare) {
+    if (!compare)
+        compare = function (a, b) {
+            return a === b;
+        };
+
+    var i = a.length;
+    if (i != b.length) return false;
+    while (i--) {
+        if (!compare(a[i], b[i]))
+            return false;
+    }
+    return true;
+};
