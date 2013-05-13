@@ -63,9 +63,19 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Start debug code
     var bounty = {
         "status": "closed",
-        "amount": "12.00",
+        "amount": 12.1291,
         "expiredDate": new Date(1945, 4, 1, 24),
-        "userName": "JohnDoeUser"
+        "userName": "JohnDoeUser",
+        "claimedBy": [
+                        {
+                            "userName": "Bounty Jack",
+                            "amount": 5
+                        },
+                        {
+                            "userName": "Outlaw Joe",
+                            "amount": 7
+                        }
+                     ]
     }
     var status = bounty.status;
     var cashLevel = 3;
@@ -100,15 +110,15 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var bountyStatusImageFile;
     if (status === "open") {
         statusHeader = "BOUNTY NOW OPEN!";
-        bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
+        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
         bountyStatusImageFile = "banner-bounty-open.png";
     } else if (status === "closed") {
         statusHeader = "BOUNTY CLOSED";
-        bountyAmount = "This bounty was posted for " + currencySymbol + bounty.amount;
+        bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
         bountyStatusImageFile = "banner-bounty-closed.png";
     } else if (status === "reopened") {
         statusHeader = "BOUNTY REOPENED";
-        bountyAmount = "This bounty is posted for " + currencySymbol + bounty.amount;
+        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
         bountyStatusImageFile = "banner-bounty-reopened.png";
     } else {
         throw "Unknown bounty status";
@@ -177,6 +187,12 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var posterUserOriginY = bountyStatusOriginY + 290;
     var siteLinkOriginY = posterUserOriginY + 31;
 
+    // Claimed by text (when opened)
+    var rightOffsetIndent = 5;
+    var claimedByTextOriginX = footerOriginX - rightOffsetIndent;
+    var claimedByTextOriginY = posterUserOriginY - 70;
+    var claimedByText2OriginY = claimedByTextOriginY + 30;
+
     // Draw Bounty status
     // TODO: exclamation mark is not included in font Woodshop, so in the
     // original design, it is replaced by using Myriad Pro.
@@ -200,6 +216,25 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.font = footerSmallerFontSize + " " + footerFontName;
     var siteLink = "codebounty.co"
     ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
+
+    // Draw claimed by text
+    if (status === "closed" && bounty.claimedBy) {
+        ctx.textAlign = "right";
+        ctx.fillStyle = footerFontColor;
+        ctx.font = footerFontSize + " " + footerFontName;
+
+        // Only display two claimer
+        // TODO: code needs optimization
+        if (bounty.claimedBy[0]) {
+            var claimedTextClaimer = "Claimed by: " + bounty.claimedBy[0].userName + " " + currencySymbol + bounty.claimedBy[0].amount;
+            ctx.fillText(claimedTextClaimer, claimedByTextOriginX, claimedByTextOriginY);
+        }
+
+        if (bounty.claimedBy[1]) {
+            var claimedTextClaimer2 = bounty.claimedBy[1].userName + " " + currencySymbol + bounty.claimedBy[1].amount;
+            ctx.fillText(claimedTextClaimer2, claimedByTextOriginX, claimedByText2OriginY);
+        }
+    }
 
     // Draw bounty status image
     var bountyStatusImage = new Image;
