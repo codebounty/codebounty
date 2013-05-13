@@ -244,19 +244,19 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Draw bounty cash image
     var bountyCashImageFile;
     switch (cashLevel) {
-        case 1:
+        case 0:
             bountyCashImageFile = "cash-coins.png";
             break;
-        case 2:
+        case 1:
             bountyCashImageFile = "cash-money-bag.png";
             break;
-        case 3:
+        case 2:
             bountyCashImageFile = "cash-many-money-bags.png";
             break;
-        case 4:
+        case 3:
             bountyCashImageFile = "cash-bars.png";
             break;
-        case 5:
+        case 4:
             bountyCashImageFile = "cash-jackpot.png";
             break;
         default:
