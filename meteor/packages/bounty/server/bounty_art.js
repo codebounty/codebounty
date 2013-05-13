@@ -104,27 +104,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var centerX = Math.floor(width / 2),
         centerY = Math.floor(height / 2);
 
-    // Setup variables based on status
-    var statusHeader;
-    var bountyAmount;
-    var bountyStatusImageFile;
-    if (status === "open") {
-        statusHeader = "BOUNTY NOW OPEN!";
-        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
-        bountyStatusImageFile = "banner-bounty-open.png";
-    } else if (status === "closed") {
-        statusHeader = "BOUNTY CLOSED";
-        bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
-        bountyStatusImageFile = "banner-bounty-closed.png";
-    } else if (status === "reopened") {
-        statusHeader = "BOUNTY REOPENED";
-        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
-        bountyStatusImageFile = "banner-bounty-reopened.png";
-    } else {
-        throw "Unknown bounty status";
-    }
-
-    // TODO make this pretty
+    // Initialize canvas
     var canvas = new Canvas(width, height),
         ctx = canvas.getContext("2d");
 
@@ -162,6 +142,26 @@ Bounty.statusImage = function (bountyId, callback, size) {
      // Draw background
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
+
+    // Setup variables based on status
+    var statusHeader;
+    var bountyAmount;
+    var bountyStatusImageFile;
+    if (status === "open") {
+        statusHeader = "BOUNTY NOW OPEN!";
+        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
+        bountyStatusImageFile = "banner-bounty-open.png";
+    } else if (status === "closed") {
+        statusHeader = "BOUNTY CLOSED";
+        bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
+        bountyStatusImageFile = "banner-bounty-closed.png";
+    } else if (status === "reopened") {
+        statusHeader = "BOUNTY REOPENED";
+        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
+        bountyStatusImageFile = "banner-bounty-reopened.png";
+    } else {
+        throw "Unknown bounty status";
+    }
 
     // Align elements
     // Bounty Status
