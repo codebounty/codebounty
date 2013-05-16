@@ -18,6 +18,20 @@ Bounty.statusImage = function (bountyId, callback, size) {
         return path.join(basepath, "/assets/", name);
     };
 
+    var getCashLevel = function (amount) {
+        if (amount < 20) {
+            return 0;
+        } else if (20 <= amount && amount < 50) {
+            return 1;
+        } else if (50 <= amount && amount < 100) {
+            return 2;
+        } else if (100 <= amount && amount < 250) {
+            return 3;
+        } else {
+            return 4;
+        }
+    }
+
     var formatDate = function () {
         var m_names = new Array("Jan", "Feb", "Mar", "Apr", "May",
         "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec");
@@ -63,7 +77,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Start debug code
     var bounty = {
         "status": "closed",
-        "amount": 12.1291,
+        "amount": 20.234,
         "expiredDate": new Date(1945, 4, 1, 24),
         "userName": "JohnDoeUser",
         "claimedBy": [
@@ -78,7 +92,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
                      ]
     }
     var status = bounty.status;
-    var cashLevel = 3;
+    var cashLevel = getCashLevel(bounty.amount);
     size = {
         "width": 0,
         "height": 0
