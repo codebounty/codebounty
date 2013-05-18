@@ -32,50 +32,14 @@ Reward.prototype.checkStatus = function (issueEvents) {
     if (last.event === "closed" && (that.status === "open" || that.status === "reopened")
         && that.receivers.length > 0) {
         that.distributeEqually();
-        that.initiatePayout("system");
+        that.initiatePayout("system", function (err) {
+            if (err)
+                throw err;
+        });
     }
     //cancel the payout and reopen the reward
     else if (last.event === "reopened" && that.status === "initiated" && that.payout.by === "system") {
         that.cancelPayout("reopened");
-    }
-};
-
-/**
- * Try to distribute the rewards equally among the receivers
- */
-Reward.prototype.distributeEqually = function () {
-    var that = this;
-
-    var receivers = that.receivers;
-
-    //nothing to distribute
-    if (receivers.length <= 0)
-        return;
-
-    var minimumReward = ReceiverUtils.minimum(that.currency);
-    var amountToDistribute = that.total();
-
-    var equallyDistributed = amountToDistribute.div(receivers.length);
-    //equally distribute the reward
-    if (equallyDistributed.cmp(minimumReward) >= 0) {
-        _.each(receivers, function (receiver) {
-            receiver.setReward(equallyDistributed);
-        });
-    }
-    //pay as many of the contributors as possible
-    else {
-        var numberCanPay = amountToDistribute.div(minimumReward).toFixed(0);
-        equallyDistributed = amountToDistribute.div(numberCanPay);
-
-        for (var i = 0; i < receivers.length; i++) {
-            var receiver = receivers[i];
-
-            var rewardAmount = new Big(0);
-            if (i < numberCanPay)
-                rewardAmount = equallyDistributed;
-
-            receiver.setReward(rewardAmount);
-        }
     }
 };
 

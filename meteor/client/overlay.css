@@ -190,11 +190,11 @@ button:hover.disabled, button:active.disabled {
     border-top: 1px dashed #ccc;
 }
 
-.statusBox, .rewardButtonGroup {
+.validationError, .rewardButtonGroup {
     padding: 10px 0;
 }
 
-.statusBox {
+.validationError {
     display: none;
     padding-right: 250px;
     text-align: center;

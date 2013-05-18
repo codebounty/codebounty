@@ -104,8 +104,8 @@ Receiver.prototype.validationErrors = function () {
     var reward = this.getReward();
     var min = ReceiverUtils.minimum(this.currency);
 
-    if (reward.cmp(new Big(0)) > 0 && reward < min)
-        errors.push("Receiver reward (" + reward + ") must be 0 or > the minimum ("
+    if (!(reward.cmp(new Big(0)) === 0 || reward.cmp(min) >= 0))
+        errors.push("Receiver reward (" + reward + ") must be 0 or >= the minimum ("
             + min + " " + this.currency + ")");
 
     return errors;

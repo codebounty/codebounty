@@ -157,8 +157,11 @@ Meteor.methods({
         requireAuthentication(this.userId);
 
         var fut = new Future();
-        Bounty.initiatePayout(null, reward, this.userId, function () {
-            fut.ret(true);
+        reward.initiatePayout(this.userId, function (error, success) {
+            fut.ret(success);
+
+            if (error)
+                throw error;
         });
 
         return fut.wait();

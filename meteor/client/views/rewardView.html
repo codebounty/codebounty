@@ -1,4 +1,4 @@
-<template name="rewardBountyView">
+<template name="rewardView">
     <div class="container">
         <h3>Contributor Payout:
             <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount"><span class="currencySymbol">$</span>{{total}}</span></span>
@@ -6,29 +6,30 @@
         <ul>
             {{#each reward.receivers}}
             <li class="contributorRow">
-                <input type="checkbox" class="shouldPay"/>
+                <input type="checkbox" class="shouldPay" {{#if receiverHasReward}}checked="checked" {{/if}}/>
 
                 <label name="contributorName" class="contributorName">{{email}}</label>
                 <div class="rewardInputGroup">
                     <div class="rewardSlider"></div>
                     <div class="inputWrapper">
                         <span class="currencySymbol">$</span>
-                        <input type="number" min="{{minimum}}" max="{{total}}" class="rewardInput" disabled/>
+                        <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}"
+                               value="{{receiverReward}}" {{#unless receiverHasReward}}disabled {{/unless}}/>
                     </div>
                     <div class="inputWrapper">
-                        <label class="rewardPercent"></label>
+                        <label class="rewardPercent">{{receiverReward true}}</label>
                         <span class="percentSign">%</span>
                     </div>
                 </div>
             </li>
             {{/each}}
         </ul>
-        <div class="calculatedTotal">Payout Amount: <span class="currencySymbol">$</span><span
-                class="calculatedTotalAmount">0</span></div>
+        <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">Payout Amount: <span class="currencySymbol">$</span><span
+                class="calculatedTotalAmount">{{receiverTotal}}</span></div>
         <div class="bottomBar">
-            <div class="statusBox">Please make sure the payout amount is equal to the total.</div>
+            <div class="validationError">Please make sure the payout amount is equal to the total.</div>
             <div class="rewardButtonGroup">
-                <button class="rewardButton">Reward the coders</button>
+                <button class="rewardButton{{#unless isValid}} disabled{{/unless}}"{{#unless isValid}} disabled{{/unless}}>Reward the coders</button>
                 <button class="closeButton">Cancel</button>
             </div>
         </div>

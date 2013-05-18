@@ -1,6 +1,7 @@
 {
   "packages": {
     "router": {},
-    "node-modules": {}
+    "node-modules": {},
+    "session-extras": {}
   }
 }
