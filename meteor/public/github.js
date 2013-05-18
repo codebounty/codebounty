@@ -233,6 +233,11 @@
                     e.stopPropagation();
                     e.preventDefault();
                 });
+
+                $("#bountyInput").keyup(function () {
+                    var amount = $("#bountyInput").val();
+                    ui._changeBountyStatusIcon(amount);
+                });
             }, "setupPostBounty");
         },
 
@@ -267,6 +272,52 @@
             }, "setBountyAmount");
         },
 
+        _changeBountyStatusIcon: function () {
+            var getCashLevel = function (amount) {
+                if (amount < 20)
+                    return 0;
+                else if (20 <= amount && amount < 50)
+                    return 1;
+                else if (50 <= amount && amount < 100)
+                    return 2;
+                else if (100 <= amount && amount < 250)
+                    return 3;
+                else
+                    return 4;
+            };
+            var getStatusIconUrl = function (cashLevel) {
+                if (cashLevel === 0)
+                    return staticRootUrl + "/" + "status-coins.png";
+                else if (cashLevel === 1)
+                    return staticRootUrl + "/" + "status-moneybag.png";
+                else if (cashLevel === 2)
+                    return staticRootUrl + "/" + "status-moneybags.png";
+                else if (cashLevel === 3)
+                    return staticRootUrl + "/" + "status-bars.png";
+                else if (cashLevel === 4)
+                    return staticRootUrl + "/" + "status-jackpot.png";
+                else
+                    throw "Unknown cash level."
+            };
+            return function (amount) {
+                var cashLevel = getCashLevel(amount);
+                var statusIconUrl = getStatusIconUrl(cashLevel);
+                var statusIcon = $("#statusIcon");
+
+                if (statusIcon.length) {
+                    if (statusIcon.attr("cashLevel") != cashLevel) {
+                        statusIcon.attr("src", statusIconUrl);
+                        statusIcon.attr("cashLevel", cashLevel);
+                    }
+                } else {
+                    var statusIconSrc = "" +
+                        "<img id='statusIcon' src='" + statusIconUrl + "' " +
+                        "width=100 height=100 cashLevel=" + cashLevel +
+                        ">";
+                    $(statusIconSrc).insertBefore($("#addBounty"));
+                }
+            }
+        }(),
         /**
          * Show bounty status icon based on bounty amount
          */
@@ -275,50 +326,12 @@
                 var openText = $(".state-indicator.open").text();
                 return openText.substring(openText.indexOf("$") + 1);
             };
-
-            var getCashLevel = function (amount) {
-                if (amount < 20) {
-                    return 0;
-                } else if (20 <= amount && amount < 50) {
-                    return 1;
-                } else if (50 <= amount && amount < 100) {
-                    return 2;
-                } else if (100 <= amount && amount < 250) {
-                    return 3;
-                } else {
-                    return 4;
-                }
-            }
-
-            var getStatusIconUrl = function (cashLevel) {
-                if (cashLevel === 0) {
-                    return staticRootUrl + "/" + "status-coins.png";
-                } else if (cashLevel === 1) {
-                    return staticRootUrl + "/" + "status-moneybag.png";
-                } else if (cashLevel === 2) {
-                    return staticRootUrl + "/" + "status-moneybags.png";
-                } else if (cashLevel === 3) {
-                    return staticRootUrl + "/" + "status-bars.png";
-                } else if (cashLevel === 4) {
-                    return staticRootUrl + "/" + "status-jackpot.png";
-                } else {
-                    throw "Unknown cash level."
-                }
-            };
             
             ui.render(function () {
                 if ($(".state-indicator.open").length) {
                     // If open
                     var amount = getBountyAmount();
-                    var cashLevel = getCashLevel(amount);
-                    var statusIconUrl = getStatusIconUrl(cashLevel);
-
-                    $("#statusIcon").remove();
-                    var statusIcon = "" +
-                        "<img id='statusIcon' src='" + statusIconUrl + "' " +
-                        "width=100 height=100" +
-                        ">";
-                    $(statusIcon).insertBefore($("#addBounty"));
+                    ui._changeBountyStatusIcon(amount);
                 }
             }, "showBountyStatusIcon");
         },
@@ -384,6 +397,7 @@
         //synchronize the total bounty reward for this issue, and show it
         events.register("rewardChanged", function (handle, message) {
             ui.setBountyAmount(message.amount);
+            ui._changeBountyStatusIcon(message.amount);
         });
     });
 })();
