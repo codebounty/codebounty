@@ -19,18 +19,17 @@ Bounty.statusImage = function (bountyId, callback, size) {
     };
 
     var getCashLevel = function (amount) {
-        if (amount < 20) {
+        if (amount < 20)
             return 0;
-        } else if (20 <= amount && amount < 50) {
+        else if (20 <= amount && amount < 50)
             return 1;
-        } else if (50 <= amount && amount < 100) {
+        else if (50 <= amount && amount < 100)
             return 2;
-        } else if (100 <= amount && amount < 250) {
+        else if (100 <= amount && amount < 250)
             return 3;
-        } else {
+        else
             return 4;
-        }
-    }
+    };
 
     var formatDate = function () {
         var m_names = new Array("Jan", "Feb", "Mar", "Apr", "May",
