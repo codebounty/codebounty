@@ -13,7 +13,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
         _minHeight = 368;
     var currencySymbol = "$";
     var backgroundColor = "#E0C39D";
-    
+
     var assetFile = function (name) {
         return path.join(basepath, "/assets/", name);
     };
@@ -32,8 +32,8 @@ Bounty.statusImage = function (bountyId, callback, size) {
     };
 
     var formatDate = function () {
-        var m_names = new Array("Jan", "Feb", "Mar", "Apr", "May",
-        "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec");
+        var m_names = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July",
+        "Aug", "Sept", "Oct", "Nov", "Dec"];
 
         return function (date) {
             // TODO: take care of timezone
@@ -72,7 +72,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     }();
 
     // var bounty = Bounties.findOne(bountyId);
-    
+
     // Start debug code
     var bounty = {
         "status": "closed",
@@ -121,7 +121,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     var canvas = new Canvas(width, height),
         ctx = canvas.getContext("2d");
 
-    // Setup fonts     
+    // Setup fonts
     var headerFontName = "Woodshop";
     var headerFontFile = "woodshop-regular.otf";
     var headerFontColor = "#484640";
@@ -179,8 +179,8 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Align elements
     // Bounty Status
     var bountyStatusOriginX = centerX - 332;
-    var bountyStatusOriginY = Math.floor((height - 336) / 2);   // horizontally center (bounty status image valid height is 328) 
-    
+    var bountyStatusOriginY = Math.floor((height - 336) / 2);   // horizontally center (bounty status image valid height is 328)
+
     // Bounty Cash
     var bountyCashOriginX = bountyStatusOriginX + 147;
     var bountyCashOriginY = bountyStatusOriginY + 233;
