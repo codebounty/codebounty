@@ -335,7 +335,7 @@ GitHub.prototype.getIssueEvents = function (issueUrl, callback) {
 
 /**
  * Loads the commit with a conditional request
- * @param repo {user: String, name: String}
+ * @param repo {user: string, name: string}
  * @param {string} sha
  * @param {function} [callback] (error, result) result is an array with one item
  */
@@ -401,7 +401,7 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
 /**
  * Post a comment on an issue
  * @param {string} issueUrl
- * @param {String} comment "Interesting issue!"
+ * @param {string} comment "Interesting issue!"
  */
 GitHub.prototype.postComment = function (issueUrl, comment) {
     var issue = GitHubUtils.getIssue(issueUrl);

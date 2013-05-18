@@ -212,7 +212,7 @@
 
         /**
          * Creates the post a bounty button and a numeric up / down (for setting the bounty amount)
-         * @param {Number} initValue
+         * @param {number} initValue
          */
         setupPostBounty: function (initValue) {
             ui.render(function () {

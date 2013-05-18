@@ -30,18 +30,17 @@ Rewards = new Meteor.Collection("rewards", {
 });
 
 /**
- * Reward for a bounty / set of bounties
+ * Reward for an issue
  * @param options {{_id: string=,
  *                  bountyIds: Array.<string>,
  *                  bountyAmounts: Array.<Big>,
  *                  currency: string,
- *                  issueUrl: String,
+ *                  issueUrl: string,
  *                  lastSync: Date=,
  *                  payout: {by: string, on: Date}=,
  *                  receivers: Array.<Receiver>,
- *                  receivers: Array.<Receiver>,
  *                  status: string,
- *                  userId: String}}
+ *                  userId: string}}
  *
  * - _id, lastSync, and payout are optional, they will only be set on existing rewards
  * - currency Ex. "btc", "usd"

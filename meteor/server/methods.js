@@ -100,7 +100,7 @@ Meteor.methods({
      * @param amount the bounty amount
      * @param issueUrl the url to create a bounty for
      * @param currency
-     * @returns {String}
+     * @returns {string}
      */
     "createBounty": function (amount, issueUrl, currency) {
         requireAuthentication(this.userId);

@@ -5,7 +5,7 @@ var Url = Npm.require("url");
 /**
  * Parse out the issue object
  * @param issueUrl The github url
- * @returns {{repo: {user: String, name: String}, number: Number}}
+ * @returns {{repo: {user: string, name: string}, number: number}}
  */
 GitHubUtils.getIssue = function (issueUrl) {
     issueUrl = Tools.stripHash(issueUrl);
