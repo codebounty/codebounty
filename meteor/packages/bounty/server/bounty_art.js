@@ -16,7 +16,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
 
     var assetFile = function (name) {
         return path.join(basepath, "/assets/", name);
-    };
+    }
 
     var getCashLevel = function (amount) {
         if (amount < 20)
@@ -68,16 +68,18 @@ Bounty.statusImage = function (bountyId, callback, size) {
 
             return m_names[curr_month] + " " + curr_date + sup + ", " +
                    curr_year + " at " + curr_hour + a_p;
-        }
+        };
     }();
 
     // var bounty = Bounties.findOne(bountyId);
 
+    //
     // Start debug code
+    //
     var bounty = {
-        "status": "closed",
+        "status": "claimed", // open, closed, reopened, claimed
         "amount": 20.234,
-        "expiredDate": new Date(1945, 4, 1, 24),
+        "expiredDate": new Date(),
         "userName": "JohnDoeUser",
         "claimedBy": [
                         {
@@ -89,14 +91,16 @@ Bounty.statusImage = function (bountyId, callback, size) {
                             "amount": 7
                         }
                      ]
-    }
+    };
     var status = bounty.status;
     var cashLevel = getCashLevel(bounty.amount);
     size = {
         "width": 0,
         "height": 0
-    }
+    };
+    //
     // End debug code
+    //
 
     // var status;
     // if (bounty.reward) {
@@ -156,129 +160,145 @@ Bounty.statusImage = function (bountyId, callback, size) {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Setup variables based on status
-    var statusHeader;
-    var bountyAmount;
-    var bountyStatusImageFile;
-    if (status === "open") {
-        statusHeader = "BOUNTY NOW OPEN!";
-        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
-        bountyStatusImageFile = "banner-bounty-open.png";
-    } else if (status === "closed") {
-        statusHeader = "BOUNTY CLOSED";
-        bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
-        bountyStatusImageFile = "banner-bounty-closed.png";
-    } else if (status === "reopened") {
-        statusHeader = "BOUNTY REOPENED";
-        bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
-        bountyStatusImageFile = "banner-bounty-reopened.png";
+    if (status === "open" || status === "closed" || status === "reopened") {
+        // When status is open, closed or reopened
+        (function () {
+            // Setup variables based on status
+            var statusHeader;
+            var bountyAmount;
+            var bountyStatusImageFile;
+            if (status === "open") {
+                statusHeader = "BOUNTY NOW OPEN!";
+                bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
+                bountyStatusImageFile = "banner-bounty-open.png";
+            } else if (status === "closed") {
+                statusHeader = "BOUNTY CLOSED";
+                bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
+                bountyStatusImageFile = "banner-bounty-closed.png";
+            } else if (status === "reopened") {
+                statusHeader = "BOUNTY REOPENED";
+                bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(bounty.amount).toFixed(2);
+                bountyStatusImageFile = "banner-bounty-reopened.png";
+            }
+
+            // Align elements
+            // Bounty Status
+            var bountyStatusOriginX = centerX - 332;
+            var bountyStatusOriginY = Math.floor((height - 336) / 2);   // horizontally center (bounty status image valid height is 328)
+
+            // Bounty Cash
+            var bountyCashOriginX = bountyStatusOriginX + 147;
+            var bountyCashOriginY = bountyStatusOriginY + 233;
+
+            // Bounty Header
+            var statusHeaderOriginX = centerX - 86;
+            var statusHeaderOriginY = bountyStatusOriginY + 65;
+
+            // Bounty Content
+            var leftOffsetIndent = 5;
+            var bountyContentOriginX = statusHeaderOriginX + leftOffsetIndent;
+            var bountyAmountOriginY = statusHeaderOriginY + 53;
+            var bountyExpirationOriginY = statusHeaderOriginY + 90;
+
+            // Bounty Footer
+            var footerOriginX = centerX + 319;
+            var posterUserOriginY = bountyStatusOriginY + 290;
+            var siteLinkOriginY = posterUserOriginY + 31;
+
+            // Claimed by text (when opened)
+            var rightOffsetIndent = 5;
+            var claimedByTextOriginX = footerOriginX - rightOffsetIndent;
+            var claimedByTextOriginY = posterUserOriginY - 70;
+            var claimedByText2OriginY = claimedByTextOriginY + 30;
+
+            // Draw Bounty status
+            // TODO: exclamation mark is not included in font Woodshop, so in the
+            // original design, it is replaced by using Myriad Pro.
+            ctx.font = headerFontSize + " " + headerFontName;
+            ctx.fillStyle = headerFontColor;
+            ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
+
+            // Draw bounty amount and expiration
+            ctx.font = contentFontSize + " " + contentFontName;
+            ctx.fillStyle = contentFontColor;
+            ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
+            var bountyExpiration = "Expires: " + formatDate(bounty.expiredDate);
+            ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
+
+            // Draw codebounty plug and link (align right)
+            ctx.textAlign = "right";
+            ctx.fillStyle = footerFontColor;
+            ctx.font = footerFontSize + " " + footerFontName;
+            var posterUser = "Posted by " + bounty.userName;
+            ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
+            ctx.font = footerSmallerFontSize + " " + footerFontName;
+            var siteLink = "codebounty.co";
+            ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
+
+            // Draw claimed by text
+            if (status === "closed" && bounty.claimedBy) {
+                ctx.textAlign = "right";
+                ctx.fillStyle = footerFontColor;
+                ctx.font = footerFontSize + " " + footerFontName;
+
+                // Only display two claimer
+                // TODO: code needs optimization
+                if (bounty.claimedBy[0]) {
+                    var claimedTextClaimer = "Claimed by: " + bounty.claimedBy[0].userName + " " + currencySymbol + bounty.claimedBy[0].amount;
+                    ctx.fillText(claimedTextClaimer, claimedByTextOriginX, claimedByTextOriginY);
+                }
+
+                if (bounty.claimedBy[1]) {
+                    var claimedTextClaimer2 = bounty.claimedBy[1].userName + " " + currencySymbol + bounty.claimedBy[1].amount;
+                    ctx.fillText(claimedTextClaimer2, claimedByTextOriginX, claimedByText2OriginY);
+                }
+            }
+
+            // Draw bounty status image
+            var bountyStatusImage = new Image();
+            bountyStatusImage.src = fs.readFileSync(assetFile(bountyStatusImageFile));
+            ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
+
+            // Draw bounty cash image
+            var bountyCashImageFile;
+            
+            switch (cashLevel) {
+                case 0:
+                    bountyCashImageFile = "cash-coins.png";
+                    break;
+                case 1:
+                    bountyCashImageFile = "cash-money-bag.png";
+                    break;
+                case 2:
+                    bountyCashImageFile = "cash-many-money-bags.png";
+                    break;
+                case 3:
+                    bountyCashImageFile = "cash-bars.png";
+                    break;
+                case 4:
+                    bountyCashImageFile = "cash-jackpot.png";
+                    break;
+                default:
+                    throw "Unknown cash level";
+            }
+            var bountyCashImage = new Image();
+            bountyCashImage.src = fs.readFileSync(assetFile(bountyCashImageFile));
+            ctx.drawImage(bountyCashImage, bountyCashOriginX, bountyCashOriginY, bountyCashImage.width, bountyCashImage.height);
+
+            // Finish drawing canvas
+            callback(canvas);
+        })();
+        // End when status is open, closed or reopened
+    } else if (status === "claimed") {
+        // When status is claimed
+        (function () {
+
+
+            callback(canvas);
+        })();
+        // End when status is claimed
     } else {
         throw "Unknown bounty status";
     }
 
-    // Align elements
-    // Bounty Status
-    var bountyStatusOriginX = centerX - 332;
-    var bountyStatusOriginY = Math.floor((height - 336) / 2);   // horizontally center (bounty status image valid height is 328)
-
-    // Bounty Cash
-    var bountyCashOriginX = bountyStatusOriginX + 147;
-    var bountyCashOriginY = bountyStatusOriginY + 233;
-
-    // Bounty Header
-    var statusHeaderOriginX = centerX - 86;
-    var statusHeaderOriginY = bountyStatusOriginY + 65;
-
-    // Bounty Content
-    var leftOffsetIndent = 5;
-    var bountyContentOriginX = statusHeaderOriginX + leftOffsetIndent;
-    var bountyAmountOriginY = statusHeaderOriginY + 53;
-    var bountyExpirationOriginY = statusHeaderOriginY + 90;
-
-    // Bounty Footer
-    var footerOriginX = centerX + 319;
-    var posterUserOriginY = bountyStatusOriginY + 290;
-    var siteLinkOriginY = posterUserOriginY + 31;
-
-    // Claimed by text (when opened)
-    var rightOffsetIndent = 5;
-    var claimedByTextOriginX = footerOriginX - rightOffsetIndent;
-    var claimedByTextOriginY = posterUserOriginY - 70;
-    var claimedByText2OriginY = claimedByTextOriginY + 30;
-
-    // Draw Bounty status
-    // TODO: exclamation mark is not included in font Woodshop, so in the
-    // original design, it is replaced by using Myriad Pro.
-    ctx.font = headerFontSize + " " + headerFontName;
-    ctx.fillStyle = headerFontColor;
-    ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
-
-    // Draw bounty amount and expiration
-    ctx.font = contentFontSize + " " + contentFontName;
-    ctx.fillStyle = contentFontColor;
-    ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
-    var bountyExpiration = "Expires: " + formatDate(bounty.expiredDate);
-    ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
-
-    // Draw codebounty plug and link (align right)
-    ctx.textAlign = "right";
-    ctx.fillStyle = footerFontColor;
-    ctx.font = footerFontSize + " " + footerFontName;
-    var posterUser = "Posted by " + bounty.userName;
-    ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
-    ctx.font = footerSmallerFontSize + " " + footerFontName;
-    var siteLink = "codebounty.co"
-    ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
-
-    // Draw claimed by text
-    if (status === "closed" && bounty.claimedBy) {
-        ctx.textAlign = "right";
-        ctx.fillStyle = footerFontColor;
-        ctx.font = footerFontSize + " " + footerFontName;
-
-        // Only display two claimer
-        // TODO: code needs optimization
-        if (bounty.claimedBy[0]) {
-            var claimedTextClaimer = "Claimed by: " + bounty.claimedBy[0].userName + " " + currencySymbol + bounty.claimedBy[0].amount;
-            ctx.fillText(claimedTextClaimer, claimedByTextOriginX, claimedByTextOriginY);
-        }
-
-        if (bounty.claimedBy[1]) {
-            var claimedTextClaimer2 = bounty.claimedBy[1].userName + " " + currencySymbol + bounty.claimedBy[1].amount;
-            ctx.fillText(claimedTextClaimer2, claimedByTextOriginX, claimedByText2OriginY);
-        }
-    }
-
-    // Draw bounty status image
-    var bountyStatusImage = new Image;
-    bountyStatusImage.src = fs.readFileSync(assetFile(bountyStatusImageFile));
-    ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
-
-    // Draw bounty cash image
-    var bountyCashImageFile;
-    switch (cashLevel) {
-        case 0:
-            bountyCashImageFile = "cash-coins.png";
-            break;
-        case 1:
-            bountyCashImageFile = "cash-money-bag.png";
-            break;
-        case 2:
-            bountyCashImageFile = "cash-many-money-bags.png";
-            break;
-        case 3:
-            bountyCashImageFile = "cash-bars.png";
-            break;
-        case 4:
-            bountyCashImageFile = "cash-jackpot.png";
-            break;
-        default:
-            throw "Unknown cash level";
-    }
-    var bountyCashImage = new Image;
-    bountyCashImage.src = fs.readFileSync(assetFile(bountyCashImageFile));
-    ctx.drawImage(bountyCashImage, bountyCashOriginX, bountyCashOriginY, bountyCashImage.width, bountyCashImage.height);
-
-    // Finish drawing canvas
-    callback(canvas);
 };
