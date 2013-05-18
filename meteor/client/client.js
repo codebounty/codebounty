@@ -52,10 +52,11 @@ Meteor.Router.add({
                 return;
 
             //TODO change this to accept multiple rewards
-            Session.set("reward", result[0]);
+            var reward = result[0];
+            Session.set("reward", reward);
         });
 
-        return "rewardBountyView";
+        return "rewardView";
     },
     "/logout": function () {
         Meteor.logout();

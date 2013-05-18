@@ -98,6 +98,7 @@ Reward.prototype = {
         var that = this;
 
         var options = {
+            _id: that._id,
             bountyIds: clonedBountyIds,
             bountyAmounts: clonedBountyAmounts,
             currency: that.currency,
@@ -150,6 +151,9 @@ Reward.prototype = {
             userId: that.userId
         };
 
+        if (that._id)
+            json._id = that._id;
+
         return json;
     }
 };
@@ -158,15 +162,8 @@ EJSON.addType("Reward", RewardUtils.fromJSONValue);
 
 //methods
 
-Reward.prototype.getReceivers = function () {
-    this._receiversDep.depend();
-    return this.receivers;
-};
-
-Reward.prototype.total = function () {
+Reward.prototype.fee = function () {
     var that = this;
-
-    var total = BigUtils.sum(that.bountyAmounts);
     var totalFee = new Big(0);
 
     //add up the fee per bounty
@@ -184,7 +181,37 @@ Reward.prototype.total = function () {
         totalFee = totalFee.plus(fee);
     });
 
-    return total.minus(totalFee);
+    return totalFee;
+};
+
+Reward.prototype.getReceivers = function () {
+    this._receiversDep.depend();
+    return this.receivers;
+};
+
+/**
+ * The total amount of bounties to reward (removes the fee)
+ * @returns {Big}
+ */
+Reward.prototype.total = function () {
+    var that = this;
+
+    var fee = that.fee();
+
+    var total = BigUtils.sum(that.bountyAmounts);
+    return total.minus(fee);
+};
+
+/**
+ * (reactive) The total amount of receiver rewards
+ */
+Reward.prototype.receiverTotal = function () {
+    var receivers = this.getReceivers();
+    var totalReceiverRewards = _.reduce(receivers, function (sum, receiver) {
+        return sum.plus(receiver.getReward());
+    }, new Big("0"));
+
+    return totalReceiverRewards;
 };
 
 /**
@@ -193,15 +220,11 @@ Reward.prototype.total = function () {
  * @reactive
  */
 Reward.prototype.validationErrors = function () {
-    var receivers = this.getReceivers();
+    var that = this;
+    var receivers = that.getReceivers();
     var validationErrors = [];
 
-    var total = this.total();
-
-    var receiverMinimum = ReceiverUtils.minimum(this.currency);
-    if (total.cmp(receiverMinimum) < 0)
-        validationErrors.push("The reward amount (" + total +
-            ") must be >= the minimum receiver amount (" + receiverMinimum + ")");
+    var total = that.total();
 
     //add all the receiver errors
     _.each(receivers, function (receiver) {
@@ -211,9 +234,7 @@ Reward.prototype.validationErrors = function () {
     });
 
     //the reward amount needs to equal codebounty fee + the total receiver amounts
-    var totalReceiverRewards = _.reduce(receivers, function (sum, receiver) {
-        return sum.plus(receiver.getReward());
-    }, new Big("0"));
+    var totalReceiverRewards = that.receiverTotal();
 
     if (total.cmp(totalReceiverRewards) !== 0)
         validationErrors.push("The reward (" + total +

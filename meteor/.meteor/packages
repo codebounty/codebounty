@@ -11,3 +11,4 @@ accounts-ui
 accounts-github
 router
 force-ssl
+session-extras

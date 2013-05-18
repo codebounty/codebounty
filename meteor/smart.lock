@@ -2,12 +2,13 @@
   "meteor": {
     "git": "https://github.com/meteor/meteor.git",
     "branch": "master",
-    "commit": "bfe4b72ebec4367eaddcdf0887fcf5e649d9dcb8"
+    "commit": "5d736d4bf0448c7db1f9b47124dfafc34a9631bb"
   },
   "dependencies": {
     "basePackages": {
       "router": {},
-      "node-modules": {}
+      "node-modules": {},
+      "session-extras": {}
     },
     "packages": {
       "router": {
@@ -19,6 +20,11 @@
         "git": "https://github.com/possibilities/meteor-node-modules.git",
         "tag": "v0.0.5",
         "commit": "d502e5091759073a6baed856fadd93012749842d"
+      },
+      "session-extras": {
+        "git": "https://github.com/belisarius222/meteor-session-extras.git",
+        "tag": "v0.3.0",
+        "commit": "0c49d41009821e76f46af3ad65d0a1d5bfa8d4eb"
       },
       "page-js-ie-support": {
         "git": "https://github.com/tmeasday/meteor-page-js-ie-support.git",
