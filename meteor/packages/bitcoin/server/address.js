@@ -9,6 +9,8 @@ var addressFile = "./packages/bitcoin/server/addresses"; // The file to pull add
 BitcoinAddresses = new Meteor.Collection("bitcoinAddresses");
 
 Meteor.setInterval(function () {
+    // TODO: Actually allow for counting errors and halting if
+    // they reach a certain threshold.
     var response;
     var errors = 0;
     
@@ -17,7 +19,7 @@ Meteor.setInterval(function () {
         used: false
     }).count();
     
-    if (availableAddresses < Settings.minimumAddresses) {
+    if (availableAddresses < Bitcon.Settings.minimumAddresses) {
                 
         // Create a file to hold the addresses we don't use.
         unusedAddresses = fs.createWriteStream(addressFile + ".unused");
@@ -30,13 +32,13 @@ Meteor.setInterval(function () {
 
                 // If we don't have the maximum available number of addresses,
                 // create a new address.
-                if (availableAddresses < Settings.maximumAddresses
-                && errors < Settings.maximumErrors
+                if (availableAddresses < Bitcoin.Settings.maximumAddresses
+                && errors < Bitcoin.Settings.maximumErrors
                 && address != "") {
                     
                     Fiber(function () {
                         // Contact Blockchain.info for a proxy address.
-                        response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Settings.callbackURI);
+                        response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI);
                     
                         // Make sure the call was successful and save the generated
                         // address if it was.

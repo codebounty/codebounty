@@ -32,3 +32,24 @@ Bitcoin.addressForIssue = function (userId, url) {
     
     return address;
 };
+
+/*****************************************************
+ * Checks a Blockchain.info request for the secret key
+ * defined in Bitcoin.IPNSecret.
+ * @param request
+ * @param response
+ * @param callback
+ **/
+Bitcoin.verify = function (request, response, callback) {
+    var error = null;
+    var params = request.body;
+
+    if (params.secret != Bitcoin.IPNSecret) {
+        error = "Error verifying Bitcoin IPN. Secret was " + params.secret;
+        console.log(error);
+    }
+    
+    if (callback) {
+        callback(error, params);
+    }
+};

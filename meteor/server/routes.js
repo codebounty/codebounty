@@ -36,8 +36,14 @@ Meteor.Router.add("/ipn", function () {
 // The Blockchain.info IPN callback.
 // http://blockchain.info/api/api_receive
 Meteor.Router.add("/bitcoin-ipn", function () {
-        
+    Bitcoin.verify(this.request, this.response, function (error, params) {
+        if (error)
+            return;
+            
+        if (params)
+            Bounty.Bitcoin.confirm(params);
+    });
     
-    // From the example on Blockchain.info.
+    // To prevent Blockchain.info from resending the transaction.
    return [200, "*ok*"];
 });
