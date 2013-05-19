@@ -35,6 +35,11 @@
     font-size: 18px;
 }
 
+#currencyToggle {
+    position: relative;
+    margin: 1em auto;
+}
+
 #iframecontainer {
     width: 90%;
     height: 80%;
