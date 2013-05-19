@@ -8,6 +8,7 @@ Meteor.subscribe("allUserData");
 Meteor.Router.add({
     "/addFunds": function () {
         var amount = window.url("?amount");
+        var currency = window.url("?currency");
         var url = window.url("?url");
         var currency = window.url("?currency");
 
