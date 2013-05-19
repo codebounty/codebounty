@@ -216,6 +216,10 @@
          */
         setupPostBounty: function (initValue) {
             ui.render(function () {
+                
+                var currencyToggle = "<div id='currencyToggle' class='toggle-light'></div>";
+                $(currencyToggle).insertAfter(ui._container);
+                
                 var bountyDiv = "" +
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
                     "<input id='bountyInput' type='number' value='" + initValue + "' min='0' step='5'/></div>" +
@@ -224,6 +228,13 @@
                     "</a>";
 
                 $(bountyDiv).insertAfter(ui._container);
+                
+                
+                $("#currencyToggle").toggles({
+                    type: "select", 
+                    text: {on: "USD", off: "BTC"},
+                    on: true
+                });
 
                 $("#postBounty").click(function (e) {
                     //TODO: Input validation.
