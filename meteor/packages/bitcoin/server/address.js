@@ -19,7 +19,7 @@ Meteor.setInterval(function () {
         used: false
     }).count();
     
-    if (availableAddresses < Bitcon.Settings.minimumAddresses) {
+    if (availableAddresses < Bitcoin.Settings.minimumAddresses) {
                 
         // Create a file to hold the addresses we don't use.
         unusedAddresses = fs.createWriteStream(addressFile + ".unused");
