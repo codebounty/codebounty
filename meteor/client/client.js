@@ -5,6 +5,9 @@ Responses = new Meteor.Collection("responses");
 Meteor.subscribe("allUserData");
 
 Meteor.Router.add({
+    "/btcAddressForIssue": function () {
+        var url = window.url;
+    },
     "/createBounty": function () {
         var amount = window.url("?amount");
         var currency = window.url("?currency");

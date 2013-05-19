@@ -94,6 +94,33 @@ Meteor.methods({
 
         return fut.wait();
     },
+    
+    /**
+     * Take an issue and return the user's Bitcoin address for it.
+     * @param url the url to return an address for
+     * @returns {String}
+     */
+     "btcAddressForIssue": function (url) {
+        var address = BitcoinAddresses.findOne(
+        { url: url, userId: this.userId }, { reactive: false });
+         
+        // If there is no address associated with this user and issue,
+        // grab an unused one and associate it.
+        if (!address) {
+            address = BitcoinAddresses.findOne(
+               { used: false }, { reactive: false } );
+               
+            if (address) {
+                Fiber(function () {
+                    BitcoinAddresses.update({ address: address.address },
+                        { $set: { used: true, url: url, userId: this.userId } });
+                }).run();
+            } else {
+                throw "no bitcoin addresses loaded!";
+            }
+        }
+        return address.proxyAddress;
+     },
 
     /**
      * Create a bounty and return it's paypal pre-approval url
@@ -119,8 +146,6 @@ Meteor.methods({
         };
         bounty._id = Bounties.insert(bounty);
 
-        if (currency === "btc")
-            throw "not implemented yet";
 
         //TODO remove (for debugging w/o tunnel)
 //        bounty.approved = true;
