@@ -32,3 +32,12 @@ Meteor.Router.add("/ipn", function () {
     //from http://stackoverflow.com/a/15847900/230462
     return [200];
 });
+
+// The Blockchain.info IPN callback.
+// http://blockchain.info/api/api_receive
+Meteor.Router.add("/bitcoin-ipn", function () {
+        
+    
+    // From the example on Blockchain.info.
+   return [200, "*ok*"];
+});
