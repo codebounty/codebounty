@@ -6,6 +6,9 @@ Rewards = new Meteor.Collection("rewards");
 Meteor.subscribe("allUserData");
 
 Meteor.Router.add({
+    "/btcAddressForIssue": function () {
+        var url = window.url;
+    },
     "/addFunds": function () {
         var amount = window.url("?amount");
         var currency = window.url("?currency");

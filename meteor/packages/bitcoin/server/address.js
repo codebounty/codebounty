@@ -2,15 +2,11 @@
  * Bitcoin addresses collection and loading script.
  */
 var fs = Npm.require('fs');
-var lazy = Npm.require('lazy');
+var readline = Npm.require('readline');
 var checkForAddressesInterval = 60000; // In milliseconds.
 var addressFile = "./addresses"; // The file to pull addresses from.
  
-BitcoinAddresses = new Meteor.Collection("bitcoinAddresses", {
-    transform: function (doc) {
-        return RewardUtils.fromJSONValue(doc);
-    }
-});
+BitcoinAddresses = new Meteor.Collection("bitcoinAddresses");
 
 Meteor.setInterval(function () {
     var response;
@@ -27,50 +23,53 @@ Meteor.setInterval(function () {
         unusedAddresses = fs.createWriteStream(addressFile + ".unused");
         
         // Open file containing Bitcoin addresses.
-        new lazy(fs.createReadStream(addressFile))
-            .lines
-            .forEach(function(address){
-                
+        readline.createInterface({
+            input: fs.createReadStream(addressFile),
+            terminal: false
+        }).on('line', function(address){
+
                 // If we don't have the maximum available number of addresses,
                 // create a new address.
                 if (availableAddresses < Settings.maximumAddresses
-                && errors < Settings.maximumErrors) {
+                && errors < Settings.maximumErrors
+                && address != "") {
                     
-                    // Contact Blockchain.info for a proxy address.
-                    response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Settings.callbackURI);
+                    Fiber(function () {
+                        // Contact Blockchain.info for a proxy address.
+                        response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Settings.callbackURI);
                     
-                    // Make sure the call was successful and save the generated
-                    // address if it was.
-                    if (response.status == 200 && response.data != null) {
-                        
-                        // Insert the generated address.
-                        BitcoinAddresses.insert({
-                            address: address,
-                            proxyAddress: response.data.destination,
-                            used: false
-                        });
-                        
-                        availableAddresses++;
-                        
-                    // If the call wasn't successful, keep the address in the
-                    // addresses file and increment our error counter.
-                    } else {
-                        errors++;
-                        unusedAddresses.write(address + "\n");
-                    }
+                        // Make sure the call was successful and save the generated
+                        // address if it was.
+                        if (response.data != null) {
+                            
+                            // Insert the generated address.
+                            BitcoinAddresses.insert({
+                                address: address,
+                                proxyAddress: response.data.input_address,
+                                used: false
+                            });
+                            
+                        // If the call wasn't successful, keep the address in the
+                        // addresses file and increment our error counter.
+                        } else {
+                            console.log(response.content);
+                        }
+                    }).run();
+                    
+                    availableAddresses++;
                     
                 // If we do, write the address to our "unused addresses" file
                 // which will later replace the file we're reading in.
                 } else {
                     unusedAddresses.write(address + "\n");
                 }
-            }
-        );
+            });
         
         // Close the write stream.
         unusedAddresses.end();
         
-        // Replace the "addresses" file with the "unused addresses" file.
-        fs.rename(addressFile + ".unused", addressFile);
+        if (availableAddresses > 0)
+            // Replace the "addresses" file with the "unused addresses" file.
+            fs.rename(addressFile + ".unused", addressFile);
     }
 }, checkForAddressesInterval);
