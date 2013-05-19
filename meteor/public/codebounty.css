@@ -40,6 +40,13 @@
     margin: 1em auto;
 }
 
+#btcSymbol {
+    height: 1em;
+    width: 0.75em;
+    margin-top: 0.15em;
+    display: none;
+}
+
 #iframecontainer {
     width: 90%;
     height: 80%;
