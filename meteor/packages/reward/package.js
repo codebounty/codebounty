@@ -1,5 +1,5 @@
 Package.describe({
-    summary: "Manages bounties, rewards, and their payment"
+    summary: "Manages rewards and their payment"
 });
 
 Npm.depends({
