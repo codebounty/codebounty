@@ -158,25 +158,7 @@ Meteor.methods({
      * @returns {String}
      */
      "btcAddressForIssue": function (url) {
-        var address = BitcoinAddresses.findOne(
-        { url: url, userId: this.userId }, { reactive: false });
-         
-        // If there is no address associated with this user and issue,
-        // grab an unused one and associate it.
-        if (!address) {
-            address = BitcoinAddresses.findOne(
-               { used: false }, { reactive: false } );
-               
-            if (address) {
-                Fiber(function () {
-                    BitcoinAddresses.update({ address: address.address },
-                        { $set: { used: true, url: url, userId: this.userId } });
-                }).run();
-            } else {
-                throw "no bitcoin addresses loaded!";
-            }
-        }
-        return address.proxyAddress;
+        return Bitcoin.addressForIssue(this.userId, url).proxyAddress;
      },
 
     /**
