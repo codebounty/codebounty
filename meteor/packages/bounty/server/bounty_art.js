@@ -121,7 +121,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // Start debug code
     //
     var bounty = {
-        "status": "reopened",        // open, closed, reopened, claimed
+        "status": "claimed",        // open, closed, reopened, claimed
         "amount": 100.01,
         "expiredDate": new Date(),
         "userName": "JohnDoeUser",  // user who posted the bounty
@@ -181,14 +181,11 @@ Bounty.statusImage = function (bountyId, callback, size) {
     // var myriadProFont = new Font(myriadPro, assetFile(myriadProFile));
     // ctx.addFont(myriadProFont);
 
-    var futuraLTHeavy       = '"Futura LT Heavy"';
-    var futuraLTHeavyFile   = "futura-lt-heavy.otf";
-    var futuraLTHeavyFont   = new Font(futuraLTHeavy, assetFile(futuraLTHeavyFile));
-    ctx.addFont(futuraLTHeavyFont);
-
-    var futuraLT            = '"Futura LT"';
+    var futuraLT            = "FuturaLT";
     var futuraLTFile        = "futura-lt.ttf";
+    var futuraLTHeavyFile   = "futura-lt-heavy.otf";
     var futuraLTFont        = new Font(futuraLT, assetFile(futuraLTFile));
+    futuraLTFont.addFace(assetFile(futuraLTHeavyFile), "bold");
     ctx.addFont(futuraLTFont);
 
     // Draw background
@@ -272,7 +269,7 @@ Bounty.statusImage = function (bountyId, callback, size) {
             ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
             // Draw bounty amount and expiration
-            ctx.font = fontStr(contentFontSize, futuraLTHeavy);
+            ctx.font = fontStr(contentFontSize, futuraLT, "bold");
             ctx.fillStyle = contentFontColor;
             ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
             var bountyExpiration = "Expires: " + formatDate(bounty.expiredDate);
@@ -367,13 +364,13 @@ Bounty.statusImage = function (bountyId, callback, size) {
 
             // Draw poster user
             ctx.fillStyle = posterUserFontColor;
-            ctx.font = fontStr(posterUserFontSize, futuraLTHeavy);
+            ctx.font = fontStr(posterUserFontSize, futuraLT, "bold");
             var posterUser = bounty.userName;
             ctx.fillText(posterUser, posterUserOriginX, posterUserOriginY);
 
             // Draw claimed by text
             if (bounty.claimedBy) {
-                ctx.font = fontStr(claimedByFontSize, futuraLTHeavy);
+                ctx.font = fontStr(claimedByFontSize, futuraLT, "bold");
                 ctx.fillStyle = claimedByFontColor;
                 var claimedByText = "Claimed by: ";
                 ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
