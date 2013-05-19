@@ -7,9 +7,10 @@ Meteor.subscribe("allUserData");
 Meteor.Router.add({
     "/createBounty": function () {
         var amount = window.url("?amount");
+        var currency = window.url("?currency");
         var url = window.url("?url");
 
-        Bounty.create(parseFloat(amount), url, "usd");
+        Bounty.create(parseFloat(amount), url, currency);
 
         return "processBountyView";
     },
