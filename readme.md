@@ -2,8 +2,6 @@
 
 ###Setup Project
 
-1. Need cairo installed, see [here](https://github.com/LearnBoost/node-canvas/wiki/_pages)
-
 OS X / Linux / Ubuntu
 
 1. Install [meteorite](http://oortcloud.github.com/meteorite/) ** Ubuntu 12.04 users see [here](https://github.com/oortcloud/meteorite/issues/67)
