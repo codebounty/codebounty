@@ -268,7 +268,8 @@
                 $("#addBounty").click(function (e) {
                     //TODO: Input validation.
                     var amount = $("#bountyInput").val();
-                    var target = rootUrl + "/createBounty?amount=" + amount + "&url=" + thisIssueUrl;
+                    var currency = $("#currencyInput").val();
+                    var target = rootUrl + "/createBounty?amount=" + amount + "&currency=" + currency + "&url=" + thisIssueUrl;
                     ui.openWindow(target);
                     e.stopPropagation();
                     e.preventDefault();
