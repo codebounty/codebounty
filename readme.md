@@ -17,15 +17,16 @@ OS X / Linux / Ubuntu
 
 3. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer
 
-	- #####OS X  
-	Open `https://localhost` in safari, choose certificate details, and select always trust this certificate, then reopen chrome and test it by visiting `https://localhost`.
+		# OS X  
+		Open `https://localhost` in safari, choose certificate details, and select always trust this certificate, then reopen chrome and test it by visiting `https://localhost`.
+
+4. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki)
 
 ###Run Project
 
-1. Start meteor project (this will also install meteorite packages) `sudo mrt --settings settings.json`
+1. Start meteor project (this will also install meteorite packages) 
 
-	- #####OS X
-	If you have `homebrew` installed, you have to run `export PKG_CONFIG_PATH=/usr/X11/lib/pkgconfig` before running the command above, otherwise package canvas will fail to build.
+		mrt --settings settings.json
 
 2. Start the https web server for the github.js file in another terminal**  
 
