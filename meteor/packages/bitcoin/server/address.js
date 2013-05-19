@@ -4,7 +4,7 @@
 var fs = Npm.require('fs');
 var readline = Npm.require('readline');
 var checkForAddressesInterval = 60000; // In milliseconds.
-var addressFile = "./addresses"; // The file to pull addresses from.
+var addressFile = "./packages/bitcoin/server/addresses"; // The file to pull addresses from.
  
 BitcoinAddresses = new Meteor.Collection("bitcoinAddresses");
 
