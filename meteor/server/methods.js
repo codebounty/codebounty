@@ -49,6 +49,57 @@ Meteor.methods({
         return fut.wait();
     },
 
+    //Funds ---------------------------------------------------------------------
+
+    /**
+     * Add funds to a reward
+     * @param amount
+     * @param currency
+     * @param issueUrl
+     * @returns {string} The funding url
+     */
+    "addFunds": function (amount, currency, issueUrl) {
+        var userId = this.userId;
+        requireAuthentication(userId);
+        issueUrl = Tools.stripHash(issueUrl);
+
+        if (currency !== "usd" && currency !== "btc")
+            throw currency + " is an invalid currency";
+
+        amount = new Big(amount);
+
+        var fut = new Future();
+        RewardUtils.addFundsToIssue(amount, currency, issueUrl, userId, function (fundingUrl) {
+            fut.ret(fundingUrl);
+        });
+
+        return fut.wait();
+    },
+
+    /**
+     * Called if the user cancels adding a new bounty in the paypal checkout
+     */
+    "cancelFunds": function (fundId) {
+        fundId = new Meteor.Collection.ObjectID(fundId);
+
+        var userId = this.userId;
+        requireAuthentication(userId);
+
+        var reward = Rewards.findOne({ userId: userId, "funds._id": fundId });
+        if (!reward)
+            return;
+
+        //do not allow cancelling of an approved fund
+        var fund = _.find(reward.funds, function (fund) {
+            return EJSON.equals(fund._id, fundId) && !fund.isAvailable();
+        });
+
+        if (fund)
+            fund.cancel(reward);
+    },
+
+    //Rewards ---------------------------------------------------------------------
+
     /**
      * Check if the user can manually reward the issueUrl
      * @param issueUrl
@@ -56,7 +107,6 @@ Meteor.methods({
      */
     "canReward": function (issueUrl) {
         issueUrl = Tools.stripHash(issueUrl);
-
         var fut = new Future();
 
         Meteor.call("getRewards", issueUrl, function (err, rewards) {
@@ -76,92 +126,76 @@ Meteor.methods({
      * @returns {Array.<Reward>}
      */
     "getRewards": function (issueUrl) {
-        requireAuthentication(this.userId);
+        var userId = this.userId;
+        requireAuthentication(userId);
         issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
 
         var selector = {
-            userId: this.userId
+            userId: this.userId,
+            //make sure there is an approved not expired fund
+            funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
         };
 
-        var user = Meteor.users.findOne({_id: this.userId});
+        var user = Meteor.users.findOne({_id: userId});
         var gitHub = new GitHub(user);
 
         RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributors) {
-            fut.ret(contributors && contributors.length > 0 ? rewards : []);
+            if (contributors && contributors.length > 0) {
+                var clientRewards = _.map(rewards, RewardUtils.clientReward);
+                fut.ret(clientRewards);
+            } else
+                fut.ret([]);
         });
 
         return fut.wait();
     },
 
-    /**
-     * Create a bounty and return it's paypal pre-approval url
-     * @param amount the bounty amount
-     * @param issueUrl the url to create a bounty for
-     * @param currency
-     * @returns {string}
-     */
-    "createBounty": function (amount, issueUrl, currency) {
-        requireAuthentication(this.userId);
-        issueUrl = Tools.stripHash(issueUrl);
-
-        if ((!_.isNumber(amount)) || _.isNaN(amount))
-            throw "Need to specify an amount";
-
-        var bounty = {
-            amount: amount,
-            created: new Date(),
-            currency: currency,
-            reward: null,
-            issueUrl: issueUrl,
-            userId: this.userId
-        };
-        bounty._id = Bounties.insert(bounty);
-
-        if (currency === "btc")
-            throw "not implemented yet";
-
-        //TODO remove (for debugging w/o tunnel)
-//        bounty.approved = true;
-
-        var fut = new Future();
-        Bounty.PayPal.create(bounty, function (preapprovalUrl) {
-            fut.ret(preapprovalUrl);
-
-            //TODO remove (for debugging w/o tunnel)
-//            Fiber(function () {
-//                RewardUtils.addBounty(bounty);
-//            }).run();
-        });
-
-        return fut.wait();
-    },
-
-    /**
-     * Called if the user cancels adding a new bounty in the paypal checkout
-     */
-    "cancelCreateBounty": function (id) {
-        //approved: false to prevent someone cancelling an approved bounty
-        Bounties.remove({_id: id, userId: this.userId, approved: false});
-    },
-
-    //TODO change to update reward? then just have them set status to payout....
-    //and validate make sure status is not sent to paid / reopened by the user or some shit like dat
     /**
      * Initiate the reward payout process
      * @param reward
      * @returns true if there is no error
      */
-    "rewardBounty": function (reward) {
-        requireAuthentication(this.userId);
+    "reward": function (reward) {
+        var userId = this.userId;
+        requireAuthentication(userId);
+
+        var myReward = Rewards.findOne({_id: reward._id, userId: userId});
 
         var fut = new Future();
-        reward.initiatePayout(this.userId, function (error, success) {
-            fut.ret(success);
 
-            if (error)
-                throw error;
+        //update receivers before initiating payout
+        var gitHub = new GitHub(Meteor.user());
+        gitHub.getContributorsCommits(myReward.issueUrl, function (error, issueEvents, commits) {
+            var contributors = _.map(commits, function (commit) {
+                return commit.author;
+            });
+            contributors = _.uniq(contributors, false, function (contributor) {
+                return contributor.email;
+            });
+
+            Fiber(function () {
+                myReward.updateReceivers(contributors);
+
+                //the client should only have changed the receiver amounts
+                //so update the corresponding receiver amounts on the reward we fetched from the db
+                //then check the reward is still valid
+                _.each(reward._receivers, function (receiver) {
+                    var myReceiver = _.find(myReward._receivers, function (r) {
+                        return r.email === receiver.email;
+                    });
+
+                    myReceiver.setReward(receiver.amount);
+                });
+
+                myReward.initiatePayout(userId, function (error, success) {
+                    fut.ret(success);
+
+                    if (error)
+                        throw error;
+                });
+            }).run();
         });
 
         return fut.wait();
@@ -174,6 +208,4 @@ Meteor.methods({
      */
     "holdReward": function (id) {
     }
-
-    //endregion
 });

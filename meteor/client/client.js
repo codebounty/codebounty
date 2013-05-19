@@ -1,33 +1,40 @@
-//TODO before publish: remove Bounties / Responses subscription, packages: autosubscribe and insecure
+//TODO before publish: remove Bounties / Responses / rewards subscription, packages: autosubscribe and insecure
 Bounties = new Meteor.Collection("bounties");
 Responses = new Meteor.Collection("responses");
+Rewards = new Meteor.Collection("rewards");
 
 Meteor.subscribe("allUserData");
 
 Meteor.Router.add({
-    "/createBounty": function () {
+    "/addFunds": function () {
         var amount = window.url("?amount");
         var url = window.url("?url");
+        var currency = window.url("?currency");
 
-        Bounty.create(parseFloat(amount), url, "usd");
+        Meteor.call("addFunds", amount, currency, url, function (error, result) {
+            if (!ErrorUtils.handle(error))
+                return;
 
-        return "processBountyView";
+            window.location.href = result;
+        });
+
+        return "processingView";
     },
-    "/cancelCreateBounty": function () {
+    "/cancelFunds": function () {
         var id = window.url("?id");
 
-        Bounty.cancel(id, function (error) {
+        Meteor.call("cancelFunds", id, function (error) {
             if (!ErrorUtils.handle(error))
                 return;
 
             window.close();
         });
 
-        return "cancelCreateBountyView";
+        return "cancelFundsView";
     },
-    "/confirmBounty": function () {
+    "/confirmFunds": function () {
         window.close();
-        return "confirmBountyView";
+        return "confirmFundsView";
     },
     //used by a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
@@ -39,11 +46,11 @@ Meteor.Router.add({
 
         //track the total reward even before logged in
         var url = window.url("?url");
-        Bounty.trackTotalReward(url);
+        RewardUtils.trackTotal(url);
 
         return "messengerView";
     },
-    "/rewardBounty": function () {
+    "/reward": function () {
         var url = window.url("?url");
         Session.set("url", url);
 

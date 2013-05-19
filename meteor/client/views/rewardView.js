@@ -11,7 +11,7 @@ var rewardTotal = Template.rewardView.total = function () {
 };
 var isValid = Template.rewardView.isValid = function () {
     var myReward = reward();
-    return !myReward || myReward.validationErrors().length === 0;
+    return myReward && myReward.validationErrors().length === 0;
 };
 
 Template.rewardView.receiverTotal = function () {
@@ -127,7 +127,7 @@ Template.rewardView.events({
         var url = Session.get("url");
 
         $.blockUI();
-        Meteor.call("rewardBounty", reward(), function (error, success) {
+        Meteor.call("reward", reward(), function (error, success) {
             $.unblockUI();
             Messenger.send({event: "closeOverlay"});
             if (!ErrorUtils.handle(error)) {

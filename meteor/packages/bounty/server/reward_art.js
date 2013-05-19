@@ -7,7 +7,7 @@ var fs = Npm.require("fs"), path = Npm.require("path"),
  * @param callback passed a {Canvas}
  * @param size object contains variable 'width' and 'height' (optional)
  */
-Bounty.statusImage = function (bountyId, callback, size) {
+RewardUtils.statusImage = function (bountyId, callback, size) {
     // Constants
     var _minWidth       = 712,
         _minHeight      = 368;

@@ -3,7 +3,7 @@
 //how long (in minutes) to payout the bounty once it is rewarded
 //var payoutWindow = 60 * 72; //72 hours
 //for testing
-var payoutWindow = 2; //2 minutes
+var payoutWindow = 0.5; //.5 minutes
 
 /**
  * Cancel the payout
@@ -28,25 +28,36 @@ Reward.prototype.distributeEqually = function () {
     var that = this;
 
     var receivers = that.receivers;
+    var amountToDistribute = that.total();
+    var minimumReward = ReceiverUtils.minimum(that.currency);
 
     //nothing to distribute
-    if (receivers.length <= 0)
+    if (receivers.length <= 0 || amountToDistribute.cmp(minimumReward) < 0)
         return;
 
-    var minimumReward = ReceiverUtils.minimum(that.currency);
-    var amountToDistribute = that.total();
-
     var equallyDistributed = amountToDistribute.div(receivers.length);
+
+    var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
+
+    //add the fraction to the first receivers
+    var fraction = BigUtils.remainder(equallyDistributed, truncateAfterDecimals).times(receivers.length);
+    equallyDistributed = BigUtils.truncate(equallyDistributed, truncateAfterDecimals);
+
     //equally distribute the reward
     if (equallyDistributed.cmp(minimumReward) >= 0) {
         _.each(receivers, function (receiver) {
-            receiver.setReward(equallyDistributed);
+            //add fraction to the first receiver, then clear it
+            receiver.setReward(equallyDistributed.plus(fraction));
+            fraction = new Big(0);
         });
     }
     //pay as many of the contributors as possible
     else {
         var numberCanPay = amountToDistribute.div(minimumReward).toFixed(0);
         equallyDistributed = amountToDistribute.div(numberCanPay);
+
+        var fraction = BigUtils.remainder(equallyDistributed, truncateAfterDecimals).times(receivers.length);
+        equallyDistributed = BigUtils.truncate(equallyDistributed, truncateAfterDecimals);
 
         for (var i = 0; i < receivers.length; i++) {
             var receiver = receivers[i];
@@ -55,13 +66,15 @@ Reward.prototype.distributeEqually = function () {
             if (i < numberCanPay)
                 rewardAmount = equallyDistributed;
 
-            receiver.setReward(rewardAmount);
+            //add fraction to the first receiver, then clear it
+            receiver.setReward(rewardAmount.plus(fraction));
+            fraction = new Big(0);
         }
     }
 };
 
 /**
- * NOTE: Only call this after updating the reward's receivers
+ * NOTE TODO: Only call this after updating the reward's receivers
  * Initiates a payout by changing the status to initiated and storing the payout
  * after 72 hours if no one disputes the reward will automatically be paid out
  * @param by Who the reward was initiated by (the backer userId, "system", future: "moderator")
@@ -82,7 +95,7 @@ Reward.prototype.initiatePayout = function (by, callback) {
         return;
     }
 
-    console.log("Initiated payout by", by, "for", that._id);
+    console.log("Initiated payout by", by, "for", that._id.toString());
 
     that.status = "initiated";
     that.payout = {
@@ -90,10 +103,13 @@ Reward.prototype.initiatePayout = function (by, callback) {
         on: Tools.addMinutes(payoutWindow)
     };
 
-    //after the payout is set, it will automatically be paid
-    Rewards.update(that._id, that.toJSONValue());
+    Fiber(function () {
+        //TODO only update what could have changed (receiver amounts, not funds, etc..)
+        //after the payout is set, it will automatically be paid
+        Rewards.update(that._id, that.toJSONValue());
 
-    callback(null, true);
+        callback(null, true);
+    }).run();
 };
 
 /**
@@ -101,25 +117,30 @@ Reward.prototype.initiatePayout = function (by, callback) {
  */
 Reward.prototype.pay = function () {
     var that = this;
-    var payments = that.payments();
+    var fundDistributions = that.fundDistributions();
 
-    Rewards.update(that._id, {$set: {status: "paid"}});
+    Rewards.update(that._id, {$set: {status: "paying"}});
 
-    console.log("Pay reward", that._id, _.map(payments, function (bountyPayout) {
-        return bountyPayout.payments;
+    console.log("Pay reward", that._id.toString(), _.map(fundDistributions, function (fundPayment) {
+        return fundPayment.payments;
     }));
 
+    var funds = that.funds;
+    var fundIndex = 0;
     if (that.currency === "usd") {
-        _.each(payments, function (bountyPayout) {
-            //load the bounty
-            var bounty = Bounties.findOne(bountyPayout.bountyId);
-
-            var receiverList = _.map(bountyPayout.payments, function (payment) {
-                return { amount: payment.amount.toString(), email: payment.email};
+        _.each(fundDistributions, function (fundDistribution) {
+            var fund = _.find(funds, function (f) {
+                return EJSON.equals(f._id, fundDistribution.fundId);
             });
 
-            Bounty.PayPal.pay(bounty, receiverList);
+            fund.pay(fundDistribution);
+            fundIndex++;
         });
+
+        that.status = "paid";
+
+        //update the reward's status
+        Rewards.update(that._id, {$set: {status: "paid"}});
     }
     else if (that.currency === "btc") {
         throw "Not implemented yet";
@@ -127,80 +148,101 @@ Reward.prototype.pay = function () {
 };
 
 /**
- * Distributes receiver rewards and the fee payments across each bounty
- * @returns {Array.<{bountyId, payments: Array.<{email, amount: Big}>}>}
+ * Distributes receiver rewards and the fee payments across each fund
+ * @returns {Array.<{fundId, payments: Array.<{email, amount: Big}>}>}
  */
-Reward.prototype.payments = function () {
-    var allPayments = [];
+Reward.prototype.fundDistributions = function () {
+    var allFundDistributions = [];
 
     var that = this;
 
-    //setup the receiver payouts to distribute
-    var payouts = _.map(that.receivers, function (receiver) {
+    //setup the receiver payments to distribute
+    var receiverPayments = _.map(that.receivers, function (receiver) {
         return { email: receiver.email, amount: receiver.getReward() };
     });
 
+    var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
+    var feeFractions = new Big(0);
+
+    //remove any fractional payments, and put them into the fee
+    _.each(receiverPayments, function (receiverPayment) {
+        var fraction = BigUtils.remainder(receiverPayment.amount, truncateAfterDecimals);
+        if (fraction.cmp(0) > 0) {
+            receiverPayment.amount = BigUtils.truncate(receiverPayment.amount, truncateAfterDecimals);
+            feeFractions = feeFractions.plus(fraction);
+        }
+    });
+
+    var fee = that.fee();
+    //add fractional payments to the fee
+    if (feeFractions.cmp(0) > 0) {
+        fee = fee.plus(feeFractions);
+        console.log("Fractional fee for reward", that._id.toString(), feeFractions.toString());
+    }
+
     //pay codebounty the fee
-    payouts.push({ email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: that.fee() });
+    receiverPayments.push({ email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee });
 
-    //keep track of the current payout to distribute
-    var payoutIndex = 0;
-    var currentPayout = payouts[payoutIndex];
-    var remainingPayout = currentPayout.amount;
+    //keep track of the current receiver payment to distribute
+    var receiverPaymentIndex = 0;
+    var currentReceiverPayment = receiverPayments[receiverPaymentIndex];
+    var remainingReceiverPayment = currentReceiverPayment.amount;
 
-    //move through each bounty to distribute, one by one
-    for (var bountyIndex = 0; bountyIndex < that.bountyIds.length; bountyIndex++) {
-        //track how much the current bounty has remaining
-        var remainingBounty = that.bountyAmounts[bountyIndex];
+    var availableFunds = that.availableFunds();
 
-        var bountyPayments = {
-            bountyId: that.bountyIds[bountyIndex],
+    //move through each fund to distribute, one by one
+    for (var fundIndex = 0; fundIndex < availableFunds.length; fundIndex++) {
+        //track how much the current fund has remaining
+        var remainingFundAmount = availableFunds[fundIndex].amount;
+
+        var fundDistribution = {
+            fundId: availableFunds[fundIndex]._id,
             payments: []
         };
 
-        //while there is money on the bounty and more payouts to distribute
-        //keep adding payments to this bounty
-        while (remainingBounty.cmp(0) > 0 && payoutIndex < payouts.length) {
-            var payment = {
-                email: currentPayout.email
+        //while there is money on the fund and more payouts to distribute
+        //keep adding payments to this fund
+        while (remainingFundAmount.cmp(0) > 0 && receiverPaymentIndex < receiverPayments.length) {
+            var fundPayment = {
+                email: currentReceiverPayment.email
             };
 
-            //if there is enough bounty left, pay the entire remaining payout
-            if (remainingBounty.cmp(remainingPayout) >= 0) {
+            //if there is enough fund left, pay the entire remaining payout
+            if (remainingFundAmount.cmp(remainingReceiverPayment) >= 0) {
                 //distribute the entire payout
-                payment.amount = remainingPayout;
+                fundPayment.amount = remainingReceiverPayment;
 
                 //move onto the next payout
-                payoutIndex++;
-                if (payoutIndex < payouts.length) {
-                    currentPayout = payouts[payoutIndex];
-                    remainingPayout = currentPayout.amount;
+                receiverPaymentIndex++;
+                if (receiverPaymentIndex < receiverPayments.length) {
+                    currentReceiverPayment = receiverPayments[receiverPaymentIndex];
+                    remainingReceiverPayment = currentReceiverPayment.amount;
                 }
             }
-            //otherwise pay whatever is remaining on the bounty
+            //otherwise pay whatever is remaining on the fund
             else {
-                payment.amount = remainingBounty;
+                fundPayment.amount = remainingFundAmount;
 
                 //update how much still needs to be paid
-                remainingPayout = remainingPayout.minus(remainingBounty);
+                remainingReceiverPayment = remainingReceiverPayment.minus(remainingFundAmount);
             }
 
-            //reduce the amount left on this bounty
-            remainingBounty = remainingBounty.minus(payment.amount);
+            //reduce the amount left on this fund
+            remainingFundAmount = remainingFundAmount.minus(fundPayment.amount);
 
-            if (remainingBounty.cmp(0) < 0)
-                throw "Problem with distributing the bounty, it is below 0";
+            if (remainingFundAmount.cmp(0) < 0)
+                throw "Problem with distributing the fund, it is below 0";
 
-            bountyPayments.payments.push(payment);
+            fundDistribution.payments.push(fundPayment);
         }
 
-        allPayments.push(bountyPayments);
+        allFundDistributions.push(fundDistribution);
     }
 
-    if (payoutIndex < payouts.length)
-        throw "Problem with distributing the bounty, not all the receivers were paid";
+    if (receiverPaymentIndex < receiverPayments.length)
+        throw "Problem with distributing the funds, not all the receivers were paid";
 
-    return allPayments;
+    return allFundDistributions;
 };
 
 /**
@@ -212,7 +254,9 @@ Meteor.setInterval(function () {
     //all rewards ready to be paid
     var rewardsToPay = Rewards.find({
         status: "initiated",
-        "payout.on": {$lte: new Date()}
+        "payout.on": {$lte: new Date()},
+        //make sure there is an approved and not expired fund
+        funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
     }, {
         limit: 10
     }).fetch();

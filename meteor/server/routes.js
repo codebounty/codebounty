@@ -1,9 +1,9 @@
 //the generated bounty image route
-Meteor.Router.add("/bounty/:id", function (id) {
+Meteor.Router.add("/reward/:id", function (id) {
     var fut = new Future();
     var response = this.response;
 
-    Bounty.statusImage(id, function (canvas) {
+    RewardUtils.statusImage(id, function (canvas) {
         var buffer = canvas.toBuffer();
 
         response.writeHead(200, {"Content-Type": "image/png" });
@@ -22,10 +22,23 @@ Meteor.Router.add("/bounty/:id", function (id) {
 Meteor.Router.add("/ipn", function () {
     PayPal.verify(this.request, this.response, function (error, params) {
         if (error)
-            return;
+            throw error;
 
-        if (params)
-            Bounty.PayPal.confirm(params);
+        Fiber(function () {
+            var reward = Rewards.findOne({
+                funds: { $elemMatch: { preapprovalKey: params.preapproval_key }}
+            });
+
+            if (!reward) {
+                error = "PayPalFund approved but not found " + EJSON.stringify(params);
+                throw error;
+            }
+
+            var paypalFund = _.find(reward.funds, function (fund) {
+                return fund.preapprovalKey === params.preapproval_key;
+            });
+            paypalFund.confirm(reward, params);
+        }).run();
     });
 
     //prevents paypal from continually sending message

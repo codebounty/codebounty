@@ -1,64 +1,52 @@
-var rootUrl = Meteor.settings["ROOT_URL"];
-
 /**
- * Add the bounty to an existing reward or if one does not exist add it to a new reward.
- * Distribute the reward equally among all the contributors.
- * This is used after a bounty has been approved
- * @param bounty
+ * Add the (not yet approved) funds to an existing reward or if one does not exist add it to a new reward
+ * Then return the funding url to the callback
+ * @param {Big} amount
+ * @param {string} currency
+ * @param {string} issueUrl
+ * @param {string} userId
+ * @param {Function} callback (fundingUrl)
  */
-RewardUtils.addBounty = function (bounty) {
+RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, callback) {
     //find an eligible reward to add to
-    var currency = bounty.currency;
     var selector = {
         currency: currency,
-        userId: bounty.userId
+        userId: userId
     };
 
-    var user = Meteor.users.findOne({_id: bounty.userId});
+    var user = Meteor.users.findOne({_id: userId});
     var gitHub = new GitHub(user);
 
-    RewardUtils.eligibleForManualReward(selector, {}, bounty.issueUrl, gitHub, function (rewards, contributors) {
+    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributors) {
         //TODO try and consolidate them if there are rewards of the same currency
         var reward;
 
         //add to the existing reward
         if (rewards.length > 0) {
             reward = rewards[0];
-            reward.addBounty(bounty);
+            reward.addFund(amount, callback);
 
             Fiber(function () {
-                Rewards.update({_id: reward._id}, reward.toJSONValue());
-                Bounties.update({_id: bounty._id}, {reward: reward._id});
+                Rewards.update(reward._id, reward.toJSONValue());
             }).run();
 
             return;
         }
 
         var options = {
-            bountyIds: [bounty._id],
-            bountyAmounts: [new Big(bounty.amount)],
             currency: currency,
-            issueUrl: bounty.issueUrl,
+            funds: [],
+            issueUrl: issueUrl,
             receivers: [],
             status: "open",
-            userId: bounty.userId
+            userId: userId
         };
 
         reward = new Reward(options);
-        reward.updateReceivers(contributors);
-        reward.distributeEqually();
-
+        reward.addFund(amount, callback);
         Fiber(function () {
-            var rewardId = Rewards.insert(reward.toJSONValue());
-            Bounties.update({_id: bounty._id}, {reward: rewardId});
-
-            //post the reward comment using codebounty charlie
-            var imageUrl = rootUrl + "reward/" + rewardId;
-            var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
-
-            //post as charlie
-            var gitHub = new GitHub();
-            gitHub.postComment(bounty.issueUrl, commentBody);
+            reward.updateReceivers(contributors);
+            Rewards.insert(reward.toJSONValue());
         }).run();
     });
 };
@@ -67,7 +55,7 @@ RewardUtils.addBounty = function (bounty) {
  * Make sure to update the diagram here https://codebounty.hackpad.com/Reward-yN7ydM3LIjy whenever you use this method
  * ----------------------------------------------
  * Find rewards that are open, reopened, or initiated by the system (not by a user)
- * - TODO not expired (created: {"$gt": BountyUtils.expiredDate()}
+ * - TODO not expired (created: {"$gt": FundUtils.expiredDate()}
  * @param [selector] If passed, use this selector as a base
  * @param [options] If passed, use these options for the Collection.find
  * @param [contributorsIssueUrl] If passed, only load rewards for this issueUrl and load the contributors
@@ -104,7 +92,6 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
             contributors = _.uniq(contributors, false, function (contributor) {
                 return contributor.email;
             });
-
             Fiber(function () {
                 //update the status and receivers since we are already loading the issueEvents & contributors
                 _.each(rewards, function (reward) {
@@ -115,7 +102,7 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                     Rewards.update({_id: reward._id}, reward.toJSONValue());
 
                     reward.checkStatus(issueEvents);
-                 });
+                });
 
                 callback(rewards, contributors);
             }).run();
