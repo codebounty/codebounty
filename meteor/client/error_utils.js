@@ -9,12 +9,8 @@ ErrorUtils = {};
 ErrorUtils.handle = function (error) {
     if (error) {
         //TODO some errors might be okay, so return true for those
-
-        console.log(error);
-
         //TODO some nice error redirect page?
-        if (Meteor.isClient)
-            alert("Error :(");
+        alert("Agee, we've messed up. Please reload and try again. Don't go pitch a fit.");
 
         return false;
     }

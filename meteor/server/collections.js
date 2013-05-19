@@ -17,25 +17,25 @@ Meteor.publish("totalReward", function (issueUrl) {
     var totalReward = new Big(0);
     var initializing = true;
 
-    //TODO do only not expired
     var handle = Rewards.find({
         issueUrl: issueUrl,
-        "status": { $nin: [ "initiated", "paid", "hold" ] }
+        "status": { $in: [ "open", "reopened" ] },
+        //make sure there is an approved and not expired fund
+        funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
     }).observe({
             added: function (reward) {
-                var totalBounties = BigUtils.sum(reward.bountyAmounts);
+                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
                 totalReward = totalReward.plus(totalBounties);
 
                 if (!initializing) //need to wait until it is added
                     self.changed("totalReward", uuid, {amount: totalReward.toString()});
             },
             removed: function (reward) {
-                var totalBounties = BigUtils.sum(reward.bountyAmounts);
+                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
                 totalReward = totalReward.minus(totalBounties);
 
                 self.changed("totalReward", uuid, {amount: totalReward.toString()});
             }
-            // don't care about moved
         });
 
     initializing = false;

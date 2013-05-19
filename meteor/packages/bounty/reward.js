@@ -1,16 +1,31 @@
+//More details about reward here https://codebounty.hackpad.com/Reward-yN7ydM3LIjy
+
 RewardUtils = {};
+
+/**
+ * Clone the reward, then strip fields the client should not get
+ * @param reward
+ */
+RewardUtils.clientReward = function (reward) {
+    reward = reward.clone();
+    reward._availableFundAmounts = reward.availableFundAmounts();
+    reward.funds = [];
+    return reward;
+};
 
 RewardUtils.fromJSONValue = function (value) {
     var receivers = _.map(value.receivers, ReceiverUtils.fromJSONValue);
-    var amounts = _.map(value.bountyAmounts, function (val) {
-        return new Big(val);
+
+    var funds = [];
+    _.each(value.funds, function (fund) {
+        if (fund.processor === "paypal")
+            funds.push(PayPalFundUtils.fromJSONValue(fund));
     });
 
     var options = {
         _id: value._id,
-        bountyIds: value.bountyIds,
-        bountyAmounts: amounts,
         currency: value.currency,
+        funds: funds,
         issueUrl: value.issueUrl,
         lastSync: value.lastSync,
         payout: value.payout,
@@ -18,23 +33,19 @@ RewardUtils.fromJSONValue = function (value) {
         status: value.status,
         userId: value.userId
     };
+    if (value._availableFundAmounts)
+        options._availableFundAmounts = _.map(value._availableFundAmounts, function (amount) {
+            return new Big(amount);
+        });
 
     return new Reward(options);
 };
 
-//TODO move this to server?
-Rewards = new Meteor.Collection("rewards", {
-    transform: function (doc) {
-        return RewardUtils.fromJSONValue(doc);
-    }
-});
-
 /**
  * Reward for an issue
  * @param options {{_id: string=,
- *                  bountyIds: Array.<string>,
- *                  bountyAmounts: Array.<Big>,
  *                  currency: string,
+ *                  funds: Array.<Fund>,
  *                  issueUrl: string,
  *                  lastSync: Date=,
  *                  payout: {by: string, on: Date}=,
@@ -48,21 +59,26 @@ Rewards = new Meteor.Collection("rewards", {
  * @constructor
  */
 Reward = function (options) {
-    _.each(["bountyIds", "bountyAmounts", "currency", "issueUrl", "receivers", "status", "userId"], function (requiredProperty) {
+    _.each(["currency", "funds", "issueUrl", "receivers", "status", "userId"], function (requiredProperty) {
         if (typeof options[requiredProperty] === "undefined")
             throw requiredProperty + " is required";
     });
 
-    if (options.bountyIds.length !== options.bountyAmounts.length)
-        throw "The bounty ids must correspond to bounty amounts";
-
-    if (!_.contains(["open", "reopened", "initiated", "paid", "hold"], options.status))
+    if (!_.contains(["open", "expired", "initiated", "paying", "paid", "reopened", "hold"], options.status))
         throw options.status + " is not a valid reward status name";
 
-    this._id = options._id;
-    this.bountyIds = options.bountyIds;
-    this.bountyAmounts = options.bountyAmounts;
+    //generate one
+    if (!options._id)
+        this._id = new Meteor.Collection.ObjectID().toJSONValue();
+    else
+        this._id = options._id;
+
+    //for the client
+    if (options._availableFundAmounts)
+        this._availableFundAmounts = options._availableFundAmounts;
+
     this.currency = options.currency;
+    this.funds = options.funds;
     this.issueUrl = options.issueUrl;
     this.lastSync = options.lastSync;
     this.payout = options.payout;
@@ -82,25 +98,20 @@ Reward.prototype = {
     },
 
     clone: function () {
-        var clonedBountyIds = EJSON.clone(this.bountyIds);
-
-        //clone the bounty amounts
-        var clonedBountyAmounts = _.map(this.bountyAmounts, function (amount) {
-            return amount.plus(0);
+        var clonedFunds = _.map(this.funds, function (funds) {
+            return funds.clone();
         });
 
-        var clonedReceivers = [];
-        _.each(this.receivers, function (receiver) {
-            clonedReceivers.push(receiver.clone());
+        var clonedReceivers = _.map(this.receivers, function (receiver) {
+            return receiver.clone();
         });
 
         var that = this;
 
         var options = {
-            _id: that._id,
-            bountyIds: clonedBountyIds,
-            bountyAmounts: clonedBountyAmounts,
+            _id: EJSON.clone(that._id),
             currency: that.currency,
+            funds: clonedFunds,
             issueUrl: that.issueUrl,
             lastSync: that.lastSync,
             payout: that.payout,
@@ -108,6 +119,9 @@ Reward.prototype = {
             status: that.status,
             userId: that.userId
         };
+
+        if (that._availableFundAmounts)
+            options._availableFundAmounts = that._availableFundAmounts;
 
         return new Reward(options);
     },
@@ -119,9 +133,7 @@ Reward.prototype = {
         var that = this;
         return that.currency === other.currency && that.issueUrl === other.issueUrl && _.isEqual(that.status, other.status)
             && _.isEqual(that.payout, other.payout) && that.userId === other.userId &&
-            Tools.arraysAreEqual(that.bountyAmounts, other.bountyAmounts, function (a, b) {
-                return a.cmp(b) === 0;
-            }) &&
+            Tools.arraysAreEqual(that.funds, other.funds) &&
             Tools.arraysAreEqual(that.receivers, other.receivers);
     },
 
@@ -132,16 +144,17 @@ Reward.prototype = {
     toJSONValue: function () {
         var that = this;
 
+        var funds = _.map(that.funds, function (fund) {
+            return fund.toJSONValue();
+        });
         var receivers = _.map(that.receivers, function (receiver) {
             return receiver.toJSONValue();
         });
 
         var json = {
-            bountyIds: that.bountyIds,
-            bountyAmounts: _.map(that.bountyAmounts, function (amount) {
-                return amount.toString();
-            }),
+            _id: that._id,
             currency: that.currency,
+            funds: funds,
             issueUrl: that.issueUrl,
             lastSync: that.lastSync,
             payout: that.payout,
@@ -150,8 +163,11 @@ Reward.prototype = {
             userId: that.userId
         };
 
-        if (that._id)
-            json._id = that._id;
+        //for the client
+        if (that._availableFundAmounts)
+            json._availableFundAmounts = _.map(that._availableFundAmounts, function (amount) {
+                return amount.toString()
+            });
 
         return json;
     }
@@ -161,15 +177,39 @@ EJSON.addType("Reward", RewardUtils.fromJSONValue);
 
 //methods
 
+/**
+ * @returns {Array.<Fund>}
+ */
+Reward.prototype.availableFunds = function () {
+    return _.filter(this.funds, function (fund) {
+        return fund.isAvailable();
+    });
+};
+
+/**
+ * @returns {Array.<Big>}
+ */
+Reward.prototype.availableFundAmounts = function () {
+    if (Meteor.isClient) //fund details are not exposed to the client
+        return this._availableFundAmounts;
+
+    var myAvailableFunds = this.availableFunds();
+    return _.map(myAvailableFunds, function (fund) {
+        return fund.amount;
+    });
+};
+
 Reward.prototype.fee = function () {
     var that = this;
     var totalFee = new Big(0);
 
-    //add up the fee per bounty
-    _.each(that.bountyAmounts, function (amount) {
+    var myAvailableFundAmounts = that.availableFundAmounts();
+
+    //add up the fee per funding
+    _.each(myAvailableFundAmounts, function (amount) {
         var fee = amount.times("0.05");
 
-        //bump the fee up to the minimum CodeBounty fee
+        //bump the fee up to the minimum codebounty fee
         //USD: $1 minimum fee
         if (that.currency === "usd" && fee.cmp(1) < 0)
             fee = new Big(1);
@@ -197,7 +237,7 @@ Reward.prototype.total = function () {
 
     var fee = that.fee();
 
-    var total = BigUtils.sum(that.bountyAmounts);
+    var total = BigUtils.sum(that.availableFundAmounts());
     return total.minus(fee);
 };
 

@@ -1,3 +1,5 @@
+//More details about receiver here https://codebounty.hackpad.com/Reward-yN7ydM3LIjy
+
 ReceiverUtils = {};
 
 /**
@@ -15,26 +17,32 @@ ReceiverUtils.minimum = function (currency) {
 };
 
 ReceiverUtils.fromJSONValue = function (value) {
-    return new Receiver(value.email, new Big(value._reward), value.currency);
+    return new Receiver({
+        currency: value.currency,
+        email: value.email,
+        reward: new Big(value._reward)
+    });
 };
 
 /**
  * Receiver of a reward
- * @param {string} email
- * @param {Big} reward The amount the receiver should receive
- * @param {string} currency Ex. "btc", "usd"
+ * @param options {{currency: string,
+ *                  email: string,
+ *                  reward: Big}}
  * @constructor
  */
-Receiver = function (email, reward, currency) {
-    if (!email || !reward || !currency)
-        throw "Not all required constructor parameters were passed";
+Receiver = function (options) {
+    _.each(["currency", "email", "reward"], function (requiredProperty) {
+        if (typeof options[requiredProperty] === "undefined")
+            throw requiredProperty + " is required";
+    });
 
     //email and currency should be read only
-    this.email = email;
-    this.currency = currency;
+    this.email = options.email;
+    this.currency = options.currency;
 
     //should only be accessed through getter / setter
-    this._reward = reward;
+    this._reward = options.reward;
     this._rewardDep = new Deps.Dependency;
 };
 
@@ -48,7 +56,12 @@ Receiver.prototype = {
     },
 
     clone: function () {
-        return new Receiver(this.email, this._reward, this.currency);
+        var that = this;
+        return new Receiver({
+            currency: that.currency,
+            email: that.email,
+            reward: new Big(that._reward)
+        });
     },
 
     equals: function (other) {

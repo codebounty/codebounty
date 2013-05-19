@@ -219,16 +219,16 @@
                 var bountyDiv = "" +
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
                     "<input id='bountyInput' type='number' value='" + initValue + "' min='0' step='5'/></div>" +
-                    "<a id='addBounty' class='bountyButton button minibutton bigger' href='#'>" +
+                    "<a id='postBounty' class='bountyButton button minibutton bigger' href='#'>" +
                     "Post Bounty" +
                     "</a>";
 
                 $(bountyDiv).insertAfter(ui._container);
 
-                $("#addBounty").click(function (e) {
+                $("#postBounty").click(function (e) {
                     //TODO: Input validation.
                     var amount = $("#bountyInput").val();
-                    var target = rootUrl + "/createBounty?amount=" + amount + "&url=" + thisIssueUrl;
+                    var target = rootUrl + "/addFunds?amount=" + amount + "&url=" + thisIssueUrl + "&currency=usd";
                     ui.openWindow(target);
                     e.stopPropagation();
                     e.preventDefault();
@@ -251,7 +251,7 @@
                 $(bountyDiv).insertAfter(ui._container);
 
                 $("#rewardBounty").click(function (e) {
-                    var target = rootUrl + "/rewardBounty?url=" + thisIssueUrl;
+                    var target = rootUrl + "/reward?url=" + thisIssueUrl;
                     ui.openOverlay(target);
                     e.stopPropagation();
                     e.preventDefault();
@@ -314,7 +314,7 @@
                         "<img id='statusIcon' src='" + statusIconUrl + "' " +
                         "width=100 height=100 cashLevel=" + cashLevel +
                         ">";
-                    $(statusIconSrc).insertBefore($("#addBounty"));
+                    $(statusIconSrc).insertBefore($("#postBounty"));
                 }
             }
         }(),

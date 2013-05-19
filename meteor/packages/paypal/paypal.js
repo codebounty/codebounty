@@ -6,17 +6,8 @@ var request = Npm.require("request"),
     ipn = Npm.require("paypal-ipn");
 
 var rootUrl = Meteor.settings["ROOT_URL"],
-    //note when testing, this must go through a tunnel (for PayPal)
+//note when testing, this must go through a tunnel (for PayPal)
     ipnUrl = rootUrl + "ipn";
-
-PayPal.errors = {
-    preapproval: function () {
-        throw new Meteor.Error(500, "Error with preapproval");
-    },
-    notApproved: function () {
-        throw new Meteor.Error(402, "Payment not approved");
-    }
-};
 
 //https://www.x.com/developers/paypal/documentation-tools/adaptive-payments/integration-guide/APIntro#id091QF0N0MPF__id092SH0050HS
 
@@ -92,12 +83,10 @@ PayPal.confirmApproval = function (preapprovalKey, callback) {
     };
 
     execute("PreapprovalDetails", params, function (error, data) {
-        if (error) {
-            PayPal.errors.preapproval();
+        if (error)
             callback(error);
-        } else if (data) {
+        else if (data)
             callback(null, data);
-        }
     });
 };
 
