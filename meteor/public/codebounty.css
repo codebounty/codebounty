@@ -11,6 +11,22 @@
     position: relative;
 }
 
+.btc.inputWrapper {
+    display: none;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.btc.inputWrapper canvas {
+    margin: auto;
+}
+
+.state-indicator .btcSymbol {
+    height: 0.85em;
+    width: 0.75em;
+    margin-top: 0.2em;
+}
+
 .bountyCurrency {
     position: absolute;
     padding-top: 8px;
@@ -33,6 +49,11 @@
     text-align: center;
     font-weight: bold;
     font-size: 18px;
+}
+
+#currencyToggle {
+    position: relative;
+    margin: 1em auto;
 }
 
 #iframecontainer {
