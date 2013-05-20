@@ -320,7 +320,7 @@ BitcoinFund.prototype.initiatePreapproval = function (reward, callback) {
         Rewards.update(reward._id, reward.toJSONValue());
     }).run();
 
-    callback(rootUrl  + "bitcoinFund/" + address.proxyAddress);
+    callback(address.proxyAddress);
 };
 
 BitcoinFund.prototype.cancel = function (reward) {

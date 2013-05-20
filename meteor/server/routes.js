@@ -1,3 +1,5 @@
+var fs = Npm.require("fs");
+
 //the generated bounty image route
 Meteor.Router.add("/reward/:id", function (id) {
     var fut = new Future();
@@ -14,11 +16,6 @@ Meteor.Router.add("/reward/:id", function (id) {
     });
 
     return fut.wait();
-});
-
-Meteor.Router.add("/bitcoinFund/:address", function (address) {
-    Session.set("address", address);
-    return "bitcoinFundView";
 });
 
 //the paypal IPN callback
