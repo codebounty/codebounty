@@ -31,6 +31,11 @@ Meteor.Router.add("/badge/:id", function (id) {
     response.end();
 });
 
+Meteor.Router.add("/bitcoinFund/:address", function (address) {
+    Session.set("address", address);
+    return "bitcoinFundView";
+});
+
 //the paypal IPN callback
 //https://www.x.com/developers/paypal/documentation-tools/ipn/integration-guide/IPNIntro
 //http://jsfiddle.net/zkcb6/1/
