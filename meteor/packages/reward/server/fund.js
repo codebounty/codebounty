@@ -8,12 +8,9 @@ FundUtils = {
  * Funds for payment
  * @param options {{_id: string,
  *                  amount: Big,
- *                  approved: Date,
  *                  currency: string,
  *                  details: *,
  *                  expires: Date,
- *                  paid: string,
- *                  paymentError: string,
  *                  processor: string}}
  * @constructor
  */
@@ -30,12 +27,9 @@ Fund = function (options) {
         this._id = options._id;
 
     this.amount = options.amount;
-    this.approved = options.approved;
     this.currency = options.currency;
     this.details = options.details;
     this.expires = options.expires;
-    this.paid = options.paid;
-    this.paymentError = options.paymentError;
     this.processor = options.processor;
 };
 
@@ -51,6 +45,13 @@ PayPalFundUtils = {
     fromJSONValue: function (value) {
         value.amount = new Big(value.amount);
         return new PayPalFund(value);
+    }
+};
+
+BitcoinFundUtils = {
+    fromJSONValue: function (value) {
+        value.amount = new Big(value.amount);
+        return new BitcoinFund(value);
     }
 };
 
@@ -72,6 +73,9 @@ PayPalFund = function (options) {
     Fund.call(this, options);
 
     this.preapprovalKey = options.preapprovalKey;
+    this.paid = options.paid;
+    this.approved = options.approved;
+    this.paymentError = options.paymentError;
 };
 
 PayPalFund.prototype = Object.create(Fund.prototype);
@@ -200,6 +204,167 @@ PayPalFund.prototype.confirm = function (reward, params) {
 PayPalFund.prototype.pay = function (fundDistribution) {
     var that = this;
 
+    if (that._id !== fundDistribution.fundId)
+        throw "Wrong fund distribution";
+
+    var receiverList = _.map(fundDistribution.payments, function (payment) {
+        return { amount: payment.amount.toString(), email: payment.email};
+    });
+
+    console.log("Pay fund", that.toString(), receiverList);
+
+    PayPal.pay(that.preapprovalKey, receiverList, function (error, data) {
+        var update = { $set: { "funds.$.details": { receiverList: receiverList } } };
+
+        if (error) {
+            update.$set["funds.$.paymentError"] = error;
+            console.log("ERROR: PayPal Payment", error);
+        } else {
+            update.$set["funds.$.paid"] = new Date();
+            console.log("PayPal paid", that._id.toString());
+        }
+
+        Fiber(function () {
+            Rewards.update({ "funds._id": that._id }, update);
+        }).run();
+    });
+};
+
+
+/******************************************
+ * BITCOIN FUND DEFINITIONS
+ ******************************************/
+
+/**
+ * @param options {{_id: string,
+ *                  amount: Big,
+ *                  currency: string,
+ *                  details: *,
+ *                  expires: Date,
+ *                  address: string}}
+ * @constructor
+ */
+BitcoinFund = function (options) {
+    options.processor = "blockchain.info";
+
+    Fund.call(this, options);
+
+    this.address = options.address;
+};
+ 
+BitcoinFund.prototype = Object.create(Fund.prototype);
+
+//EJSON
+
+BitcoinFund.prototype.clone = function () {
+    var that = this;
+    return new BitcoinFund({
+        _id: EJSON.clone(that._id),
+        amount: that.amount,
+        currency: that.currency,
+        details: that.details,
+        expires: that.expires,
+        address: that.address
+    });
+};
+
+BitcoinFund.prototype.equals = function (other) {
+    if (!(other instanceof BitcoinFund))
+        return false;
+
+    return EJSON.equals(this._id, other._id) && this.amount.cmp(other.amount) === 0 &&
+        this.currency === other.currency && _.isEqual(this.details, other.details) &&
+        this.expires === other.expires && this.address === other.address;
+};
+
+BitcoinFund.prototype.typeName = function () {
+    return "BitcoinFund";
+};
+
+BitcoinFund.prototype.toJSONValue = function () {
+    var that = this;
+    return {
+        _id: that._id,
+        amount: that.amount.toString(),
+        currency: that.currency,
+        details: that.details,
+        expires: that.expires,
+        address: that.address,
+        processor: that.processor
+    };
+};
+
+EJSON.addType("BitcoinFund", BitcoinFundUtils.fromJSONValue);
+
+/**
+ * Get a Bitcoin address for this issue/user pair.
+ * @param reward
+ * @param callback (preapprovalUrl)
+ */
+BitcoinFund.prototype.initiatePreapproval = function (reward, callback) {
+    var that = this;
+    if (that.address)
+        throw "This fund already has a Bitcoin address";
+
+    var rootUrl = Meteor.settings["ROOT_URL"];
+    var cancel = rootUrl + "cancelFunds?id=" + that._id;
+    var confirm = rootUrl + "confirmFunds?id=" + that._id;
+
+    var issue = GitHubUtils.getIssue(reward.issueUrl);
+    var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
+    var address = Bitcoin.addressForIssue(reward.issueUrl);
+    
+    that.address = address.address;
+    
+    Fiber(function () {
+        Rewards.update(reward._id, reward.toJSONValue());
+    }).run();
+
+    callback(rootUrl  + "/bitcoinFund?address=" + address.proxyAddress);
+};
+
+BitcoinFund.prototype.cancel = function (reward) {
+    var that = this;
+
+    that.funds = _.reject(that.funds, function (fund) {
+        return EJSON.equals(fund._id, that._id);
+    });
+
+    if (that.funds.length <= 0)
+        Rewards.remove(reward._id);
+    else
+        Rewards.update(reward._id, reward.toJSONValue());
+
+    // TODO: Handle refunding.
+
+    console.log("Bitcoin fund cancelled", that._id.toString());
+};
+
+/**
+ * After receiving an IPN message, update this funded amount.
+ * @param reward
+ * @param params The IPN message parameters
+ */
+BitcoinFund.prototype.confirm = function (reward, params) {
+    var that = this;
+    console.log("Bitcoin received", that._id.toString());
+
+    //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
+    //after new funds are approved distribute the reward equally among all the contributors
+    reward.distributeEqually();
+    Rewards.update(reward._id, reward.toJSONValue());
+    reward.fundApproved();
+};
+
+/**
+ * Trigger the reward transaction.
+ * @param {{fundId, payments: Array.<{email, amount: Big}>}} fundDistribution
+ */
+BitcoinFund.prototype.pay = function (fundDistribution) {
+    var that = this;
+    
+    throw "Not yet implemented."
+    
     if (that._id !== fundDistribution.fundId)
         throw "Wrong fund distribution";
 

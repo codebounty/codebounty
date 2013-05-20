@@ -21,6 +21,8 @@ Reward.prototype.addFund = function (amount, callback) {
 
         payPalFund.initiatePreapproval(that, callback);
         that.funds.push(payPalFund);
+    } else if (that.currency === "btc") {
+        
     }
 };
 
