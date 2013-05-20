@@ -21,10 +21,13 @@
     margin: auto;
 }
 
-.state-indicator .btcSymbol {
+.btc.currencySymbol svg {
     height: 0.85em;
     width: 0.75em;
     margin-top: 0.2em;
+}
+.btc.currencySymbol {
+    display: none;
 }
 
 .bountyCurrency {
