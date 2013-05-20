@@ -69,7 +69,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
             return;
             
         if (params)
-            Bounty.Bitcoin.confirm(params);
+            Bounty.Bitcoin.create(params);
     });
     
     // To prevent Blockchain.info from resending the transaction.
