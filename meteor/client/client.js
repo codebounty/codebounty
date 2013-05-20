@@ -15,11 +15,19 @@ Meteor.Router.add({
         Meteor.call("addFunds", amount, currency, url, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
-
-            window.location.href = result;
+            
+            if (currency == "usd") {
+                window.location.href = result;
+            } else if (currency == "btc") {
+                Session.set("address", result);
+            }
         });
 
-        return "processingView";
+        if (currency == "usd") {
+            return "processingView";
+        } else if (currency == "btc") {
+            return "bitcoinFundView";
+        }
     },
    
     "/cancelFunds": function () {
