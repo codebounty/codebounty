@@ -252,7 +252,7 @@
                     var currency = $("#currencyInput").val();
                     var target = rootUrl + "/addFunds?amount=" + amount + "&currency=" + currency + "&url=" + thisIssueUrl;
                     
-                    ui.openOverlay(target);
+                    ui.openWindow(target);
                     e.stopPropagation();
                     e.preventDefault();
                 });
