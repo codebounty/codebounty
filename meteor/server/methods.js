@@ -151,6 +151,56 @@ Meteor.methods({
 
         return fut.wait();
     },
+    
+    /**
+     * Take an issue and return the user's Bitcoin address for it.
+     * @param url the url to return an address for
+     * @returns {String}
+     */
+     "btcAddressForIssue": function (url) {
+        return Bitcoin.addressForIssue(this.userId, url).proxyAddress;
+     },
+
+    /**
+     * Create a bounty and return it's paypal pre-approval url
+     * @param amount the bounty amount
+     * @param issueUrl the url to create a bounty for
+     * @param currency
+     * @returns {String}
+     */
+    "createBounty": function (amount, issueUrl, currency) {
+        requireAuthentication(this.userId);
+        issueUrl = Tools.stripHash(issueUrl);
+
+        if ((!_.isNumber(amount)) || _.isNaN(amount))
+            throw "Need to specify an amount";
+
+        var bounty = {
+            amount: amount,
+            created: new Date(),
+            currency: currency,
+            reward: null,
+            issueUrl: issueUrl,
+            userId: this.userId
+        };
+        bounty._id = Bounties.insert(bounty);
+
+
+        //TODO remove (for debugging w/o tunnel)
+//        bounty.approved = true;
+
+        var fut = new Future();
+        Bounty.PayPal.create(bounty, function (preapprovalUrl) {
+            fut.ret(preapprovalUrl);
+
+            //TODO remove (for debugging w/o tunnel)
+//            Fiber(function () {
+//                RewardUtils.addBounty(bounty);
+//            }).run();
+        });
+
+        return fut.wait();
+    },
 
     /**
      * Initiate the reward payout process
