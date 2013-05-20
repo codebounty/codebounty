@@ -1,3 +1,5 @@
+var fs = Npm.require("fs");
+
 //the generated bounty image route
 Meteor.Router.add("/reward/:id", function (id) {
     var fut = new Future();
