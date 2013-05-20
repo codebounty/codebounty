@@ -251,7 +251,8 @@
                     var amount = $("#bountyInput").val();
                     var currency = $("#currencyInput").val();
                     var target = rootUrl + "/addFunds?amount=" + amount + "&currency=" + currency + "&url=" + thisIssueUrl;
-                    ui.openWindow(target);
+                    
+                    ui.openOverlay(target);
                     e.stopPropagation();
                     e.preventDefault();
                 });
