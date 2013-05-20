@@ -9,21 +9,24 @@ Rewards = new Meteor.Collection("rewards", {
  * @param {Function} callback (fundingUrl)
  */
 Reward.prototype.addFund = function (amount, callback) {
+    var fundClass;
     var that = this;
 
     var expires = Tools.addDays(FundUtils.expiresAfterDays);
     if (that.currency === "usd") {
-        var payPalFund = new PayPalFund({
-            amount: amount,
-            currency: that.currency,
-            expires: expires
-        });
-
-        payPalFund.initiatePreapproval(that, callback);
-        that.funds.push(payPalFund);
+        fundClass = PayPalFund;
     } else if (that.currency === "btc") {
-        
+        fundClass = BitcoinFund;
     }
+    
+    var fund = new fundClass({
+        amount: amount,
+        currency: that.currency,
+        expires: expires
+    });
+
+    fund.initiatePreapproval(that, callback);
+    that.funds.push(fund);
 };
 
 /**

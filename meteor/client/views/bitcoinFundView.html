@@ -1,0 +1,8 @@
+<template name="bitcoinFund">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="/meteor/public/qrcode.js"></script>
+    <script src="/meteor/public/jquery.qrcode.js"></script>
+    <h1>Pay here</h1>
+    <div class="qrCode" data="{{address}}"></div>
+    <a href="bitcoin:{{address}}">{{address}}</a>
+</template>
