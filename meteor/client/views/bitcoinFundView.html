@@ -1,7 +1,17 @@
 <template name="bitcoinFundView">
+<style type="text/css">
+.container {
+    text-align: center;
+    margin-top: 2em;
+}
+</style>
 <div class="container">
-    <h1>Pay here</h1>
-    <div class="qrCode" data="{{address}}"></div>
-    <a href="bitcoin:{{address}}">{{address}}</a>
+    <div id="loadingMessage">
+        <h1>Processing...</h1>
+    </div>
+    <div id="paymentMessage" style="display:none">
+        <a href="bitcoin:{{address}}"><div id="qrCode"></div></a>
+        <h3>To fund a bounty, send at least {{minimumPayment}} to <a href="bitcoin:{{address}}">{{address}}</a></h3>
+    </div>
 </div>
 </template>
