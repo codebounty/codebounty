@@ -17,9 +17,7 @@ for (var i = 0; i < css.length; i++) {
 //Inject javascript - will probably want to squash all into one file someday.
 var js = [
     "https://localhost/meteor/public/github.js",
-    "https://localhost/meteor/public/toggles.min.js",
-    "https://localhost/meteor/public/qrcode.js",
-    "https://localhost/meteor/public/jquery.qrcode.js"
+    "https://localhost/meteor/public/toggles.min.js"
 ];
 
 for (var i = 0; i < js.length; i++) {
