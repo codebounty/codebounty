@@ -3,5 +3,11 @@ Bitcoin.Settings = {
     "callbackURI": "http://someurl?secret=" + Bitcoin.IPNSecret,
     "minimumAddresses": 300,
     "maximumAddresses": 6000,
-    "maximumErrors": 10
+    "maximumErrors": 10,
+    "client": {
+        "host": "localhost",
+        "port": 8332,
+        "username": "rpc_user",
+        "password": "nZ8xuWPUOrWrta8EkxTqHke4hmF0RfpO5PFf01mEiKrJUld004613fGBuocgZjG"
+    }
 }
