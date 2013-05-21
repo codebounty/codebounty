@@ -2,7 +2,7 @@ Bitcoin.IPNSecret = "moEcxlV1bvVaXIqvAQ1NwF5ZtdMJeyrET5rRQtaWi32Qez3y82nEvEssDLw
 Bitcoin.Settings = {
     "callbackURI": "http://someurl?secret=" + Bitcoin.IPNSecret,
     "minimumAddresses": 300,
-    "maximumAddresses": 6000,
+    "maximumAddresses": 600,
     "maximumErrors": 10,
     "client": {
         "host": "localhost",
