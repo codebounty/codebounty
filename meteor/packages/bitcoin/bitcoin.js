@@ -24,6 +24,10 @@ Bitcoin.addressForIssue = function (userId, url) {
             Fiber(function () {
                 BitcoinAddresses.update({ address: address.address },
                     { $set: { used: true, url: url, userId: userId } });
+                    
+                // Set the address's "account" via bitcoind,
+                // for extra data redundancy.
+                Bitcoin.Client.setAccount(address.address, userId + ":" + url);
             }).run();
         } else {
             throw "no bitcoin addresses loaded!";
