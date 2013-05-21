@@ -3,39 +3,37 @@
  */
 var fs = Npm.require('fs');
 var readline = Npm.require('readline');
-var checkForAddressesInterval = 60000; // In milliseconds.
+var topUpAddressesInterval = 60000; // In milliseconds.
 var addressFile = "./packages/bitcoin/server/addresses"; // The file to pull addresses from.
- 
+
+BitcoinAddress = {} 
 BitcoinAddresses = new Meteor.Collection("bitcoinAddresses");
 
 Meteor.setInterval(function () {
-    // TODO: Actually allow for counting errors and halting if
-    // they reach a certain threshold.
     var response;
     var errors = 0;
+    
+    // We need these in order to keep counts of errors and addresses
+    // created via the asynchronous function calls in the code that
+    // calls them.
+    var errCountFut = new Future();
+    var addrCountFut = new Future();
     
     // See if we need more Bitcoin addresses.
     var availableAddresses = BitcoinAddresses.find({
         used: false
     }).count();
     
+    // Generate some addresses if we have less than the minimum.
     if (availableAddresses < Bitcoin.Settings.minimumAddresses) {
-                
-        // Create a file to hold the addresses we don't use.
-        unusedAddresses = fs.createWriteStream(addressFile + ".unused");
         
-        // Open file containing Bitcoin addresses.
-        readline.createInterface({
-            input: fs.createReadStream(addressFile),
-            terminal: false
-        }).on('line', function(address){
-
-                // If we don't have the maximum available number of addresses,
-                // create a new address.
-                if (availableAddresses < Bitcoin.Settings.maximumAddresses
-                && errors < Bitcoin.Settings.maximumErrors
-                && address != "") {
-                    
+        // Keep generating addresses until we have the maximum, or until
+        // we've encountered enough errors to put us over the threshold.
+        while (availableAddresses < Bitcoin.Settings.maximumAddresses
+        && errors < Bitcoin.Settings.maximumErrors) 
+        {
+            Bitcoin.Client.getNewAddress(function(err, address) {
+                if (!err) {
                     Fiber(function () {
                         // Contact Blockchain.info for a proxy address.
                         response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI);
@@ -43,7 +41,7 @@ Meteor.setInterval(function () {
                         // Make sure the call was successful and save the generated
                         // address if it was.
                         if (response.data != null) {
-                            
+                                
                             // Insert the generated address.
                             BitcoinAddresses.insert({
                                 address: address,
@@ -51,27 +49,30 @@ Meteor.setInterval(function () {
                                 used: false
                             });
                             
-                        // If the call wasn't successful, keep the address in the
-                        // addresses file and increment our error counter.
+                            errCountFut.ret(errors);
+                            addrCountFut.ret(availableAddresses + 1);
+                            
+                        // If the call wasn't successful, log the response and
+                        // increment our error counter.
                         } else {
                             console.log(response.content);
+                            errCountFut.ret(errors + 1);
+                            addrCountFut.ret(availableAddresses);
                         }
                     }).run();
-                    
-                    availableAddresses++;
-                    
-                // If we do, write the address to our "unused addresses" file
-                // which will later replace the file we're reading in.
                 } else {
-                    unusedAddresses.write(address + "\n");
+                    // Increment our error counter and carry on.
+                    errCountFut.ret(errors + 1);
+                    addrCountFut.ret(availableAddresses);
                 }
             });
-        
-        // Close the write stream.
-        unusedAddresses.end();
-        
-        if (availableAddresses > 0)
-            // Replace the "addresses" file with the "unused addresses" file.
-            fs.rename(addressFile + ".unused", addressFile);
+            
+            // Wait until the asynchronous address
+            // creation functions finish running so we can
+            // keep track of how many errors occurred and
+            // how many addresses were created.
+            errors = errCountFut.wait();
+            availableAddresses = addrCountFut.wait();
+        }
     }
-}, checkForAddressesInterval);
+}, topUpAddressesInterval);
