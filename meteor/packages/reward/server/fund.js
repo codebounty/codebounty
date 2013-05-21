@@ -241,7 +241,8 @@ PayPalFund.prototype.pay = function (fundDistribution) {
  *                  currency: string,
  *                  details: *,
  *                  expires: Date,
- *                  address: string}}
+ *                  address: string,
+ *                  proxyAddress: string}}
  * @constructor
  */
 BitcoinFund = function (options) {
@@ -250,6 +251,7 @@ BitcoinFund = function (options) {
     Fund.call(this, options);
 
     this.address = options.address;
+    this.proxyAddress = options.proxyAddress;
 };
  
 BitcoinFund.prototype = Object.create(Fund.prototype);
@@ -264,7 +266,8 @@ BitcoinFund.prototype.clone = function () {
         currency: that.currency,
         details: that.details,
         expires: that.expires,
-        address: that.address
+        address: that.address,
+        proxyAdress: that.proxyAddress
     });
 };
 
@@ -274,7 +277,8 @@ BitcoinFund.prototype.equals = function (other) {
 
     return EJSON.equals(this._id, other._id) && this.amount.cmp(other.amount) === 0 &&
         this.currency === other.currency && _.isEqual(this.details, other.details) &&
-        this.expires === other.expires && this.address === other.address;
+        this.expires === other.expires && this.address === other.address &&
+        this.proxyAddress === other.proxyAddress;
 };
 
 BitcoinFund.prototype.typeName = function () {
@@ -290,6 +294,7 @@ BitcoinFund.prototype.toJSONValue = function () {
         details: that.details,
         expires: that.expires,
         address: that.address,
+        proxyAddress: that.proxyAddress,
         processor: that.processor
     };
 };
@@ -315,6 +320,7 @@ BitcoinFund.prototype.initiatePreapproval = function (reward, callback) {
     var address = Bitcoin.addressForIssue(reward.issueUrl);
     
     that.address = address.address;
+    that.proxyAddress = address.proxyAddress;
     
     Fiber(function () {
         Rewards.update(reward._id, reward.toJSONValue());
@@ -363,8 +369,6 @@ BitcoinFund.prototype.confirm = function (reward, params) {
 BitcoinFund.prototype.pay = function (fundDistribution) {
     var that = this;
     
-    throw "Not yet implemented."
-    
     if (that._id !== fundDistribution.fundId)
         throw "Wrong fund distribution";
 
@@ -372,17 +376,17 @@ BitcoinFund.prototype.pay = function (fundDistribution) {
         return { amount: payment.amount.toString(), email: payment.email};
     });
 
-    console.log("Pay fund", that.toString(), receiverList);
+    console.log("Pay fund (Bitcoin)", that.toString(), receiverList);
 
-    PayPal.pay(that.preapprovalKey, receiverList, function (error, data) {
+    Bitcoin.pay(that.address, receiverList, function (error, data) {
         var update = { $set: { "funds.$.details": { receiverList: receiverList } } };
 
         if (error) {
             update.$set["funds.$.paymentError"] = error;
-            console.log("ERROR: PayPal Payment", error);
+            console.log("ERROR: Bitcoin Payment", error);
         } else {
             update.$set["funds.$.paid"] = new Date();
-            console.log("PayPal paid", that._id.toString());
+            console.log("Bitcoin paid", that._id.toString());
         }
 
         Fiber(function () {

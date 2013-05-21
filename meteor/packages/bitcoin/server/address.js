@@ -6,8 +6,11 @@ var readline = Npm.require('readline');
 var topUpAddressesInterval = 60000; // In milliseconds.
 var addressFile = "./packages/bitcoin/server/addresses"; // The file to pull addresses from.
 
-BitcoinAddress = {} 
-BitcoinAddresses = new Meteor.Collection("bitcoinAddresses");
+Bitcoin.IssueAddress = {} 
+Bitcoin.IssueAddresses = new Meteor.Collection("Bitcoin.IssueAddresses");
+
+Bitcoin.ReceiverAddress = {} 
+Bitcoin.ReceiverAddresses = new Meteor.Collection("Bitcoin.ReceiverAddresses");
 
 Meteor.setInterval(function () {
     var response;
@@ -20,7 +23,7 @@ Meteor.setInterval(function () {
     var addrCountFut = new Future();
     
     // See if we need more Bitcoin addresses.
-    var availableAddresses = BitcoinAddresses.find({
+    var availableAddresses = Bitcoin.IssueAddresses.find({
         used: false
     }).count();
     
@@ -43,7 +46,7 @@ Meteor.setInterval(function () {
                         if (response.data != null) {
                                 
                             // Insert the generated address.
-                            BitcoinAddresses.insert({
+                            Bitcoin.IssueAddresses.insert({
                                 address: address,
                                 proxyAddress: response.data.input_address,
                                 used: false
