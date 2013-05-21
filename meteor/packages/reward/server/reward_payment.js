@@ -127,24 +127,20 @@ Reward.prototype.pay = function () {
 
     var funds = that.funds;
     var fundIndex = 0;
-    if (that.currency === "usd") {
-        _.each(fundDistributions, function (fundDistribution) {
-            var fund = _.find(funds, function (f) {
-                return EJSON.equals(f._id, fundDistribution.fundId);
-            });
-
-            fund.pay(fundDistribution);
-            fundIndex++;
+    
+    _.each(fundDistributions, function (fundDistribution) {
+        var fund = _.find(funds, function (f) {
+            return EJSON.equals(f._id, fundDistribution.fundId);
         });
 
-        that.status = "paid";
+        fund.pay(fundDistribution);
+        fundIndex++;
+    });
 
-        //update the reward's status
-        Rewards.update(that._id, {$set: {status: "paid"}});
-    }
-    else if (that.currency === "btc") {
-        throw "Not implemented yet";
-    }
+    that.status = "paid";
+
+    //update the reward's status
+    Rewards.update(that._id, {$set: {status: "paid"}});
 };
 
 /**
