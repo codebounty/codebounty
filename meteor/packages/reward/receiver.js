@@ -40,6 +40,7 @@ Receiver = function (options) {
     //email and currency should be read only
     this.email = options.email;
     this.currency = options.currency;
+    this.bitcoinAddress = options.bitcoinAddress;
 
     //should only be accessed through getter / setter
     this._reward = options.reward;
