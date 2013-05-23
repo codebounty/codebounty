@@ -16,6 +16,21 @@ Meteor.Router.add("/reward/:id", function (id) {
     return fut.wait();
 });
 
+//the generated repo badge route
+Meteor.Router.add("/badge/:id", function (id) {
+    var response = this.response;
+
+    // TODO: Hook up with db
+    var repoStatus = {
+        open: 9
+    };
+
+    var canvas = RewardUtils.repoBadge(repoStatus);
+    response.writeHead(200, {"Content-Type": "image/png" });
+    response.write(canvas.toBuffer());
+    response.end();
+});
+
 //the paypal IPN callback
 //https://www.x.com/developers/paypal/documentation-tools/ipn/integration-guide/IPNIntro
 //http://jsfiddle.net/zkcb6/1/
