@@ -1,3 +1,6 @@
+var path = Npm.require("path"),
+    basepath = path.resolve(".") + "/packages/reward";
+
 /**
  * Add the (not yet approved) funds to an existing reward or if one does not exist add it to a new reward
  * Then return the funding url to the callback
@@ -49,6 +52,28 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
             Rewards.insert(reward.toJSONValue());
         }).run();
     });
+};
+
+/**
+ * Get asset file path
+ * @param  {String} name Asset filename
+ * @return {String}      File path
+ */
+RewardUtils.assetFile = function (name) {
+    return path.join(basepath, "/assets/", name);
+};
+
+/**
+ * @param {String} fontSize
+ * @param {String} fontName
+ * @param {String} [fontFace]
+ * @return {String}
+ */
+RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
+    if (!fontSize || !fontName)
+        throw "Missing argument.";
+
+    return (fontFace ? fontFace + " " : "") + fontSize + " " + fontName;
 };
 
 /**
