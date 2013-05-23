@@ -348,6 +348,25 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
 };
 
 /**
+ * Loads the commit with a conditional request
+ * @param repo {user: string, name: string}
+ * @param {string} sha
+ * @param {function} [callback] (error, result) result is an array with one item
+ */
+GitHub.prototype.getUser = function (callback) {
+    var that = this;
+    that._conditionalCrawlAndCache("User.get", {
+        user: that._userGitHub.username
+    }, false, function (error, result) {
+        if (error) {
+            callback(error);
+        }
+
+        callback(result.data[0]);
+    });
+};
+
+/**
  * Get all the commit data from  "contributors" (users with associated commits) for an issue
  * TODO and exclude the current user
  * NOTE: The commit or pull request must have a comment referencing the issue to count as a contributor
