@@ -236,13 +236,14 @@ PayPalFund.prototype.pay = function (fundDistribution) {
  ******************************************/
 
 /**
- * @param options {{_id: string,
+ * @param options { _id: string,
+ *                  userId: string,
  *                  amount: Big,
  *                  currency: string,
  *                  details: *,
  *                  expires: Date,
  *                  address: string,
- *                  proxyAddress: string}}
+ *                  proxyAddress: string }
  * @constructor
  */
 BitcoinFund = function (options) {
@@ -250,6 +251,7 @@ BitcoinFund = function (options) {
 
     Fund.call(this, options);
 
+    this.userId = options.userId;
     this.address = options.address;
     this.proxyAddress = options.proxyAddress;
 };
@@ -262,6 +264,7 @@ BitcoinFund.prototype.clone = function () {
     var that = this;
     return new BitcoinFund({
         _id: EJSON.clone(that._id),
+        userId: EJSON.clone(that.userId),
         amount: that.amount,
         currency: that.currency,
         details: that.details,
@@ -275,10 +278,10 @@ BitcoinFund.prototype.equals = function (other) {
     if (!(other instanceof BitcoinFund))
         return false;
 
-    return EJSON.equals(this._id, other._id) && this.amount.cmp(other.amount) === 0 &&
-        this.currency === other.currency && _.isEqual(this.details, other.details) &&
-        this.expires === other.expires && this.address === other.address &&
-        this.proxyAddress === other.proxyAddress;
+    return EJSON.equals(this._id, other._id) && this.userId == other.userId &&
+        this.amount.cmp(other.amount) === 0 && this.currency === other.currency &&
+        _.isEqual(this.details, other.details) && this.expires === other.expires &&
+        this.address === other.address && this.proxyAddress === other.proxyAddress;
 };
 
 BitcoinFund.prototype.typeName = function () {
@@ -331,18 +334,44 @@ BitcoinFund.prototype.initiatePreapproval = function (reward, callback) {
 
 BitcoinFund.prototype.cancel = function (reward) {
     var that = this;
+    var gitHub = new GitHub(Meteor.user());
+    var email = gitHub.getUser().email;
 
     that.funds = _.reject(that.funds, function (fund) {
         return EJSON.equals(fund._id, that._id);
     });
 
-    if (that.funds.length <= 0)
-        Rewards.remove(reward._id);
-    else
-        Rewards.update(reward._id, reward.toJSONValue());
-
-    // TODO: Handle refunding.
-
+    // Issue a refund.
+    // First make sure this BitcoinFund actually belongs to the
+    // currently logged in user.
+    if (Meteor.userId() == that.userId) {
+        
+        // And then make sure they have a refund address set.
+        var refundAddress = ReceiverAddress.find({ email: email });
+        
+        // They shouldn't have been able to send us any bitcoin
+        // if they didn't set up a receiving address first. If they're
+        // trying to refund without having set up a refund address, something's
+        // probably afoot...
+        if (refundAddress) {
+            Bitcoin.Client.getReceivedByAddress(that.address, function (err, received) {
+                
+                // Send whatever has been sent to this Fund's address to the
+                // user's refund address.
+                Bitcoin.Client.sendToAddress(refundAddress.address, received);
+            });
+                
+            // Remove this Fund from its Reward.
+            if (that.funds.length <= 0)
+                Rewards.remove(reward._id);
+            else
+                Rewards.update(reward._id, reward.toJSONValue());
+        } else {
+            console.log("Error: Refund attempted by user ("
+                + email + ") without a receiving address!");
+        }
+    }
+    
     console.log("Bitcoin fund cancelled", that._id.toString());
 };
 
