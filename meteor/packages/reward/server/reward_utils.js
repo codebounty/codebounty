@@ -54,6 +54,26 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
     });
 };
 
+RewardUtils.cashLevel = function (amount, currency) {
+    if (currency === "usd") {
+        if (amount < 20)
+            return 0;
+
+        if (20 <= amount && amount < 50)
+            return 1;
+
+        if (50 <= amount && amount < 100)
+            return 2;
+
+        if (100 <= amount && amount < 250)
+            return 3;
+
+        return 4;
+    }
+
+    throw currency + " not implemented";
+};
+
 /**
  * Get asset file path
  * @param  {String} name Asset filename

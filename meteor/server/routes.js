@@ -1,19 +1,39 @@
 //the generated bounty image route
 Meteor.Router.add("/reward/:id", function (id) {
-    var fut = new Future();
     var response = this.response;
+    var reward = Rewards.findOne(id);
 
-    RewardUtils.statusImage(id, function (canvas) {
-        var buffer = canvas.toBuffer();
+    //todo better error image
+    if (!reward)
+        return "No reward found";
 
-        response.writeHead(200, {"Content-Type": "image/png" });
-        response.write(buffer);
-        response.end();
+    var status = reward.status;
+    if (_.contains(["initiated", "expired", "paying", "hold"], status))
+        status = "closed";
+    else if (status === "paid")
+        status = "claimed";
 
-        fut.ret();
+    var rewardAmount = parseFloat(reward.total(true).toString());
+
+    var claimedBy = _.map(reward.getReceivers(), function (receiver) {
+        return {userName: receiver.email, amount: parseFloat(receiver.getReward().toString())};
     });
 
-    return fut.wait();
+    var user = Meteor.users.findOne(reward.userId);
+
+    var rewardDetails = {
+        status: status,
+        amount: rewardAmount,
+        currency: reward.currency,
+        expiredDate: reward.expires(),
+        userName: user.services.github.username,
+        claimedBy: claimedBy
+    };
+
+    var canvas = RewardUtils.statusComment(rewardDetails);
+    response.writeHead(200, {"Content-Type": "image/png" });
+    response.write(canvas.toBuffer());
+    response.end();
 });
 
 //the generated repo badge route
