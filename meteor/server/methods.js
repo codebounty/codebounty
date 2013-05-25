@@ -168,7 +168,7 @@ Meteor.methods({
         //update receivers before initiating payout
         var gitHub = new GitHub(Meteor.user());
         gitHub.getContributorsCommits(myReward.issueUrl, function (error, issueEvents, commits) {
-            var contributorsEmails = GitHubUtils.authorEmails(commits, gitHub.user);
+            var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
             Fiber(function () {
                 myReward.updateReceivers(contributorsEmails);
 

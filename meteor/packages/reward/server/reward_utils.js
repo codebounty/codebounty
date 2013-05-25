@@ -130,7 +130,7 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
     //if the contributorsIssueUrl was passed, also load the contributors / issue events
     else {
         gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
-            var contributorsEmails = GitHubUtils.authorEmails(commits, gitHub.user);
+            var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
             Fiber(function () {
                 //update the status and receivers since we are already loading the issueEvents & contributors
                 _.each(rewards, function (reward) {
