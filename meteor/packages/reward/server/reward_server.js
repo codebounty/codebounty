@@ -84,22 +84,12 @@ Reward.prototype.fundApproved = function () {
 /**
  * Find all the contributors for an issue, and make sure they are receivers
  */
-Reward.prototype.updateReceivers = function (contributors) {
+Reward.prototype.updateReceivers = function (contributorEmails) {
     //we do not want to use the reactive getReceivers since we are modifying it
     var receivers = this.receivers;
 
     var that = this;
-
-    var user = Meteor.users.findOne(that.userId);
-    var userEmail = user.services.github.email;
-
     var receiversChanged = false;
-    var contributorEmails = _.pluck(contributors, "email");
-    contributorEmails = _.reject(contributorEmails, function (contributorEmail) {
-        //exclude the current user from being a contributor
-        return contributorEmail === userEmail;
-    });
-
     var receiverEmails = _.pluck(receivers, "email");
     var r = 0;
     //remove receivers that are not contributors

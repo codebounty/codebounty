@@ -55,9 +55,8 @@ GitHub = function (user) {
     var accessToken;
 
     if (user) {
-        this._userGitHub = user.services.github;
-
-        accessToken = this._userGitHub.accessToken;
+        this.user = user;
+        accessToken = user.services.github.accessToken;
     }
     else
         accessToken = Meteor.settings["GITHUB_CHARLIE"];
@@ -305,7 +304,7 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
 GitHub.prototype.checkAccess = function (callback) {
     var that = this;
     that._conditionalCrawlAndCache("User.get", {
-        user: that._userGitHub.username
+        user: GitHubUtils.username(that.user)
     }, false, function (error, result) {
         if (error) {
             callback(false);
@@ -349,7 +348,6 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
 
 /**
  * Get all the commit data from  "contributors" (users with associated commits) for an issue
- * TODO and exclude the current user
  * NOTE: The commit or pull request must have a comment referencing the issue to count as a contributor
  * @param {string} issueUrl
  * @param {function} callback (error, eventsResult, commitsResult)

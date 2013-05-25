@@ -20,7 +20,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
     var user = Meteor.users.findOne({_id: userId});
     var gitHub = new GitHub(user);
 
-    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributors) {
+    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
         //TODO try and consolidate them if there are rewards of the same currency
         var reward;
 
@@ -48,7 +48,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
         reward = new Reward(options);
         reward.addFund(amount, callback);
         Fiber(function () {
-            reward.updateReceivers(contributors);
+            reward.updateReceivers(contributorsEmails);
             Rewards.insert(reward.toJSONValue());
         }).run();
     });
@@ -104,7 +104,7 @@ RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
  * @param [options] If passed, use these options for the Collection.find
  * @param [contributorsIssueUrl] If passed, only load rewards for this issueUrl and load the contributors
  * @param gitHub The gitHub api instance to use for loading the contributors commits
- * @param {function(Array.<Reward>, Array.<{name, email, date}>)} callback (rewards, contributors)
+ * @param {function(Array.<Reward>, Array.<string>)} callback (rewards, contributorsEmails)
  */
 RewardUtils.eligibleForManualReward = function (selector, options, contributorsIssueUrl, gitHub, callback) {
     selector = selector || {};
@@ -130,17 +130,12 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
     //if the contributorsIssueUrl was passed, also load the contributors / issue events
     else {
         gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
-            var contributors = _.map(commits, function (commit) {
-                return commit.author;
-            });
-            contributors = _.uniq(contributors, false, function (contributor) {
-                return contributor.email;
-            });
+            var contributorsEmails = GitHubUtils.authorEmails(commits, gitHub.user);
             Fiber(function () {
                 //update the status and receivers since we are already loading the issueEvents & contributors
                 _.each(rewards, function (reward) {
                     //must update the receivers first, because check status relies on them being up to date
-                    reward.updateReceivers(contributors);
+                    reward.updateReceivers(contributorsEmails);
                     reward.lastSync = new Date();
 
                     Rewards.update({_id: reward._id}, reward.toJSONValue());
@@ -148,7 +143,7 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                     reward.checkStatus(issueEvents);
                 });
 
-                callback(rewards, contributors);
+                callback(rewards, contributorsEmails);
             }).run();
         });
     }

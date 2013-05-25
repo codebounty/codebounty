@@ -25,7 +25,7 @@ Meteor.Router.add("/reward/:id", function (id) {
         amount: rewardAmount,
         currency: reward.currency,
         expiredDate: reward.expires(),
-        userName: user.services.github.username,
+        userName: GitHubUtils.username(user),
         claimedBy: claimedBy
     };
 
