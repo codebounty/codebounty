@@ -3,6 +3,28 @@ GitHubUtils = {};
 var Url = Npm.require("url");
 
 /**
+ * Return the unique author email's of the commits
+ * @param commits
+ * @param [excludeUser] If passed, exclude the user
+ * @return Array.<string>
+ */
+GitHubUtils.authorEmails = function (commits, excludeUser) {
+    var authors = _.map(commits, function (commit) {
+        return commit.author;
+    });
+    authors = _.uniq(authors, false, function (author) {
+        return author.email;
+    });
+
+    var authorsEmails = _.pluck(authors, "email");
+
+    if (excludeUser)
+        authorsEmails = _.without(authorsEmails, AuthUtils.email(excludeUser));
+
+    return authorsEmails;
+};
+
+/**
  * Parse out the issue object
  * @param issueUrl The github url
  * @returns {{repo: {user: string, name: string}, number: number}}
@@ -35,4 +57,8 @@ GitHubUtils.issue = function (issueUrl) {
  */
 GitHubUtils.repoUrl = function (user, name) {
     return "https://github.com/" + user + "/" + name;
+};
+
+GitHubUtils.username = function (user) {
+    return user.services.github.username;
 };
