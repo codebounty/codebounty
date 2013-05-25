@@ -1,4 +1,4 @@
-//TODO make this a public package
+//TODO separate this out into it's own repo / meteor package
 
 var GitHubApi = Npm.require("github"), async = Npm.require("async"), signals = Npm.require("signals");
 
@@ -324,7 +324,7 @@ GitHub.prototype.checkAccess = function (callback) {
  * @param {function} [callback] (error, result) result is an array
  */
 GitHub.prototype.getIssueEvents = function (issueUrl, callback) {
-    var issue = GitHubUtils.getIssue(issueUrl);
+    var issue = GitHubUtils.issue(issueUrl);
 
     this._conditionalCrawlAndCache("Issues.getEvents", {
         user: issue.repo.user,
@@ -357,7 +357,7 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
 GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
     var that = this;
 
-    var issue = GitHubUtils.getIssue(issueUrl);
+    var issue = GitHubUtils.issue(issueUrl);
 
     that.getIssueEvents(issueUrl, function (error, issueEvents) {
         issueEvents = issueEvents.data;
@@ -404,7 +404,7 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
  * @param {string} comment "Interesting issue!"
  */
 GitHub.prototype.postComment = function (issueUrl, comment) {
-    var issue = GitHubUtils.getIssue(issueUrl);
+    var issue = GitHubUtils.issue(issueUrl);
 
     this._client.issues.createComment(
         {

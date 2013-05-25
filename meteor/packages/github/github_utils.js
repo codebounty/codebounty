@@ -7,7 +7,7 @@ var Url = Npm.require("url");
  * @param issueUrl The github url
  * @returns {{repo: {user: string, name: string}, number: number}}
  */
-GitHubUtils.getIssue = function (issueUrl) {
+GitHubUtils.issue = function (issueUrl) {
     issueUrl = Tools.stripHash(issueUrl);
 
     var parsedUrl = Url.parse(issueUrl, true);
@@ -24,6 +24,15 @@ GitHubUtils.getIssue = function (issueUrl) {
     var issue = parseFloat(paths[4]);
     if (isNaN(issue))
         throw "Cannot parse issue number";
-    
+
     return {number: issue, repo: repo};
+};
+
+/**
+ * @param {string} user
+ * @param {string} name
+ * @returns {string} "https://github.com/codebounty/codebounty"
+ */
+GitHubUtils.repoUrl = function (user, name) {
+    return "https://github.com/" + user + "/" + name;
 };

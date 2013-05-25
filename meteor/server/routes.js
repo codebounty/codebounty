@@ -1,6 +1,5 @@
 //the generated bounty image route
 Meteor.Router.add("/reward/:id", function (id) {
-    var response = this.response;
     var reward = Rewards.findOne(id);
 
     //todo better error image
@@ -31,21 +30,28 @@ Meteor.Router.add("/reward/:id", function (id) {
     };
 
     var canvas = RewardUtils.statusComment(rewardDetails);
+
+    var response = this.response;
     response.writeHead(200, {"Content-Type": "image/png" });
     response.write(canvas.toBuffer());
     response.end();
 });
 
 //the generated repo badge route
-Meteor.Router.add("/badge/:id", function (id) {
-    var response = this.response;
+Meteor.Router.add("/badge/:user/:repo", function (user, repo) {
+    var repoUrl = GitHubUtils.repoUrl(user, repo);
 
-    // TODO: Hook up with db
+    var openRewards = Rewards.find({
+        issueUrl: new RegExp("^" + repoUrl, "i"), //regex is starts with
+        status: { $in: ["open", "reopened"] }
+    }).count();
+
     var repoStatus = {
-        open: 9
+        open: openRewards
     };
-
     var canvas = RewardUtils.repoBadge(repoStatus);
+
+    var response = this.response;
     response.writeHead(200, {"Content-Type": "image/png" });
     response.write(canvas.toBuffer());
     response.end();
