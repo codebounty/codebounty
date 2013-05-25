@@ -8,7 +8,7 @@ var Url = Npm.require("url");
  * @param [excludeUser] If passed, exclude the user
  * @return Array.<string>
  */
-GitHubUtils.authorEmails = function (commits, excludeUser) {
+GitHubUtils.authorsEmails = function (commits, excludeUser) {
     var authors = _.map(commits, function (commit) {
         return commit.author;
     });
