@@ -100,7 +100,6 @@ RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
  * Make sure to update the diagram here https://codebounty.hackpad.com/Reward-yN7ydM3LIjy whenever you use this method
  * ----------------------------------------------
  * Find rewards that are open, reopened, or initiated by the system (not by a user)
- * - TODO not expired (created: {"$gt": FundUtils.expiredDate()}
  * @param [selector] If passed, use this selector as a base
  * @param [options] If passed, use these options for the Collection.find
  * @param [contributorsIssueUrl] If passed, only load rewards for this issueUrl and load the contributors
