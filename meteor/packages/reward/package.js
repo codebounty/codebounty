@@ -22,7 +22,8 @@ Package.on_use(function (api) {
 
     api.add_files("server/fund.js", "server");
 
-    api.add_files("server/reward_art.js", "server");
+    api.add_files("server/reward_status_comment.js", "server");
+
     api.add_files("server/reward_payment.js", "server");
     api.add_files("server/reward_repo_badge.js", "server");
     api.add_files("server/reward_server.js", "server");

@@ -6,15 +6,8 @@ FundUtils = {
 
 /**
  * Funds for payment
- * @param options {{_id: string,
- *                  amount: Big,
- *                  approved: Date,
- *                  currency: string,
- *                  details: *,
- *                  expires: Date,
- *                  paid: string,
- *                  paymentError: string,
- *                  processor: string}}
+ * @param {{_id: string, amount: Big, approved: Date, currency: string, details: *,
+ *          expires: Date, paid: Date, paymentError: string, processor: string}} options
  * @constructor
  */
 Fund = function (options) {
@@ -55,15 +48,8 @@ PayPalFundUtils = {
 };
 
 /**
- * @param options {{_id: string,
- *                  amount: Big,
- *                  approved: Date,
- *                  currency: string,
- *                  details: *,
- *                  expires: Date,
- *                  paid: string,
- *                  paymentError: string,
- *                  preapprovalKey: string}}
+ * @param {{_id: string, amount: Big, approved: Date, currency: string, details: *,
+ *          expires: Date, paid: string, paymentError: string, preapprovalKey: string}} options
  * @constructor
  */
 PayPalFund = function (options) {
