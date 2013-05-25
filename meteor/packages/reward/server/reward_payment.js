@@ -74,9 +74,9 @@ Reward.prototype.distributeEqually = function () {
 };
 
 /**
- * NOTE TODO: Only call this after updating the reward's receivers
  * Initiates a payout by changing the status to initiated and storing the payout
  * after 72 hours if no one disputes the reward will automatically be paid out
+ * NOTE: Only call this after updating the reward's receivers
  * @param by Who the reward was initiated by (the backer userId, "system", future: "moderator")
  * @param callback (error, success)
  */

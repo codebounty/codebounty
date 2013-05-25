@@ -28,6 +28,7 @@ Reward.prototype.addFund = function (amount, callback) {
  * If the last issue event was
  * - closed, and the reward status is open or reopened, and there are receivers: initiate an equally distributed payout
  * - reopened and the reward status is initiated by the system: reopen the reward and cancel the payout
+ * NOTE: Only call this after updating the reward's receivers, because a payout might be initiated
  */
 Reward.prototype.checkStatus = function (issueEvents) {
     var that = this;
@@ -43,6 +44,7 @@ Reward.prototype.checkStatus = function (issueEvents) {
     if (last.event === "closed" && (that.status === "open" || that.status === "reopened")
         && that.receivers.length > 0) {
         that.distributeEqually();
+
         that.initiatePayout("system", function (err) {
             if (err)
                 throw err;
@@ -81,7 +83,6 @@ Reward.prototype.fundApproved = function () {
 
 /**
  * Find all the contributors for an issue, and make sure they are receivers
- * TODO exclude the backer from being a receiver
  */
 Reward.prototype.updateReceivers = function (contributors) {
     //we do not want to use the reactive getReceivers since we are modifying it

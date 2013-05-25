@@ -413,7 +413,6 @@ GitHub.prototype.postComment = function (issueUrl, comment) {
             number: issue.number,
             body: comment
         }, function (err, res) {
-            //TODO log error
             if (err)
                 console.log("ERROR: Posting GitHub comment", err);
         }
