@@ -19,50 +19,42 @@ var SMALL = "19.5px",
     MEDIUM = "26px",
     LARGE = "39px";
 
-// Helper functions
-/**
- * Get asset file path
- * @param  {String} name Asset filename
- * @return {String}      File path
- */
-var assetFile = function (name) {
-    return path.join(basepath, "/assets/", name);
-};
+// Helper Functions
 
 /**
- * @param {String} fontSize
- * @param {String} fontName
- * @param {String} [fontFace]
+ * Get currency symbol
+ * @param  {String} currency "usd" or "btc"
  * @return {String}
  */
-var canvasFontString = function (fontSize, fontName, fontFace) {
-    if (!fontSize || !fontName)
-        throw "Missing argument.";
+var getCurrencySymbol = function (currency) {
+    if (currency === "usd") {
+        return "$";
+    }
 
-    return (fontFace ? fontFace + " " : "") + fontSize + " " + fontName;
+    throw currency + " not implemented";
 };
 
 //setup fonts
 
 var woodshop = "Woodshop", futuraLT = "FuturaLT";
 var Fonts = {
-    "Woodshop": new Canvas.Font(woodshop, assetFile("woodshop-regular.otf")),
-    "FuturaLT": new Canvas.Font(futuraLT, assetFile("futura-lt.ttf"))
+    "Woodshop": new Canvas.Font(woodshop, RewardUtils.assetFile("woodshop-regular.otf")),
+    "FuturaLT": new Canvas.Font(futuraLT, RewardUtils.assetFile("futura-lt.ttf"))
 };
-Fonts.FuturaLT.addFace(assetFile("futura-lt-heavy.otf"), "bold");
+Fonts.FuturaLT.addFace(RewardUtils.assetFile("futura-lt-heavy.otf"), "bold");
 
 /**
  * generates the reward status comment image
  * @param {{status: string, amount: Number, currency: string, expiredDate: Date, userName: string,
- *          claimedBy: Array.<{userName: string, amount: Number}>}=} rewardDetails
+ *          claimedBy: Array.<{userName: string, amount: Number}>}=} options
  * - status: "open", "closed", "reopened", "claimed"
  * - userName: user who posted the bounty
  * - claimedBy: only used on "closed" or "claimed"
  * @return {Canvas}
  */
-RewardUtils.statusComment = function (rewardDetails) {
-    var status = rewardDetails.status;
-    var currencySymbol = "$";
+RewardUtils.statusComment = function (options) {
+    var status = options.status;
+    var currencySymbol = getCurrencySymbol(options.currency);
 
     var width = 712, height = 368;
     var centerX = Math.floor(width / 2),
@@ -75,10 +67,6 @@ RewardUtils.statusComment = function (rewardDetails) {
     ctx.addFont(Fonts.FuturaLT);
     ctx.addFont(Fonts.Woodshop);
 
-    // var myriadPro = '"Myriad Pro"';
-    // var myriadProFont = new Font("myriadpro-regular.otf", assetFile(myriadProFile));
-    // ctx.addFont(myriadProFont);
-
     // Draw background
     ctx.fillStyle = LIGHT_ORANGE;
     ctx.fillRect(0, 0, width, height);
@@ -90,15 +78,15 @@ RewardUtils.statusComment = function (rewardDetails) {
 
         if (status === "open") {
             statusHeader = "BOUNTY NOW OPEN!";
-            bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(rewardDetails.amount).toFixed(2);
+            bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(options.amount).toFixed(2);
             bountyStatusImageFile = "banner-bounty-open.png";
         } else if (status === "closed") {
             statusHeader = "BOUNTY CLOSED";
-            bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(rewardDetails.amount).toFixed(2);
+            bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(options.amount).toFixed(2);
             bountyStatusImageFile = "banner-bounty-closed.png";
         } else if (status === "reopened") {
             statusHeader = "BOUNTY REOPENED";
-            bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(rewardDetails.amount).toFixed(2);
+            bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(options.amount).toFixed(2);
             bountyStatusImageFile = "banner-bounty-reopened.png";
         }
 
@@ -153,59 +141,59 @@ RewardUtils.statusComment = function (rewardDetails) {
         // Draw Bounty status
         // TODO: exclamation mark is not included in font Woodshop, so in the
         // original design, it is replaced by using Myriad Pro.
-        ctx.font = canvasFontString(headerFontSize, woodshop);
+        ctx.font = RewardUtils.canvasFontString(headerFontSize, woodshop);
         ctx.fillStyle = headerFontColor;
         ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
         // Draw bounty amount and expiration
-        ctx.font = canvasFontString(contentFontSize, futuraLT, "bold");
+        ctx.font = RewardUtils.canvasFontString(contentFontSize, futuraLT, "bold");
         ctx.fillStyle = contentFontColor;
         ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
-        var bountyExpiration = "Expires: " + Tools.formatDate(rewardDetails.expiredDate);
+        var bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
         ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
 
         // Draw codebounty plug and link (align right)
         ctx.textAlign = "right";
         ctx.fillStyle = footerFontColor;
-        ctx.font = canvasFontString(footerFontSize, futuraLT);
-        var posterUser = "Posted by " + rewardDetails.userName;
+        ctx.font = RewardUtils.canvasFontString(footerFontSize, futuraLT);
+        var posterUser = "Posted by " + options.userName;
         ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
-        ctx.font = canvasFontString(footerSmallerFontSize, futuraLT);
+        ctx.font = RewardUtils.canvasFontString(footerSmallerFontSize, futuraLT);
         var siteLink = "codebounty.co";
         ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
         ctx.textAlign = "left";
 
         // Draw claimed by text
-        if (status === "closed" && rewardDetails.claimedBy) {
+        if (status === "closed" && options.claimedBy) {
             ctx.fillStyle = footerFontColor;
-            ctx.font = canvasFontString(footerFontSize, futuraLT);
+            ctx.font = RewardUtils.canvasFontString(footerFontSize, futuraLT);
             var claimedByText = "Claimed by: ";
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
 
             //TODO... more claimers somehow. Like "+2 others"?
             // Only display two claimers
-            if (rewardDetails.claimedBy[0]) {
-                var claimedByPerson1Text = rewardDetails.claimedBy[0].userName + " " + currencySymbol + rewardDetails.claimedBy[0].amount;
+            if (options.claimedBy[0]) {
+                var claimedByPerson1Text = options.claimedBy[0].userName + " " + currencySymbol + options.claimedBy[0].amount;
                 ctx.fillText(claimedByPerson1Text, claimedByPerson1OriginX, claimedByTextOriginY);
             }
 
-            if (rewardDetails.claimedBy[1]) {
-                var claimedByPerson2Text = rewardDetails.claimedBy[1].userName + " " + currencySymbol + rewardDetails.claimedBy[1].amount;
+            if (options.claimedBy[1]) {
+                var claimedByPerson2Text = options.claimedBy[1].userName + " " + currencySymbol + options.claimedBy[1].amount;
                 ctx.fillText(claimedByPerson2Text, claimedByPerson2OriginX, claimedByText2OriginY);
             }
         }
 
         // Draw bounty status image
         var bountyStatusImage = new Image();
-        bountyStatusImage.src = fs.readFileSync(assetFile(bountyStatusImageFile));
+        bountyStatusImage.src = fs.readFileSync(RewardUtils.assetFile(bountyStatusImageFile));
         ctx.drawImage(bountyStatusImage, bountyStatusOriginX, bountyStatusOriginY, bountyStatusImage.width, bountyStatusImage.height);
 
-        var cashLevel = RewardUtils.cashLevel(rewardDetails.amount, rewardDetails.currency);
+        var cashLevel = RewardUtils.cashLevel(options.amount, options.currency);
 
         // Draw bounty cash image
         var bountyCashImageFile = CASH_IMAGE_FILES[cashLevel];
         var bountyCashImage = new Image();
-        bountyCashImage.src = fs.readFileSync(assetFile(bountyCashImageFile));
+        bountyCashImage.src = fs.readFileSync(RewardUtils.assetFile(bountyCashImageFile));
         ctx.drawImage(bountyCashImage, bountyCashOriginX, bountyCashOriginY, bountyCashImage.width, bountyCashImage.height);
 
         return canvas;
@@ -249,30 +237,30 @@ RewardUtils.statusComment = function (rewardDetails) {
         // Draw bounty claimed stamp
         var bountyClaimedStampImageFile = "bounty-claimed-stamp.png";
         var bountyClaimedStampImage = new Image();
-        bountyClaimedStampImage.src = fs.readFileSync(assetFile(bountyClaimedStampImageFile));
+        bountyClaimedStampImage.src = fs.readFileSync(RewardUtils.assetFile(bountyClaimedStampImageFile));
         ctx.drawImage(bountyClaimedStampImage, bountyClaimedStampOriginX, bountyClaimedStampOriginY, bountyClaimedStampImage.width, bountyClaimedStampImage.height);
 
         // Draw poster user
         ctx.fillStyle = posterUserFontColor;
-        ctx.font = canvasFontString(posterUserFontSize, futuraLT, "bold");
-        var posterUser = rewardDetails.userName;
+        ctx.font = RewardUtils.canvasFontString(posterUserFontSize, futuraLT, "bold");
+        var posterUser = options.userName;
         ctx.fillText(posterUser, posterUserOriginX, posterUserOriginY);
 
         // Draw claimed by text
-        if (rewardDetails.claimedBy) {
-            ctx.font = canvasFontString(claimedByFontSize, futuraLT, "bold");
+        if (options.claimedBy) {
+            ctx.font = RewardUtils.canvasFontString(claimedByFontSize, futuraLT, "bold");
             ctx.fillStyle = claimedByFontColor;
             var claimedByText = "Claimed by: ";
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
 
             // Only display two claimers
-            if (rewardDetails.claimedBy[0]) {
-                var claimedByPerson1Text = rewardDetails.claimedBy[0].userName + " " + currencySymbol + rewardDetails.claimedBy[0].amount;
+            if (options.claimedBy[0]) {
+                var claimedByPerson1Text = options.claimedBy[0].userName + " " + currencySymbol + options.claimedBy[0].amount;
                 ctx.fillText(claimedByPerson1Text, claimedByPerson1OriginX, claimedByTextOriginY);
             }
 
-            if (rewardDetails.claimedBy[1]) {
-                var claimedByPerson2Text = rewardDetails.claimedBy[1].userName + " " + currencySymbol + rewardDetails.claimedBy[1].amount;
+            if (options.claimedBy[1]) {
+                var claimedByPerson2Text = options.claimedBy[1].userName + " " + currencySymbol + options.claimedBy[1].amount;
                 ctx.fillText(claimedByPerson2Text, claimedByPerson2OriginX, claimedByText2OriginY);
             }
         }
@@ -280,7 +268,7 @@ RewardUtils.statusComment = function (rewardDetails) {
         // Draw sheriff icon
         var sheriffIconImageFile = "sheriff.png";
         var sheriffIconImage = new Image();
-        sheriffIconImage.src = fs.readFileSync(assetFile(sheriffIconImageFile));
+        sheriffIconImage.src = fs.readFileSync(RewardUtils.assetFile(sheriffIconImageFile));
         ctx.drawImage(sheriffIconImage, sheriffIconOriginX, sheriffIconOriginY, sheriffIconImage.width, sheriffIconImage.height);
 
         return canvas;
