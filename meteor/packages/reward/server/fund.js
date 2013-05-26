@@ -121,6 +121,9 @@ PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
         throw "This fund already has a preapproval key";
 
     var rootUrl = Meteor.settings["ROOT_URL"];
+    if (typeof rootUrl === "undefined")
+        throw "ROOT_URL is not defined";
+
     var cancel = rootUrl + "cancelFunds?id=" + that._id;
     var confirm = rootUrl + "confirmFunds?id=" + that._id;
 
