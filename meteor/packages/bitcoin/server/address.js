@@ -65,6 +65,7 @@ Meteor.setInterval(function () {
                     }).run();
                 } else {
                     // Increment our error counter and carry on.
+                    console.log(err);
                     errCountFut.ret(errors + 1);
                     addrCountFut.ret(availableAddresses);
                 }

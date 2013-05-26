@@ -6,8 +6,8 @@ Bitcoin.Settings = {
     "maximumErrors": 10,
     "client": {
         "host": "localhost",
-        "port": 8332,
-        "username": "rpc_user",
-        "password": "nZ8xuWPUOrWrta8EkxTqHke4hmF0RfpO5PFf01mEiKrJUld004613fGBuocgZjG"
+        "port": 18332,
+        "username": "oldgregg",
+        "password": "4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ"
     }
 }
