@@ -84,7 +84,7 @@ Reward.prototype.fundApproved = function () {
 /**
  * Find all the contributors for an issue, and make sure they are receivers
  */
-Reward.prototype.updateReceivers = function (contributorEmails) {
+Reward.prototype.updateReceivers = function (contributorsEmails) {
     //we do not want to use the reactive getReceivers since we are modifying it
     var receivers = this.receivers;
 
@@ -94,7 +94,7 @@ Reward.prototype.updateReceivers = function (contributorEmails) {
     var r = 0;
     //remove receivers that are not contributors
     _.each(receiverEmails, function (receiverEmail) {
-        if (!_.contains(contributorEmails, receiverEmail)) {
+        if (!_.contains(contributorsEmails, receiverEmail)) {
             receivers.splice(r, 1);
             receiversChanged = true;
         }
@@ -103,7 +103,7 @@ Reward.prototype.updateReceivers = function (contributorEmails) {
     });
 
     //add contributors that are not receivers
-    _.each(contributorEmails, function (contributorEmail) {
+    _.each(contributorsEmails, function (contributorEmail) {
         if (!_.contains(receiverEmails, contributorEmail)) {
             var newReceiver = new Receiver({
                 currency: that.currency,
