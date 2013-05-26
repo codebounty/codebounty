@@ -1,5 +1,4 @@
 //TODO before publish: remove Bounties / Responses / rewards subscription, packages: autosubscribe and insecure
-<<<<<<< HEAD
 Bounties = new Meteor.Collection("bounties");
 Responses = new Meteor.Collection("responses");
 Rewards = new Meteor.Collection("rewards");
