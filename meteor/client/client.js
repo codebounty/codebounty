@@ -22,7 +22,7 @@ Meteor.Router.add({
             if (currency == "usd") {
                 window.location.href = result;
             } else if (currency == "btc") {
-                Session.set("address", result);
+                Session.set("result", result);
             }
         });
 

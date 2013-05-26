@@ -311,25 +311,38 @@ EJSON.addType("BitcoinFund", BitcoinFundUtils.fromJSONValue);
  */
 BitcoinFund.prototype.initiatePreapproval = function (reward, callback) {
     var that = this;
+    // TODO: See if the line below is in error...
     if (that.address)
         throw "This fund already has a Bitcoin address";
-
-    var rootUrl = Meteor.settings["ROOT_URL"];
-    var cancel = rootUrl + "cancelFunds?id=" + that._id;
-    var confirm = rootUrl + "confirmFunds?id=" + that._id;
-
-    var issue = GitHubUtils.getIssue(reward.issueUrl);
-    var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
-    var address = Bitcoin.addressForIssue(reward.issueUrl);
+        
+    // Make sure this user has a receiving address set up before
+    // we issue them an address to send us funds through.
+    var receivingAddress = Bitcoin.ReceiverAddresses.findOne(
+        { userId: that.userId });
     
-    that.address = address.address;
-    that.proxyAddress = address.proxyAddress;
+    if (receivingAddress) {
     
-    Fiber(function () {
-        Rewards.update(reward._id, reward.toJSONValue());
-    }).run();
+        var rootUrl = Meteor.settings["ROOT_URL"];
+        var cancel = rootUrl + "cancelFunds?id=" + that._id;
+        var confirm = rootUrl + "confirmFunds?id=" + that._id;
 
-    callback(address.proxyAddress);
+        var issue = GitHubUtils.getIssue(reward.issueUrl);
+        var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
+        var address = Bitcoin.addressForIssue(reward.issueUrl);
+        
+        that.address = address.address;
+        that.proxyAddress = address.proxyAddress;
+        
+        Fiber(function () {
+            Rewards.update(reward._id, reward.toJSONValue());
+        }).run();
+
+        callback({address: address.proxyAddress});
+        
+    } else {
+        // No receiving address set. Send back an empty response.
+        callback({});
+    }
 };
 
 BitcoinFund.prototype.cancel = function (reward) {
