@@ -44,7 +44,8 @@ Tools.formatDate = function (date) {
 
     // TODO: take care of timezone
     var day = date.getDate(), month = date.getMonth(),
-        year = date.getFullYear(), hour = date.getHours();
+        year = date.getFullYear(), hour = date.getHours(),
+        minute = date.getMinutes();
 
     var ordinalIndicator;
     if (day === 1 || day === 21 || day === 31)
@@ -67,7 +68,7 @@ Tools.formatDate = function (date) {
     else if (hour > 12)
         hour = hour - 12;
 
-    return monthNames[month] + " " + day + ordinalIndicator + ", " + year + " at " + hour + period;
+    return monthNames[month] + " " + day + ordinalIndicator + ", " + year + " at " + hour + ":" + minute + period;
 };
 
 
