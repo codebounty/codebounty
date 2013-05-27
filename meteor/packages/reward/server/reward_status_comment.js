@@ -286,8 +286,8 @@ RewardUtils.statusComment = function (options) {
         var sheriffIconOriginX = centerX - 345;
         var sheriffIconOriginY = Math.floor((height - 323) / 2);
 
-        // Poster user
-        var posterUserOriginX = sheriffIconOriginX + 65;
+        // Poster user (align center)
+        var posterUserOriginX = sheriffIconOriginX + 160;
         var posterUserOriginY = sheriffIconOriginY + 323;
 
         // Claimed by text
@@ -315,10 +315,12 @@ RewardUtils.statusComment = function (options) {
         ctx.drawImage(bountyClaimedStampImage, bountyClaimedStampOriginX, bountyClaimedStampOriginY, bountyClaimedStampImage.width, bountyClaimedStampImage.height);
 
         // Draw poster user
+        ctx.textAlign = "center";
         ctx.fillStyle = posterUserFontColor;
         ctx.font = RewardUtils.canvasFontString(posterUserFontSize, futuraLT, "bold");
         var posterUser = formatter.getUserName();
         ctx.fillText(posterUser, posterUserOriginX, posterUserOriginY);
+        ctx.textAlign = "left";
 
         // Draw claimed by text
         if (options.claimedBy) {
