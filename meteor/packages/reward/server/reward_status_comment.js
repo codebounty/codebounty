@@ -21,17 +21,81 @@ var SMALL = "19.5px",
 
 // Helper Functions
 
-/**
- * Get currency symbol
- * @param  {String} currency "usd" or "btc"
- * @return {String}
- */
-var getCurrencySymbol = function (currency) {
-    if (currency === "usd") {
-        return "$";
+var RewardFormatter = function (options) {
+    this.options = options;
+};
+
+RewardFormatter.prototype.CONFIGS = {
+    USER_NAME_MAX_CHARACTER: 10,
+    CLAIMER_MAX_COUNT: 2,
+    CLAIMER_USER_NAME_MAX_CHARACTER: 10
+};
+
+RewardFormatter.prototype._limitStringLength = function (string, maxCharacter) {
+    if (string.length <= maxCharacter)
+        return string;
+
+    return string.substring(0, maxCharacter - 2) + "...";
+};
+
+RewardFormatter.prototype._formatCurrency = function (amount) {
+    if (this.options.currency === "usd") {
+        if (amount > 999999999) {
+            return "$" + parseFloat((amount / 1000000000).toFixed(2)) + "B";
+        }
+
+        if (amount > 999999) {
+            return "$" + parseFloat((amount / 1000000).toFixed(2)) + "M";
+        }
+
+        if (amount > 999) {
+            return "$" + parseFloat((amount / 1000).toFixed(2)) + "K";
+        }
+
+        return "$" + parseFloat(amount.toFixed(2));
+    } else {
+        throw this.options.currency + " not implemented";
     }
 
-    throw currency + " not implemented";
+};
+
+RewardFormatter.prototype.getRewardAmount = function () {
+    var rewardAmount = this._formatCurrency(this.options.amount);
+    // TODO: convert unit
+    
+    return rewardAmount;
+};
+
+RewardFormatter.prototype.getUserName = function () {
+    return this._limitStringLength(this.options.userName, this.CONFIGS.USER_NAME_MAX_CHARACTER);
+};
+
+/**
+ * Generate reward claimer strings. Default only displays limited entries, others
+ * will be replaced by "+X others".
+ * @return {Array.String}
+ */
+RewardFormatter.prototype.getClaimerStrings = function () {
+    var claimers = [];
+
+    var i, claimer;
+    var max = Math.min(this.options.claimedBy.length, this.CONFIGS.CLAIMER_MAX_COUNT);
+
+    for (i = 0; i < max; i++) {
+        claimer = this._limitStringLength(this.options.claimedBy[i].userName,
+                  this.CONFIGS.CLAIMER_USER_NAME_MAX_CHARACTER) + " " +
+                  this._formatCurrency(this.options.claimedBy[i].amount);
+
+        claimers.push(claimer);
+    }
+
+    var othersCount = this.options.claimedBy.length - max;
+    if (othersCount === 1)
+        claimers.push("+1 other");
+    else if (othersCount > 1)
+        claimers.push("+" + othersCount + " others");
+
+    return claimers;
 };
 
 //setup fonts
@@ -48,13 +112,13 @@ Fonts.FuturaLT.addFace(RewardUtils.assetFile("futura-lt-heavy.otf"), "bold");
  * @param {{status: string, amount: Number, currency: string, expiredDate: Date, userName: string,
  *          claimedBy: Array.<{userName: string, amount: Number}>}=} options
  * - status: "open", "closed", "reopened", "claimed"
- * - userName: user who posted the bounty
+ * - userName: user who posted the reward
  * - claimedBy: only used on "closed" or "claimed"
  * @return {Canvas}
  */
 RewardUtils.statusComment = function (options) {
     var status = options.status;
-    var currencySymbol = getCurrencySymbol(options.currency);
+    var formatter = new RewardFormatter(options);
 
     var width = 712, height = 368;
     var centerX = Math.floor(width / 2),
@@ -78,27 +142,29 @@ RewardUtils.statusComment = function (options) {
 
         if (status === "open") {
             statusHeader = "BOUNTY NOW OPEN!";
-            bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(options.amount).toFixed(2);
+            bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
             bountyStatusImageFile = "banner-bounty-open.png";
         } else if (status === "closed") {
             statusHeader = "BOUNTY CLOSED";
-            bountyAmount = "This bounty was posted for " + currencySymbol + parseFloat(options.amount).toFixed(2);
+            bountyAmount = "This bounty was posted for " + formatter.getRewardAmount();
             bountyStatusImageFile = "banner-bounty-closed.png";
         } else if (status === "reopened") {
             statusHeader = "BOUNTY REOPENED";
-            bountyAmount = "This bounty is posted for " + currencySymbol + parseFloat(options.amount).toFixed(2);
+            bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
             bountyStatusImageFile = "banner-bounty-reopened.png";
         }
 
         // Setup styles
         var headerFontColor = DARK_GREY,
             contentFontColor = LIGHT_GREY,
-            footerFontColor = DARK_GREY;
+            footerFontColor = DARK_GREY,
+            posterFontColor = status !== "closed" ? footerFontColor : LIGHT_GREY;
 
         var headerFontSize = LARGE,
             contentFontSize = MEDIUM,
             footerFontSize = MEDIUM,
-            footerSmallerFontSize = SMALL;
+            footerSmallerFontSize = SMALL,
+            posterFontSize = status !== "closed" ? footerFontSize : SMALL;
 
         //
         // Align elements
@@ -120,27 +186,32 @@ RewardUtils.statusComment = function (options) {
         var leftOffsetIndent = 5;
         var bountyContentOriginX = statusHeaderOriginX + leftOffsetIndent;
         var bountyAmountOriginY = statusHeaderOriginY + 53;
-        var bountyExpirationOriginY = statusHeaderOriginY + 90;
+        var bountyExpirationOriginY = bountyAmountOriginY + 37;
 
         // Bounty Footer (align right)
         var footerOriginX = centerX + 319;
-        var posterUserOriginY = bountyStatusOriginY + 290;
-        var siteLinkOriginY = posterUserOriginY + 31;
+        var siteLinkOriginY = bountyStatusOriginY + 321;
+        var posterUserOriginY = status !== "closed" ? siteLinkOriginY - 31 : siteLinkOriginY - 23;
 
         // Claimed by text (when closed)
-        var claimedByTextOriginX = centerX - 7;
-        var claimedByPerson1OriginX = claimedByTextOriginX + 142;
-        var claimedByPerson2OriginX = claimedByPerson1OriginX;
-        var claimedByTextOriginY = posterUserOriginY - 70;
-        var claimedByText2OriginY = claimedByTextOriginY + 30;
+        var claimedByTextOriginX = centerX - 35;
+        var claimedByTextOriginY = bountyExpirationOriginY + 45;
+        var claimedByPersonOriginX = {
+            0: claimedByTextOriginX + 142,
+            1: claimedByTextOriginX + 142,
+            2: claimedByTextOriginX + 142
+        };
+        var claimedByPersonOriginY = {
+            0: claimedByTextOriginY,
+            1: claimedByTextOriginY + 30,
+            2: claimedByTextOriginY + 60
+        };
 
         //
         // Draw elements
         //
 
         // Draw Bounty status
-        // TODO: exclamation mark is not included in font Woodshop, so in the
-        // original design, it is replaced by using Myriad Pro.
         ctx.font = RewardUtils.canvasFontString(headerFontSize, woodshop);
         ctx.fillStyle = headerFontColor;
         ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
@@ -154,10 +225,12 @@ RewardUtils.statusComment = function (options) {
 
         // Draw codebounty plug and link (align right)
         ctx.textAlign = "right";
-        ctx.fillStyle = footerFontColor;
-        ctx.font = RewardUtils.canvasFontString(footerFontSize, futuraLT);
-        var posterUser = "Posted by " + options.userName;
+        ctx.fillStyle = posterFontColor;
+        ctx.font = RewardUtils.canvasFontString(posterFontSize, futuraLT);            
+        var posterUser = "Posted by " + formatter.getUserName();
         ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
+
+        ctx.fillStyle = footerFontColor;
         ctx.font = RewardUtils.canvasFontString(footerSmallerFontSize, futuraLT);
         var siteLink = "codebounty.co";
         ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
@@ -170,17 +243,11 @@ RewardUtils.statusComment = function (options) {
             var claimedByText = "Claimed by: ";
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
 
-            //TODO... more claimers somehow. Like "+2 others"?
             // Only display two claimers
-            if (options.claimedBy[0]) {
-                var claimedByPerson1Text = options.claimedBy[0].userName + " " + currencySymbol + options.claimedBy[0].amount;
-                ctx.fillText(claimedByPerson1Text, claimedByPerson1OriginX, claimedByTextOriginY);
-            }
-
-            if (options.claimedBy[1]) {
-                var claimedByPerson2Text = options.claimedBy[1].userName + " " + currencySymbol + options.claimedBy[1].amount;
-                ctx.fillText(claimedByPerson2Text, claimedByPerson2OriginX, claimedByText2OriginY);
-            }
+            var claimers = formatter.getClaimerStrings();
+            claimers.forEach(function (element, index) {
+                ctx.fillText(element, claimedByPersonOriginX[index], claimedByPersonOriginY[index]);
+            });
         }
 
         // Draw bounty status image
@@ -225,10 +292,17 @@ RewardUtils.statusComment = function (options) {
 
         // Claimed by text
         var claimedByTextOriginX = centerX - 36;
-        var claimedByPerson1OriginX = claimedByTextOriginX + 142;
-        var claimedByPerson2OriginX = claimedByPerson1OriginX;
-        var claimedByTextOriginY = centerY + 110;
-        var claimedByText2OriginY = claimedByTextOriginY + 30;
+        var claimedByTextOriginY = centerY + 98;
+        var claimedByPersonOriginX = {
+            0: claimedByTextOriginX + 142,
+            1: claimedByTextOriginX + 142,
+            2: claimedByTextOriginX + 142
+        };
+        var claimedByPersonOriginY = {
+            0: claimedByTextOriginY,
+            1: claimedByTextOriginY + 30,
+            2: claimedByTextOriginY + 60
+        };
 
         //
         // Draw elements
@@ -243,7 +317,7 @@ RewardUtils.statusComment = function (options) {
         // Draw poster user
         ctx.fillStyle = posterUserFontColor;
         ctx.font = RewardUtils.canvasFontString(posterUserFontSize, futuraLT, "bold");
-        var posterUser = options.userName;
+        var posterUser = formatter.getUserName();
         ctx.fillText(posterUser, posterUserOriginX, posterUserOriginY);
 
         // Draw claimed by text
@@ -254,15 +328,10 @@ RewardUtils.statusComment = function (options) {
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
 
             // Only display two claimers
-            if (options.claimedBy[0]) {
-                var claimedByPerson1Text = options.claimedBy[0].userName + " " + currencySymbol + options.claimedBy[0].amount;
-                ctx.fillText(claimedByPerson1Text, claimedByPerson1OriginX, claimedByTextOriginY);
-            }
-
-            if (options.claimedBy[1]) {
-                var claimedByPerson2Text = options.claimedBy[1].userName + " " + currencySymbol + options.claimedBy[1].amount;
-                ctx.fillText(claimedByPerson2Text, claimedByPerson2OriginX, claimedByText2OriginY);
-            }
+            var claimers = formatter.getClaimerStrings();
+            claimers.forEach(function (element, index) {
+                ctx.fillText(element, claimedByPersonOriginX[index], claimedByPersonOriginY[index]);
+            });
         }
 
         // Draw sheriff icon
