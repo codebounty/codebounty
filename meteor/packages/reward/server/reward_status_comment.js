@@ -21,24 +21,24 @@ var SMALL = "19.5px",
 
 // Helper Functions
 
-var BountyFormatter = function (options) {
+var RewardFormatter = function (options) {
     this.options = options;
 };
 
-BountyFormatter.prototype.CONFIGS = {
+RewardFormatter.prototype.CONFIGS = {
     USER_NAME_MAX_CHARACTER: 10,
     CLAIMER_MAX_COUNT: 2,
     CLAIMER_USER_NAME_MAX_CHARACTER: 10
 };
 
-BountyFormatter.prototype._limitStringLength = function (string, maxCharacter) {
+RewardFormatter.prototype._limitStringLength = function (string, maxCharacter) {
     if (string.length <= maxCharacter)
         return string;
 
     return string.substring(0, maxCharacter - 2) + "...";
 };
 
-BountyFormatter.prototype._formatCurrency = function (amount) {
+RewardFormatter.prototype._formatCurrency = function (amount) {
     if (this.options.currency === "usd") {
         if (amount > 999999999) {
             return "$" + parseFloat((amount / 1000000000).toFixed(2)) + "B";
@@ -59,23 +59,23 @@ BountyFormatter.prototype._formatCurrency = function (amount) {
 
 };
 
-BountyFormatter.prototype.getBountyAmount = function () {
-    var bountyAmount = this._formatCurrency(this.options.amount);
+RewardFormatter.prototype.getRewardAmount = function () {
+    var rewardAmount = this._formatCurrency(this.options.amount);
     // TODO: convert unit
     
-    return bountyAmount;
+    return rewardAmount;
 };
 
-BountyFormatter.prototype.getUserName = function () {
+RewardFormatter.prototype.getUserName = function () {
     return this._limitStringLength(this.options.userName, this.CONFIGS.USER_NAME_MAX_CHARACTER);
 };
 
 /**
- * Generate bounty claimer strings. Default only displays limited entries, others
+ * Generate reward claimer strings. Default only displays limited entries, others
  * will be replaced by "+X others".
  * @return {Array.String}
  */
-BountyFormatter.prototype.getClaimerStrings = function () {
+RewardFormatter.prototype.getClaimerStrings = function () {
     var claimers = [];
 
     var i, claimer;
@@ -112,13 +112,13 @@ Fonts.FuturaLT.addFace(RewardUtils.assetFile("futura-lt-heavy.otf"), "bold");
  * @param {{status: string, amount: Number, currency: string, expiredDate: Date, userName: string,
  *          claimedBy: Array.<{userName: string, amount: Number}>}=} options
  * - status: "open", "closed", "reopened", "claimed"
- * - userName: user who posted the bounty
+ * - userName: user who posted the reward
  * - claimedBy: only used on "closed" or "claimed"
  * @return {Canvas}
  */
 RewardUtils.statusComment = function (options) {
     var status = options.status;
-    var formatter = new BountyFormatter(options);
+    var formatter = new RewardFormatter(options);
 
     var width = 712, height = 368;
     var centerX = Math.floor(width / 2),
@@ -142,15 +142,15 @@ RewardUtils.statusComment = function (options) {
 
         if (status === "open") {
             statusHeader = "BOUNTY NOW OPEN!";
-            bountyAmount = "This bounty is posted for " + formatter.getBountyAmount();
+            bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
             bountyStatusImageFile = "banner-bounty-open.png";
         } else if (status === "closed") {
             statusHeader = "BOUNTY CLOSED";
-            bountyAmount = "This bounty was posted for " + formatter.getBountyAmount();
+            bountyAmount = "This bounty was posted for " + formatter.getRewardAmount();
             bountyStatusImageFile = "banner-bounty-closed.png";
         } else if (status === "reopened") {
             statusHeader = "BOUNTY REOPENED";
-            bountyAmount = "This bounty is posted for " + formatter.getBountyAmount();
+            bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
             bountyStatusImageFile = "banner-bounty-reopened.png";
         }
 
