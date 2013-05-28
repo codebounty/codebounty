@@ -358,11 +358,7 @@ GitHub.prototype.getUser = function (callback) {
     that._conditionalCrawlAndCache("User.get", {
         user: that._userGitHub.username
     }, false, function (error, result) {
-        if (error) {
-            callback(error);
-        }
-
-        callback(result.data[0]);
+        callback(error, !error ? result.data[0] : undefined);
     });
 };
 

@@ -133,7 +133,7 @@ EJSON.addType("PayPalFund", PayPalFundUtils.fromJSONValue);
  * @param reward
  * @param callback (preapprovalUrl)
  */
-PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
+PayPalFund.prototype.initiatePreapproval = function (reward, funder, callback) {
     var that = this;
     if (that.preapprovalKey)
         throw "This fund already has a preapproval key";
@@ -309,46 +309,60 @@ EJSON.addType("BitcoinFund", BitcoinFundUtils.fromJSONValue);
  * @param reward
  * @param callback (preapprovalUrl)
  */
-BitcoinFund.prototype.initiatePreapproval = function (reward, callback) {
+BitcoinFund.prototype.initiatePreapproval = function (reward, funder, callback) {
     var that = this;
-    // TODO: See if the line below is in error...
-    if (that.address)
-        throw "This fund already has a Bitcoin address";
-        
-    // Make sure this user has a receiving address set up before
-    // we issue them an address to send us funds through.
-    var receivingAddress = Bitcoin.ReceiverAddresses.findOne(
-        { userId: that.userId });
+    var fut = new Future();
     
-    if (receivingAddress) {
+    Fiber(function () {
+        // TODO: See if the line below is in error...
+        if (that.address)
+            throw "This fund already has a Bitcoin address";
+        
+        var gitHub = new GitHub(funder);
+        
+        gitHub.getUser(function (error, user) {
+            if (error) {
+                console.log(error);
+            }
+            Fiber(function () {
+                // Make sure this user has a receiving address set up before
+                // we issue them an address to send us funds through.
+                var receivingAddress = Bitcoin.ReceiverAddresses.findOne(
+                    { email: user.email });
+                
+                if (receivingAddress) {
+                
+                    var rootUrl = Meteor.settings["ROOT_URL"];
+                    var cancel = rootUrl + "cancelFunds?id=" + that._id;
+                    var confirm = rootUrl + "confirmFunds?id=" + that._id;
+
+                    var issue = GitHubUtils.getIssue(reward.issueUrl);
+                    var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
+                    var address = Bitcoin.addressForIssue(reward.issueUrl);
+                    
+                    that.address = address.address;
+                    that.proxyAddress = address.proxyAddress;
+                    
+                    Fiber(function () {
+                        Rewards.update(reward._id, reward.toJSONValue());
+                    }).run();
+                    
+                    fut.ret(callback({address: address.proxyAddress}));
+                    
+                } else {
+                    // No receiving address set. Send back an empty response.
+                    fut.ret(callback({}));
+                }
+            }).run();
+        });
+    }).run();
     
-        var rootUrl = Meteor.settings["ROOT_URL"];
-        var cancel = rootUrl + "cancelFunds?id=" + that._id;
-        var confirm = rootUrl + "confirmFunds?id=" + that._id;
-
-        var issue = GitHubUtils.getIssue(reward.issueUrl);
-        var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
-        var address = Bitcoin.addressForIssue(reward.issueUrl);
-        
-        that.address = address.address;
-        that.proxyAddress = address.proxyAddress;
-        
-        Fiber(function () {
-            Rewards.update(reward._id, reward.toJSONValue());
-        }).run();
-
-        callback({address: address.proxyAddress});
-        
-    } else {
-        // No receiving address set. Send back an empty response.
-        callback({});
-    }
+    return fut.wait();
 };
 
 BitcoinFund.prototype.cancel = function (reward) {
     var that = this;
     var gitHub = new GitHub(Meteor.user());
-    var email = gitHub.getUser().email;
 
     that.funds = _.reject(that.funds, function (fund) {
         return EJSON.equals(fund._id, that._id);
@@ -358,31 +372,33 @@ BitcoinFund.prototype.cancel = function (reward) {
     // First make sure this BitcoinFund actually belongs to the
     // currently logged in user.
     if (Meteor.userId() == that.userId) {
-        
-        // And then make sure they have a refund address set.
-        var refundAddress = ReceiverAddress.find({ email: email });
-        
-        // They shouldn't have been able to send us any bitcoin
-        // if they didn't set up a receiving address first. If they're
-        // trying to refund without having set up a refund address, something's
-        // probably afoot...
-        if (refundAddress) {
-            Bitcoin.Client.getReceivedByAddress(that.address, function (err, received) {
-                
-                // Send whatever has been sent to this Fund's address to the
-                // user's refund address.
-                Bitcoin.Client.sendToAddress(refundAddress.address, received);
-            });
-                
-            // Remove this Fund from its Reward.
-            if (that.funds.length <= 0)
-                Rewards.remove(reward._id);
-            else
-                Rewards.update(reward._id, reward.toJSONValue());
-        } else {
-            console.log("Error: Refund attempted by user ("
-                + email + ") without a receiving address!");
-        }
+    
+        gitHub.getUser(function (error, user) {
+            // And then make sure they have a refund address set.
+            var refundAddress = ReceiverAddress.find({ email: user.email });
+            
+            // They shouldn't have been able to send us any bitcoin
+            // if they didn't set up a receiving address first. If they're
+            // trying to refund without having set up a refund address, something's
+            // probably afoot...
+            if (refundAddress) {
+                Bitcoin.Client.getReceivedByAddress(that.address, function (err, received) {
+                    
+                    // Send whatever has been sent to this Fund's address to the
+                    // user's refund address.
+                    Bitcoin.Client.sendToAddress(refundAddress.address, received);
+                });
+                    
+                // Remove this Fund from its Reward.
+                if (that.funds.length <= 0)
+                    Rewards.remove(reward._id);
+                else
+                    Rewards.update(reward._id, reward.toJSONValue());
+            } else {
+                console.log("Error: Refund attempted by user ("
+                    + user.email + ") without a receiving address!");
+            }
+        });
     }
     
     console.log("Bitcoin fund cancelled", that._id.toString());
