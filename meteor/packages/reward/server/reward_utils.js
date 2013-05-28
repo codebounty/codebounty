@@ -7,17 +7,16 @@ var path = Npm.require("path"),
  * @param {Big} amount
  * @param {string} currency
  * @param {string} issueUrl
- * @param {string} userId
+ * @param {User} user
  * @param {Function} callback (fundingUrl)
  */
-RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, callback) {
+RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callback) {
     //find an eligible reward to add to
     var selector = {
         currency: currency,
-        userId: userId
+        userId: user._id
     };
 
-    var user = Meteor.users.findOne({_id: userId});
     var gitHub = new GitHub(user);
 
     RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
@@ -42,7 +41,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
             issueUrl: issueUrl,
             receivers: [],
             status: "open",
-            userId: userId
+            userId: user._id
         };
 
         reward = new Reward(options);

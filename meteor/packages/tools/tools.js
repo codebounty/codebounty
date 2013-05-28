@@ -39,6 +39,15 @@ Tools.arraysAreEqual = function (a, b, compare) {
     return true;
 };
 
+
+/**
+ * Returns if a string ends with a suffix
+ * @returns {boolean}
+ */
+Tools.endsWith = function (str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+};
+
 Tools.formatDate = function (date) {
     var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
 

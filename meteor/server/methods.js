@@ -1,9 +1,6 @@
-var requireAuthentication = function (userId) {
-    if (!userId)
-        throw new Meteor.Error(404, "Not authorized");
-};
-
 Meteor.methods({
+    //Authorization -------------------------------------------------------------
+
     //checks if the user has properly authorized codebounty
     "checkAuthorization": function () {
         var user = Meteor.user();
@@ -25,7 +22,6 @@ Meteor.methods({
      * - the issue is not closed
      * - the issue is for a public repository
      *   (we will not be able to get the event information if it is not)
-     * - TODO the user is not banned (not setup yet)
      * @param issueUrl
      * @returns {boolean}
      */
@@ -33,7 +29,7 @@ Meteor.methods({
         issueUrl = Tools.stripHash(issueUrl);
 
         var user = Meteor.user();
-        if (!user)
+        if (!user || !user.active)
             return false;
 
         var fut = new Future();
@@ -49,6 +45,40 @@ Meteor.methods({
         return fut.wait();
     },
 
+    "setIsActive": function (user, isActive, reason) {
+        var currentUser = Meteor.user();
+        AuthUtils.requireAuthorization(currentUser, "admin");
+
+        var logItem = "User set to " + (isActive ? "active" : "inactive") +
+            " on " + new Date().toString() + " by " + currentUser._id +
+            " because " + reason;
+
+        Meteor.users.update(user._id, {
+            $set: { active: isActive },
+            $push: { log: logItem }
+        });
+
+        return logItem;
+    },
+
+    "setRole": function (user, role, reason) {
+        var currentUser = Meteor.user();
+        AuthUtils.requireAuthorization(currentUser, "admin");
+
+        if (!_.contains(["admin", "user"], role))
+            throw new Meteor.Error(400, "Invalid role");
+
+        var logItem = "User set to " + role + " on " + new Date().toString() +
+            " by " + currentUser._id + " because " + reason;
+
+        Meteor.users.update(user._id, {
+            $set: { role: role },
+            $push: { log: logItem }
+        });
+
+        return logItem;
+    },
+
     //Funds ---------------------------------------------------------------------
 
     /**
@@ -59,8 +89,9 @@ Meteor.methods({
      * @returns {string} The funding url
      */
     "addFunds": function (amount, currency, issueUrl) {
-        var userId = this.userId;
-        requireAuthentication(userId);
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user);
+
         issueUrl = Tools.stripHash(issueUrl);
 
         if (currency !== "usd" && currency !== "btc")
@@ -69,7 +100,7 @@ Meteor.methods({
         amount = new Big(amount);
 
         var fut = new Future();
-        RewardUtils.addFundsToIssue(amount, currency, issueUrl, userId, function (fundingUrl) {
+        RewardUtils.addFundsToIssue(amount, currency, issueUrl, user, function (fundingUrl) {
             fut.ret(fundingUrl);
         });
 
@@ -82,10 +113,10 @@ Meteor.methods({
     "cancelFunds": function (fundId) {
         fundId = new Meteor.Collection.ObjectID(fundId);
 
-        var userId = this.userId;
-        requireAuthentication(userId);
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user);
 
-        var reward = Rewards.findOne({ userId: userId, "funds._id": fundId });
+        var reward = Rewards.findOne({ userId: user._id, "funds._id": fundId });
         if (!reward)
             return;
 
@@ -98,7 +129,7 @@ Meteor.methods({
             fund.cancel(reward);
     },
 
-    //Rewards ---------------------------------------------------------------------
+    //Rewards -------------------------------------------------------------------
 
     /**
      * Check if the user can manually reward the issueUrl
@@ -107,8 +138,8 @@ Meteor.methods({
      */
     "canReward": function (issueUrl) {
         issueUrl = Tools.stripHash(issueUrl);
-        var fut = new Future();
 
+        var fut = new Future();
         Meteor.call("getRewards", issueUrl, function (err, rewards) {
             if (err)
                 throw err;
@@ -126,19 +157,19 @@ Meteor.methods({
      * @returns {Array.<Reward>}
      */
     "getRewards": function (issueUrl) {
-        var userId = this.userId;
-        requireAuthentication(userId);
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user);
+
         issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
 
         var selector = {
-            userId: this.userId,
+            userId: user._id,
             //make sure there is an approved not expired fund
             funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
         };
 
-        var user = Meteor.users.findOne({_id: userId});
         var gitHub = new GitHub(user);
 
         RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
@@ -152,16 +183,24 @@ Meteor.methods({
         return fut.wait();
     },
 
+    //TODO
+    /**
+     * used by moderators to hold a bounties reward until a dispute is resolved
+     * @param id
+     */
+    "holdReward": function (id) {
+    },
+
     /**
      * Initiate the reward payout process
      * @param reward
      * @returns true if there is no error
      */
     "reward": function (reward) {
-        var userId = this.userId;
-        requireAuthentication(userId);
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user);
 
-        var myReward = Rewards.findOne({_id: reward._id, userId: userId});
+        var myReward = Rewards.findOne({_id: reward._id, userId: user._id});
 
         var fut = new Future();
 
@@ -183,7 +222,7 @@ Meteor.methods({
                     myReceiver.setReward(receiver.amount);
                 });
 
-                myReward.initiatePayout(userId, function (error, success) {
+                myReward.initiatePayout(user._id, function (error, success) {
                     fut.ret(success);
 
                     if (error)
@@ -193,13 +232,5 @@ Meteor.methods({
         });
 
         return fut.wait();
-    },
-
-    //TODO
-    /**
-     * used by moderators to hold a bounties reward until a dispute is resolved
-     * @param id
-     */
-    "holdReward": function (id) {
     }
 });
