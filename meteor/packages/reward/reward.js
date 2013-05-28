@@ -90,8 +90,8 @@ Reward.prototype = {
     },
 
     clone: function () {
-        var clonedFunds = _.map(this.funds, function (funds) {
-            return funds.clone();
+        var clonedFunds = _.map(this.funds, function (fund) {
+            return fund.clone();
         });
 
         var clonedReceivers = _.map(this.receivers, function (receiver) {

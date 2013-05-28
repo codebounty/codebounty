@@ -58,7 +58,3 @@ GitHubUtils.issue = function (issueUrl) {
 GitHubUtils.repoUrl = function (user, name) {
     return "https://github.com/" + user + "/" + name;
 };
-
-GitHubUtils.username = function (user) {
-    return user.services.github.username;
-};

@@ -304,7 +304,7 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
 GitHub.prototype.checkAccess = function (callback) {
     var that = this;
     that._conditionalCrawlAndCache("User.get", {
-        user: GitHubUtils.username(that.user)
+        user: AuthUtils.username(that.user)
     }, false, function (error, result) {
         if (error) {
             callback(false);
@@ -312,7 +312,9 @@ GitHub.prototype.checkAccess = function (callback) {
         }
 
         var scopes = result.meta["x-oauth-scopes"].replace(" ", "").split(",");
-        var haveAccess = _.contains(scopes, "user") && _.contains(scopes, "repo");
+
+        //TODO before deployment, switch to only public repo
+        var haveAccess = _.contains(scopes, "repo") && _.contains(scopes, "user:email");
         callback(haveAccess);
     });
 };

@@ -1,5 +1,53 @@
-//contains server specific reward methods
+// publish the total available reward for an issue url
+Meteor.publish("totalReward", function (issueUrl) {
+    issueUrl = Tools.stripHash(issueUrl);
 
+    var subscription = this;
+    var docId = Meteor.uuid();
+    var totalReward = new Big(0);
+    var initializing = true;
+
+    var handle = Rewards.find({
+        issueUrl: issueUrl,
+        status: { $in: [ "open", "reopened" ] },
+        //make sure there is an approved and not expired fund
+        funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
+    }).observe({
+            added: function (reward) {
+                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                totalReward = totalReward.plus(totalBounties);
+
+                if (!initializing) //need to wait until it is added
+                    subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+            },
+            //having an issue with Fund.amount getting cloned incorrectly / meteor not using the .clone method?
+//            changed: function (reward, oldReward) {
+//                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+//                var lastTotalBounties = BigUtils.sum(oldReward.availableFundAmounts());
+//                var addedReward = totalBounties.minus(lastTotalBounties);
+//                totalReward = totalReward.plus(addedReward);
+//
+//                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+//            },
+            removed: function (reward) {
+                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                totalReward = totalReward.minus(totalBounties);
+
+                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+            }
+        });
+
+    initializing = false;
+    subscription.added("totalReward", docId, {amount: totalReward.toString()});
+    subscription.ready();
+
+    // turn off observe when client unsubscribes
+    subscription.onStop(function () {
+        handle.stop();
+    });
+});
+
+//on the server auto-transform the json to a reward
 Rewards = new Meteor.Collection("rewards", {
     transform: RewardUtils.fromJSONValue
 });
