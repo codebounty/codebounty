@@ -27,7 +27,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
         //add to the existing reward
         if (rewards.length > 0) {
             reward = rewards[0];
-            reward.addFund(amount, callback);
+            reward.addFund(amount, user, callback);
 
             Fiber(function () {
                 Rewards.update(reward._id, reward.toJSONValue());

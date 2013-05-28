@@ -48,6 +48,45 @@ Meteor.methods({
 
         return fut.wait();
     },
+    
+    "setupReceiverAddress": function (receiverAddress, redirect) {
+        var fut = new Future();
+        var gitHub = new GitHub(Meteor.user());
+        
+        gitHub.getUser(function (error, user) {
+            Fiber(function () {
+                
+                var registeredAddress = Bitcoin.ReceiverAddresses.findOne(
+                    { email: user.email });
+                
+                // Make sure an address has not been assigned to this user
+                // before assigning one.
+                if (!registeredAddress) {
+                    Bitcoin.ReceiverAddresses.insert(
+                        { email: user.email, address: receiverAddress});
+                    
+                    Fiber(function () {
+                        // See if we set up a temporary address for this user and
+                        // forward any BTC in it to their receiving address.
+                        Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
+                            
+                            if (address) {
+                                Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
+                                
+                                    if (received) {
+                                        Bitcoin.Client.sendToAddress(receiverAddress, received);
+                                    }
+                                });
+                            }
+                        });
+                    }).run();
+                }
+                fut.ret(redirect);
+            }).run();
+        });
+        
+        return fut.wait();
+    },
 
     //Funds ---------------------------------------------------------------------
 

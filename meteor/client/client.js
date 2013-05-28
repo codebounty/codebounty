@@ -9,6 +9,15 @@ Meteor.Router.add({
     "/btcAddressForIssue": function () {
         var url = window.url;
     },
+    "/setupReceiverAddress": function () {
+        var redirect = window.url("?redirect");
+        var address = window.url("?receiverAddress");
+        
+        Meteor.call("setupReceiverAddress", address, redirect,
+            function (error, result) {
+                window.location.href = decodeURIComponent(result);
+            });
+    },
     "/addFunds": function () {
         var amount = window.url("?amount");
         var currency = window.url("?currency");

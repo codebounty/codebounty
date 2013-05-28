@@ -8,7 +8,7 @@ Rewards = new Meteor.Collection("rewards", {
  * @param {Big} amount
  * @param {Function} callback (fundingUrl)
  */
-Reward.prototype.addFund = function (amount, callback) {
+Reward.prototype.addFund = function (amount, funder, callback) {
     var fundClass;
     var that = this;
 
@@ -25,7 +25,7 @@ Reward.prototype.addFund = function (amount, callback) {
         expires: expires
     });
 
-    fund.initiatePreapproval(that, callback);
+    fund.initiatePreapproval(that, funder, callback);
     that.funds.push(fund);
 };
 
