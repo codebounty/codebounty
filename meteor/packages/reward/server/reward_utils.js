@@ -16,8 +16,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
         currency: currency,
         userId: userId
     };
-
-    var user = Meteor.users.findOne({_id: userId});
+    var user = Meteor.user();
     var gitHub = new GitHub(user);
 
     RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributors) {
@@ -46,7 +45,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
         };
 
         reward = new Reward(options);
-        reward.addFund(amount, callback);
+        reward.addFund(amount, user, callback);
         Fiber(function () {
             reward.updateReceivers(contributors);
             Rewards.insert(reward.toJSONValue());
