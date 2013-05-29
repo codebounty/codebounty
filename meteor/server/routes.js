@@ -33,11 +33,6 @@ Meteor.Router.add("/badge/:id", function (id) {
     response.end();
 });
 
-Meteor.Router.add("/bitcoinFund/:address", function (address) {
-    Session.set("address", address);
-    return "bitcoinFundView";
-});
-
 //the paypal IPN callback
 //https://www.x.com/developers/paypal/documentation-tools/ipn/integration-guide/IPNIntro
 //http://jsfiddle.net/zkcb6/1/
@@ -73,12 +68,29 @@ Meteor.Router.add("/ipn", function () {
 Meteor.Router.add("/bitcoin-ipn", function () {
     Bitcoin.verify(this.request, this.response, function (error, params) {
         if (error)
-            return;
-            
-        if (params)
-            Bounty.Bitcoin.create(params);
+            throw error;
+
+        Fiber(function () {
+            var reward = Rewards.findOne({
+                funds: { $elemMatch:
+                    { address: params.destination_address, 
+                      proxyAddress: params.input_address
+                    }
+                }
+            });
+
+            if (!reward) {
+                error = "BitcoinFund approved but not found " + EJSON.stringify(params);
+                throw error;
+            }
+
+            var bitcoinFund = _.find(reward.funds, function (fund) {
+                return fund.proxyAddress === params.input_address;
+            });
+            bitcoinFund.confirm(reward, params);
+        }).run();
     });
-    
-    // To prevent Blockchain.info from resending the transaction.
+
+    // To prevent Blockchain.info from continually resending the transaction.
    return [200, "*ok*"];
 });
