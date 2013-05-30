@@ -51,19 +51,23 @@ Meteor.methods({
     
     "setupReceiverAddress": function (receiverAddress, redirect) {
         var fut = new Future();
-        var gitHub = new GitHub(Meteor.user());
+        var userId = this.userId;
         
-        gitHub.getUser(function (error, user) {
-            Fiber(function () {
+        Fiber(function () {
+            
+            var registeredAddress = Bitcoin.ReceiverAddresses.findOne(
+                { userId: userId });
+            
+            // Make sure an address has not been assigned to this user
+            // before assigning one.
+            if (!registeredAddress) {
                 
-                var registeredAddress = Bitcoin.ReceiverAddresses.findOne(
-                    { email: user.email });
-                
-                // Make sure an address has not been assigned to this user
-                // before assigning one.
-                if (!registeredAddress) {
-                    Bitcoin.ReceiverAddresses.insert(
-                        { email: user.email, address: receiverAddress});
+                // We need to get this user's email address.
+                var gitHub = new GitHub(Meteor.user());
+        
+                gitHub.getUser(function (error, user) {
+                    Bitcoin.ReceiverAddresses.insert({ userId: this.userId,
+                        email: user.email, address: receiverAddress});
                     
                     Fiber(function () {
                         // See if we set up a temporary address for this user and
@@ -80,10 +84,11 @@ Meteor.methods({
                             }
                         });
                     }).run();
-                }
-                fut.ret(redirect);
-            }).run();
-        });
+                });
+            }
+            fut.ret(redirect);
+        }).run();
+    
         
         return fut.wait();
     },

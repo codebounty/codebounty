@@ -20,6 +20,8 @@ RewardUtils.fromJSONValue = function (value) {
     _.each(value.funds, function (fund) {
         if (fund.processor === "paypal")
             funds.push(PayPalFundUtils.fromJSONValue(fund));
+        else if (fund.currency === "btc")
+            funds.push(BitcoinFundUtils.fromJSONValue(fund));
     });
 
     var options = {
