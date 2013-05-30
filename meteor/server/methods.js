@@ -110,7 +110,13 @@ Meteor.methods({
         if (currency !== "usd" && currency !== "btc")
             throw currency + " is an invalid currency";
 
-        amount = new Big(amount);
+        // Specifying fund amount before funds are actually received
+        // is not supported by the Bitcoin flow.
+        if (currency == "usd") {
+            amount = new Big(amount);
+        } else if (currency == "btc") {
+            amount = new Big(0);
+        }
 
         var fut = new Future();
         RewardUtils.addFundsToIssue(amount, currency, issueUrl, userId, function (fundingUrl) {

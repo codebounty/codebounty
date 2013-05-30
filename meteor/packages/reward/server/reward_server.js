@@ -24,9 +24,19 @@ Reward.prototype.addFund = function (amount, funder, callback) {
         currency: that.currency,
         expires: expires
     });
-
     fund.initiatePreapproval(that, funder, callback);
-    that.funds.push(fund);
+    
+    // See if a fund matching the new fund already exists.
+    // If one does, don't bother adding the new fund to the reward object.
+    // If one doesn't, add the new fund to this Reward object.
+    var fundExists = _.some(that.funds, function (_fund) {
+        return fund.equals(_fund);
+    });
+    
+    if (!fundExists) {
+        that.funds.push(fund);
+    }
+    console.log(that.funds);
 };
 
 /**
