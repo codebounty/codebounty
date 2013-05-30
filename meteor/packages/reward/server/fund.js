@@ -294,6 +294,7 @@ BitcoinFund.prototype.toJSONValue = function () {
     var that = this;
     return {
         _id: that._id,
+        userId: that.userId,
         amount: that.amount.toString(),
         currency: that.currency,
         details: that.details,
@@ -344,6 +345,7 @@ BitcoinFund.prototype.initiatePreapproval = function (reward, funder, callback) 
                     
                     that.address = address.address;
                     that.proxyAddress = address.proxyAddress;
+                    that.userId = EJSON.clone(funder._id);
                     
                     Fiber(function () {
                         Rewards.update(reward._id, reward.toJSONValue());
@@ -413,7 +415,7 @@ BitcoinFund.prototype.cancel = function (reward) {
  */
 BitcoinFund.prototype.confirm = function (reward, params) {
     var that = this;
-    that.amount = Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN)); // Value is passed as number of satoshi.
+    that.amount = that.amount.plus(Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN))); // Value is passed as number of satoshi.
     
     //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
     //after new funds are approved distribute the reward equally among all the contributors

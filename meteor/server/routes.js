@@ -81,7 +81,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                         }
                     }
                 });
-                
+                console.log(reward);
                 if (!reward) {
                     error = "BitcoinFund approved but not found " + EJSON.stringify(params);
                     throw error;
@@ -91,6 +91,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                     return fund.proxyAddress === params.input_address;
                 });
                 bitcoinFund.confirm(reward, params);
+                console.log(bitcoinFund.toString());
             }).run();
             
             // To prevent Blockchain.info from continually resending the transaction.
