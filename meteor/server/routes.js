@@ -66,31 +66,41 @@ Meteor.Router.add("/ipn", function () {
 // The Blockchain.info IPN callback.
 // http://blockchain.info/api/api_receive
 Meteor.Router.add("/bitcoin-ipn", function () {
+    var fut = new Future();
+    
     Bitcoin.verify(this.request, this.response, function (error, params) {
         if (error)
             throw error;
-
-        Fiber(function () {
-            var reward = Rewards.findOne({
-                funds: { $elemMatch:
-                    { address: params.destination_address, 
-                      proxyAddress: params.input_address
+            
+        if (params.confirmations >= Bitcoin.Settings.minimumConfirmations) {
+            Fiber(function () {
+                var reward = Rewards.findOne({
+                    funds: { $elemMatch:
+                        { address: params.destination_address,
+                          proxyAddress: params.input_address
+                        }
                     }
+                });
+                
+                if (!reward) {
+                    error = "BitcoinFund approved but not found " + EJSON.stringify(params);
+                    throw error;
                 }
-            });
 
-            if (!reward) {
-                error = "BitcoinFund approved but not found " + EJSON.stringify(params);
-                throw error;
-            }
-
-            var bitcoinFund = _.find(reward.funds, function (fund) {
-                return fund.proxyAddress === params.input_address;
-            });
-            bitcoinFund.confirm(reward, params);
-        }).run();
+                var bitcoinFund = _.find(reward.funds, function (fund) {
+                    return fund.proxyAddress === params.input_address;
+                });
+                bitcoinFund.confirm(reward, params);
+            }).run();
+            
+            // To prevent Blockchain.info from continually resending the transaction.
+            fut.ret([200, "*ok*"]);
+        } else {
+            // No *ok* token means Blockchain.info will resend this notification
+            // every time more confirmations are added to the transactions.
+            fut.ret([200]);
+        }
     });
-
-    // To prevent Blockchain.info from continually resending the transaction.
-   return [200, "*ok*"];
+    
+    return fut.wait();
 });

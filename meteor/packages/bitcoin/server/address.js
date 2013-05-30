@@ -3,7 +3,6 @@
  */
 var fs = Npm.require('fs');
 var readline = Npm.require('readline');
-var topUpAddressesInterval = 60000; // In milliseconds.
 var addressFile = "./packages/bitcoin/server/addresses"; // The file to pull addresses from.
 
 Bitcoin.IssueAddress = {} 
@@ -15,13 +14,7 @@ Bitcoin.ReceiverAddresses = new Meteor.Collection("Bitcoin.ReceiverAddresses");
 Meteor.setInterval(function () {
     var response;
     var errors = 0;
-    
-    // We need these in order to keep counts of errors and addresses
-    // created via the asynchronous function calls in the code that
-    // calls them.
-    var errCountFut = new Future();
-    var addrCountFut = new Future();
-    
+        
     // See if we need more Bitcoin addresses.
     var availableAddresses = Bitcoin.IssueAddresses.find({
         used: false
@@ -34,7 +27,13 @@ Meteor.setInterval(function () {
         // we've encountered enough errors to put us over the threshold.
         while (availableAddresses < Bitcoin.Settings.maximumAddresses
         && errors < Bitcoin.Settings.maximumErrors) 
-        {
+        {                    
+            // We need these in order to keep counts of errors and addresses
+            // created via the asynchronous function calls in the code that
+            // calls them.
+            var errCountFut = new Future();
+            var addrCountFut = new Future();
+            
             Bitcoin.Client.getNewAddress(function(err, address) {
                 if (!err) {
                     Fiber(function () {
@@ -79,4 +78,4 @@ Meteor.setInterval(function () {
             availableAddresses = addrCountFut.wait();
         }
     }
-}, topUpAddressesInterval);
+}, Bitcoin.Settings.addressRefillInterval);

@@ -46,7 +46,7 @@ Bitcoin.addressForIssue = function (userId, url) {
  **/
 Bitcoin.verify = function (request, response, callback) {
     var error = null;
-    var params = request.body;
+    var params = request.query;
 
     if (params.secret != Bitcoin.IPNSecret) {
         error = "Error verifying Bitcoin IPN. Secret was " + params.secret;

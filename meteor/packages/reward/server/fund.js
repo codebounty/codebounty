@@ -50,7 +50,11 @@ PayPalFundUtils = {
 
 BitcoinFundUtils = {
     fromJSONValue: function (value) {
-        value.amount = new Big(value.amount);
+        if (value.amount != 'NaN') {
+            value.amount = new Big(value.amount);
+        } else {
+            value.amount = new Big(0);
+        }
         return new BitcoinFund(value);
     }
 };
@@ -278,9 +282,7 @@ BitcoinFund.prototype.equals = function (other) {
     if (!(other instanceof BitcoinFund))
         return false;
 
-    return EJSON.equals(this._id, other._id) && this.userId == other.userId &&
-        this.amount.cmp(other.amount) === 0 && this.currency === other.currency &&
-        _.isEqual(this.details, other.details) && this.expires === other.expires &&
+    return this.userId == other.userId && this.currency === other.currency
         this.address === other.address && this.proxyAddress === other.proxyAddress;
 };
 
@@ -411,8 +413,8 @@ BitcoinFund.prototype.cancel = function (reward) {
  */
 BitcoinFund.prototype.confirm = function (reward, params) {
     var that = this;
-    console.log("Bitcoin received", that._id.toString());
-
+    that.amount = Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN)); // Value is passed as number of satoshi.
+    
     //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
     //after new funds are approved distribute the reward equally among all the contributors
     reward.distributeEqually();
