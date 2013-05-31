@@ -1,0 +1,11 @@
+.adminUserView {
+    .row {
+        padding: 20px 20px;
+    }
+
+    .userSearch {
+        .btn {
+            margin-top: 10px;
+        }
+    }
+}

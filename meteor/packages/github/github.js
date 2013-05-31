@@ -1,4 +1,4 @@
-//TODO make this a public package
+//TODO separate this out into it's own repo / meteor package
 
 var GitHubApi = Npm.require("github"), async = Npm.require("async"), signals = Npm.require("signals");
 
@@ -55,9 +55,8 @@ GitHub = function (user) {
     var accessToken;
 
     if (user) {
-        this._userGitHub = user.services.github;
-
-        accessToken = this._userGitHub.accessToken;
+        this.user = user;
+        accessToken = user.services.github.accessToken;
     }
     else
         accessToken = Meteor.settings["GITHUB_CHARLIE"];
@@ -305,7 +304,7 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
 GitHub.prototype.checkAccess = function (callback) {
     var that = this;
     that._conditionalCrawlAndCache("User.get", {
-        user: that._userGitHub.username
+        user: AuthUtils.username(that.user)
     }, false, function (error, result) {
         if (error) {
             callback(false);
@@ -313,7 +312,9 @@ GitHub.prototype.checkAccess = function (callback) {
         }
 
         var scopes = result.meta["x-oauth-scopes"].replace(" ", "").split(",");
-        var haveAccess = _.contains(scopes, "user") && _.contains(scopes, "repo");
+
+        //TODO before deployment, switch to only public repo
+        var haveAccess = _.contains(scopes, "repo") && _.contains(scopes, "user:email");
         callback(haveAccess);
     });
 };
@@ -324,7 +325,7 @@ GitHub.prototype.checkAccess = function (callback) {
  * @param {function} [callback] (error, result) result is an array
  */
 GitHub.prototype.getIssueEvents = function (issueUrl, callback) {
-    var issue = GitHubUtils.getIssue(issueUrl);
+    var issue = GitHubUtils.issue(issueUrl);
 
     this._conditionalCrawlAndCache("Issues.getEvents", {
         user: issue.repo.user,
@@ -364,7 +365,6 @@ GitHub.prototype.getUser = function (callback) {
 
 /**
  * Get all the commit data from  "contributors" (users with associated commits) for an issue
- * TODO and exclude the current user
  * NOTE: The commit or pull request must have a comment referencing the issue to count as a contributor
  * @param {string} issueUrl
  * @param {function} callback (error, eventsResult, commitsResult)
@@ -372,7 +372,7 @@ GitHub.prototype.getUser = function (callback) {
 GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
     var that = this;
 
-    var issue = GitHubUtils.getIssue(issueUrl);
+    var issue = GitHubUtils.issue(issueUrl);
 
     that.getIssueEvents(issueUrl, function (error, issueEvents) {
         issueEvents = issueEvents.data;
@@ -419,7 +419,7 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
  * @param {string} comment "Interesting issue!"
  */
 GitHub.prototype.postComment = function (issueUrl, comment) {
-    var issue = GitHubUtils.getIssue(issueUrl);
+    var issue = GitHubUtils.issue(issueUrl);
 
     this._client.issues.createComment(
         {
@@ -428,7 +428,6 @@ GitHub.prototype.postComment = function (issueUrl, comment) {
             number: issue.number,
             body: comment
         }, function (err, res) {
-            //TODO log error
             if (err)
                 console.log("ERROR: Posting GitHub comment", err);
         }

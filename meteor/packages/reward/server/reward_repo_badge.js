@@ -22,11 +22,11 @@ var NUMBER_CONFIGS = {
 
 /**
  * Generates github badge for repository.
- * @param  {{open: Number}} repoStatus
+ * @param  {{open: Number}} options
  * @return {Canvas}
  */
-RewardUtils.repoBadge = function (repoStatus) {
-    var open = repoStatus.open || 0;
+RewardUtils.repoBadge = function (options) {
+    var open = options.open || 0;
     if (open >= 100) {
         open = "99+";
     } else {
@@ -40,7 +40,7 @@ RewardUtils.repoBadge = function (repoStatus) {
 
     var futuraLTBook = "FuturaLTBook";
     var futuraLTBookFont = new Canvas.Font(futuraLTBook, RewardUtils.assetFile("futura-lt-book.ttf"));
-    ctx.addFont(futuraLTBook);
+    ctx.addFont(futuraLTBookFont);
 
     var repoBadgeBackground = new Image();
     repoBadgeBackground.src = fs.readFileSync(RewardUtils.assetFile("repo-badge-bg.png"));

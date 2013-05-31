@@ -7,19 +7,18 @@ var path = Npm.require("path"),
  * @param {Big} amount
  * @param {string} currency
  * @param {string} issueUrl
- * @param {string} userId
+ * @param {User} user
  * @param {Function} callback (fundingUrl)
  */
-RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, callback) {
+RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callback) {
     //find an eligible reward to add to
     var selector = {
         currency: currency,
-        userId: userId
+        userId: user._id
     };
-    var user = Meteor.user();
     var gitHub = new GitHub(user);
 
-    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributors) {
+    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
         //TODO try and consolidate them if there are rewards of the same currency
         var reward;
 
@@ -41,16 +40,36 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, userId, call
             issueUrl: issueUrl,
             receivers: [],
             status: "open",
-            userId: userId
+            userId: user._id
         };
 
         reward = new Reward(options);
         reward.addFund(amount, user, callback);
         Fiber(function () {
-            reward.updateReceivers(contributors);
+            reward.updateReceivers(contributorsEmails);
             Rewards.insert(reward.toJSONValue());
         }).run();
     });
+};
+
+RewardUtils.cashLevel = function (amount, currency) {
+    if (currency === "usd") {
+        if (amount < 20)
+            return 0;
+
+        if (20 <= amount && amount < 50)
+            return 1;
+
+        if (50 <= amount && amount < 100)
+            return 2;
+
+        if (100 <= amount && amount < 250)
+            return 3;
+
+        return 4;
+    }
+
+    throw currency + " not implemented";
 };
 
 /**
@@ -79,12 +98,11 @@ RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
  * Make sure to update the diagram here https://codebounty.hackpad.com/Reward-yN7ydM3LIjy whenever you use this method
  * ----------------------------------------------
  * Find rewards that are open, reopened, or initiated by the system (not by a user)
- * - TODO not expired (created: {"$gt": FundUtils.expiredDate()}
  * @param [selector] If passed, use this selector as a base
  * @param [options] If passed, use these options for the Collection.find
  * @param [contributorsIssueUrl] If passed, only load rewards for this issueUrl and load the contributors
  * @param gitHub The gitHub api instance to use for loading the contributors commits
- * @param {function(Array.<Reward>, Array.<{name, email, date}>)} callback (rewards, contributors)
+ * @param {function(Array.<Reward>, Array.<string>)} callback (rewards, contributorsEmails)
  */
 RewardUtils.eligibleForManualReward = function (selector, options, contributorsIssueUrl, gitHub, callback) {
     selector = selector || {};
@@ -110,17 +128,12 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
     //if the contributorsIssueUrl was passed, also load the contributors / issue events
     else {
         gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
-            var contributors = _.map(commits, function (commit) {
-                return commit.author;
-            });
-            contributors = _.uniq(contributors, false, function (contributor) {
-                return contributor.email;
-            });
+            var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
             Fiber(function () {
                 //update the status and receivers since we are already loading the issueEvents & contributors
                 _.each(rewards, function (reward) {
                     //must update the receivers first, because check status relies on them being up to date
-                    reward.updateReceivers(contributors);
+                    reward.updateReceivers(contributorsEmails);
                     reward.lastSync = new Date();
 
                     Rewards.update({_id: reward._id}, reward.toJSONValue());
@@ -128,7 +141,7 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                     reward.checkStatus(issueEvents);
                 });
 
-                callback(rewards, contributors);
+                callback(rewards, contributorsEmails);
             }).run();
         });
     }

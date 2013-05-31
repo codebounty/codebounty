@@ -2,6 +2,7 @@
   "packages": {
     "router": {},
     "node-modules": {},
-    "session-extras": {}
+    "session-extras": {},
+    "font-awesome": {}
   }
 }

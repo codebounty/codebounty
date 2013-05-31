@@ -45,16 +45,8 @@ RewardUtils.fromJSONValue = function (value) {
 
 /**
  * Reward for an issue
- * @param options {{_id: string=,
- *                  currency: string,
- *                  funds: Array.<Fund>,
- *                  issueUrl: string,
- *                  lastSync: Date=,
- *                  payout: {by: string, on: Date}=,
- *                  receivers: Array.<Receiver>,
- *                  status: string,
- *                  userId: string}}
- *
+ * @param {{_id: string=, currency: string, funds: Array.<Fund>, issueUrl: string, lastSync: Date=,
+ *          payout: {by: string, on: Date}=, receivers: Array.<Receiver>, status: string, userId: string}} options
  * - _id, lastSync, and payout are optional, they will only be set on existing rewards
  * - currency Ex. "btc", "usd"
  * - status Ex. "open", "reopened", "initiated", "paid", "hold"
@@ -100,8 +92,8 @@ Reward.prototype = {
     },
 
     clone: function () {
-        var clonedFunds = _.map(this.funds, function (funds) {
-            return funds.clone();
+        var clonedFunds = _.map(this.funds, function (fund) {
+            return fund.clone();
         });
 
         var clonedReceivers = _.map(this.receivers, function (receiver) {
@@ -201,6 +193,14 @@ Reward.prototype.availableFundAmounts = function () {
     });
 };
 
+Reward.prototype.expires = function () {
+    var lastExpiration = _.last(_.sortBy(this.funds, function (fund) {
+        return fund.expires;
+    }));
+
+    return lastExpiration.expires;
+};
+
 Reward.prototype.fee = function () {
     var that = this;
     var totalFee = new Big(0);
@@ -231,19 +231,6 @@ Reward.prototype.getReceivers = function () {
 };
 
 /**
- * The total amount of bounties to reward (removes the fee)
- * @returns {Big}
- */
-Reward.prototype.total = function () {
-    var that = this;
-
-    var fee = that.fee();
-
-    var total = BigUtils.sum(that.availableFundAmounts());
-    return total.minus(fee);
-};
-
-/**
  * (reactive) The total amount of receiver rewards
  */
 Reward.prototype.receiverTotal = function () {
@@ -253,6 +240,22 @@ Reward.prototype.receiverTotal = function () {
     }, new Big("0"));
 
     return totalReceiverRewards;
+};
+
+/**
+ * The total amount of bounties to reward (removes the fee)
+ * @param [withFee] If true, include the fee
+ * @returns {Big}
+ */
+Reward.prototype.total = function (withFee) {
+    var that = this;
+
+    var total = BigUtils.sum(that.availableFundAmounts());
+    if (withFee)
+        return total;
+
+    var fee = that.fee();
+    return total.minus(fee);
 };
 
 /**
