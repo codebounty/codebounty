@@ -188,7 +188,7 @@
             //if there is a tag, remove any render functions with the same tag
             if (typeof tag !== "undefined" && tag !== null)
                 ui._renderFunctions = ui._renderFunctions.filter(function (renderObject) {
-                    return renderObject.tag !== tag
+                    return renderObject.tag !== tag;
                 });
 
             ui._renderFunctions.push({tag: tag, render: func});
@@ -320,7 +320,7 @@
                 else if (cashLevel === 4)
                     return staticRootUrl + "/" + "status-jackpot.png";
                 else
-                    throw "Unknown cash level."
+                    throw "Unknown cash level.";
             };
             return function (amount) {
                 var cashLevel = getCashLevel(amount);
@@ -339,7 +339,7 @@
                         ">";
                     $(statusIconSrc).insertBefore($("#postBounty"));
                 }
-            }
+            };
         }(),
         /**
          * Show bounty status icon based on bounty amount

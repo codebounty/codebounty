@@ -1,5 +1,53 @@
-//contains server specific reward methods
+// publish the total available reward for an issue url
+Meteor.publish("totalReward", function (issueUrl) {
+    issueUrl = Tools.stripHash(issueUrl);
 
+    var subscription = this;
+    var docId = Meteor.uuid();
+    var totalReward = new Big(0);
+    var initializing = true;
+
+    var handle = Rewards.find({
+        issueUrl: issueUrl,
+        status: { $in: [ "open", "reopened" ] },
+        //make sure there is an approved and not expired fund
+        funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
+    }).observe({
+            added: function (reward) {
+                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                totalReward = totalReward.plus(totalBounties);
+
+                if (!initializing) //need to wait until it is added
+                    subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+            },
+            //having an issue with Fund.amount getting cloned incorrectly / meteor not using the .clone method?
+//            changed: function (reward, oldReward) {
+//                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+//                var lastTotalBounties = BigUtils.sum(oldReward.availableFundAmounts());
+//                var addedReward = totalBounties.minus(lastTotalBounties);
+//                totalReward = totalReward.plus(addedReward);
+//
+//                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+//            },
+            removed: function (reward) {
+                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                totalReward = totalReward.minus(totalBounties);
+
+                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+            }
+        });
+
+    initializing = false;
+    subscription.added("totalReward", docId, {amount: totalReward.toString()});
+    subscription.ready();
+
+    // turn off observe when client unsubscribes
+    subscription.onStop(function () {
+        handle.stop();
+    });
+});
+
+//on the server auto-transform the json to a reward
 Rewards = new Meteor.Collection("rewards", {
     transform: RewardUtils.fromJSONValue
 });
@@ -43,6 +91,7 @@ Reward.prototype.addFund = function (amount, funder, callback) {
  * If the last issue event was
  * - closed, and the reward status is open or reopened, and there are receivers: initiate an equally distributed payout
  * - reopened and the reward status is initiated by the system: reopen the reward and cancel the payout
+ * NOTE: Only call this after updating the reward's receivers, because a payout might be initiated
  */
 Reward.prototype.checkStatus = function (issueEvents) {
     var that = this;
@@ -58,6 +107,7 @@ Reward.prototype.checkStatus = function (issueEvents) {
     if (last.event === "closed" && (that.status === "open" || that.status === "reopened")
         && that.receivers.length > 0) {
         that.distributeEqually();
+
         that.initiatePayout("system", function (err) {
             if (err)
                 throw err;
@@ -96,29 +146,18 @@ Reward.prototype.fundApproved = function () {
 
 /**
  * Find all the contributors for an issue, and make sure they are receivers
- * TODO exclude the backer from being a receiver
  */
-Reward.prototype.updateReceivers = function (contributors) {
+Reward.prototype.updateReceivers = function (contributorsEmails) {
     //we do not want to use the reactive getReceivers since we are modifying it
     var receivers = this.receivers;
 
     var that = this;
-
-    var user = Meteor.users.findOne(that.userId);
-    var userEmail = user.services.github.email;
-
     var receiversChanged = false;
-    var contributorEmails = _.pluck(contributors, "email");
-    contributorEmails = _.reject(contributorEmails, function (contributorEmail) {
-        //exclude the current user from being a contributor
-        return contributorEmail === userEmail;
-    });
-
     var receiverEmails = _.pluck(receivers, "email");
     var r = 0;
     //remove receivers that are not contributors
     _.each(receiverEmails, function (receiverEmail) {
-        if (!_.contains(contributorEmails, receiverEmail)) {
+        if (!_.contains(contributorsEmails, receiverEmail)) {
             receivers.splice(r, 1);
             receiversChanged = true;
         }
@@ -127,7 +166,7 @@ Reward.prototype.updateReceivers = function (contributors) {
     });
 
     //add contributors that are not receivers
-    _.each(contributorEmails, function (contributorEmail) {
+    _.each(contributorsEmails, function (contributorEmail) {
         if (!_.contains(receiverEmails, contributorEmail)) {
             var newReceiver = new Receiver({
                 currency: that.currency,

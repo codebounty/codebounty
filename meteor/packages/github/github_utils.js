@@ -3,11 +3,33 @@ GitHubUtils = {};
 var Url = Npm.require("url");
 
 /**
+ * Return the unique author email's of the commits
+ * @param commits
+ * @param [excludeUser] If passed, exclude the user
+ * @return Array.<string>
+ */
+GitHubUtils.authorsEmails = function (commits, excludeUser) {
+    var authors = _.map(commits, function (commit) {
+        return commit.author;
+    });
+    authors = _.uniq(authors, false, function (author) {
+        return author.email;
+    });
+
+    var authorsEmails = _.pluck(authors, "email");
+
+    if (excludeUser)
+        authorsEmails = _.without(authorsEmails, AuthUtils.email(excludeUser));
+
+    return authorsEmails;
+};
+
+/**
  * Parse out the issue object
  * @param issueUrl The github url
  * @returns {{repo: {user: string, name: string}, number: number}}
  */
-GitHubUtils.getIssue = function (issueUrl) {
+GitHubUtils.issue = function (issueUrl) {
     issueUrl = Tools.stripHash(issueUrl);
 
     var parsedUrl = Url.parse(issueUrl, true);
@@ -24,6 +46,15 @@ GitHubUtils.getIssue = function (issueUrl) {
     var issue = parseFloat(paths[4]);
     if (isNaN(issue))
         throw "Cannot parse issue number";
-    
+
     return {number: issue, repo: repo};
+};
+
+/**
+ * @param {string} user
+ * @param {string} name
+ * @returns {string} "https://github.com/codebounty/codebounty"
+ */
+GitHubUtils.repoUrl = function (user, name) {
+    return "https://github.com/" + user + "/" + name;
 };

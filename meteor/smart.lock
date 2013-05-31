@@ -8,7 +8,8 @@
     "basePackages": {
       "router": {},
       "node-modules": {},
-      "session-extras": {}
+      "session-extras": {},
+      "font-awesome": {}
     },
     "packages": {
       "router": {
@@ -25,6 +26,11 @@
         "git": "https://github.com/belisarius222/meteor-session-extras.git",
         "tag": "v0.3.0",
         "commit": "0c49d41009821e76f46af3ad65d0a1d5bfa8d4eb"
+      },
+      "font-awesome": {
+        "git": "https://github.com/nate-strauser/meteor-font-awesome.git",
+        "tag": "v0.1.6",
+        "commit": "f0f7bde5b60f3ceae69e11fa545bdbf8a8cf2d03"
       },
       "page-js-ie-support": {
         "git": "https://github.com/tmeasday/meteor-page-js-ie-support.git",

@@ -1,0 +1,21 @@
+<template name="adminSideNav">
+    <ul class="nav nav-tabs">
+        <li class="{{active '/admin'}}">
+            <a href="/admin"><i class="icon-dashboard"></i> Dashboard</a>
+        </li>
+        <li class="{{active '/admin/rewards'}}">
+            <a href="/admin/rewards"><span class="icon-money"></span> Rewards</a>
+        </li>
+        <li class="{{active '/admin/users'}}">
+            <a href="/admin/users"><span class="icon-user"></span> Users</a>
+        </li>
+    </ul>
+</template>
+
+<template name="adminView">
+    {{> adminSideNav}}
+</template>
+
+<template name="adminRewardsView">
+    {{> adminSideNav}}
+</template>

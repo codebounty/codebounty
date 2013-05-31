@@ -6,12 +6,8 @@ FundUtils = {
 
 /**
  * Funds for payment
- * @param options {{_id: string,
- *                  amount: Big,
- *                  currency: string,
- *                  details: *,
- *                  expires: Date,
- *                  processor: string}}
+ * @param {{_id: string, amount: Big, approved: Date, currency: string, details: *,
+ *          expires: Date, paid: Date, paymentError: string, processor: string}} options
  * @constructor
  */
 Fund = function (options) {
@@ -60,15 +56,8 @@ BitcoinFundUtils = {
 };
 
 /**
- * @param options {{_id: string,
- *                  amount: Big,
- *                  approved: Date,
- *                  currency: string,
- *                  details: *,
- *                  expires: Date,
- *                  paid: string,
- *                  paymentError: string,
- *                  preapprovalKey: string}}
+ * @param {{_id: string, amount: Big, approved: Date, currency: string, details: *,
+ *          expires: Date, paid: string, paymentError: string, preapprovalKey: string}} options
  * @constructor
  */
 PayPalFund = function (options) {
@@ -143,10 +132,13 @@ PayPalFund.prototype.initiatePreapproval = function (reward, funder, callback) {
         throw "This fund already has a preapproval key";
 
     var rootUrl = Meteor.settings["ROOT_URL"];
+    if (typeof rootUrl === "undefined")
+        throw "ROOT_URL is not defined";
+
     var cancel = rootUrl + "cancelFunds?id=" + that._id;
     var confirm = rootUrl + "confirmFunds?id=" + that._id;
 
-    var issue = GitHubUtils.getIssue(reward.issueUrl);
+    var issue = GitHubUtils.issue(reward.issueUrl);
     var description = "$" + that.amount.toString() + " bounty for Issue #" + issue.number + " in " + issue.repo.name;
 
     PayPal.getApproval(that.amount.toString(), description, that.expires, cancel, confirm, function (error, data, approvalUrl) {
