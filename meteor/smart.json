@@ -1,8 +1,9 @@
 {
-  "packages": {
-    "router": {},
-    "node-modules": {},
-    "session-extras": {},
-    "font-awesome": {}
-  }
+    "packages": {
+        "bootstrap-3": {},
+        "router": {},
+        "node-modules": {},
+        "session-extras": {},
+        "font-awesome": {}
+    }
 }
