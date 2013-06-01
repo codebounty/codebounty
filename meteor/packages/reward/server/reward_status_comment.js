@@ -61,7 +61,6 @@ RewardFormatter.prototype._formatCurrency = function (amount) {
 
 RewardFormatter.prototype.getRewardAmount = function () {
     var rewardAmount = this._formatCurrency(this.options.amount);
-    // TODO: convert unit
     
     return rewardAmount;
 };
@@ -100,12 +99,12 @@ RewardFormatter.prototype.getClaimerStrings = function () {
 
 //setup fonts
 
-var woodshop = "Woodshop", futuraLT = "FuturaLT";
+var woodshop = "Woodshop", Lato = "Lato";
 var Fonts = {
     "Woodshop": new Canvas.Font(woodshop, RewardUtils.assetFile("woodshop-regular.otf")),
-    "FuturaLT": new Canvas.Font(futuraLT, RewardUtils.assetFile("futura-lt.ttf"))
+    "Lato": new Canvas.Font(Lato, RewardUtils.assetFile("Lato/Lato-Regular.ttf"))
 };
-Fonts.FuturaLT.addFace(RewardUtils.assetFile("futura-lt-heavy.otf"), "bold");
+Fonts.Lato.addFace(RewardUtils.assetFile("Lato/Lato-Bold.ttf"), "bold");
 
 /**
  * generates the reward status comment image
@@ -128,7 +127,7 @@ RewardUtils.statusComment = function (options) {
     var canvas = new Canvas(width, height),
         ctx = canvas.getContext("2d");
 
-    ctx.addFont(Fonts.FuturaLT);
+    ctx.addFont(Fonts.Lato);
     ctx.addFont(Fonts.Woodshop);
 
     // Draw background
@@ -217,7 +216,7 @@ RewardUtils.statusComment = function (options) {
         ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
 
         // Draw bounty amount and expiration
-        ctx.font = RewardUtils.canvasFontString(contentFontSize, futuraLT, "bold");
+        ctx.font = RewardUtils.canvasFontString(contentFontSize, Lato, "bold");
         ctx.fillStyle = contentFontColor;
         ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
         var bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
@@ -226,12 +225,12 @@ RewardUtils.statusComment = function (options) {
         // Draw codebounty plug and link (align right)
         ctx.textAlign = "right";
         ctx.fillStyle = posterFontColor;
-        ctx.font = RewardUtils.canvasFontString(posterFontSize, futuraLT);            
+        ctx.font = RewardUtils.canvasFontString(posterFontSize, Lato);            
         var posterUser = "Posted by " + formatter.getUserName();
         ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
 
         ctx.fillStyle = footerFontColor;
-        ctx.font = RewardUtils.canvasFontString(footerSmallerFontSize, futuraLT);
+        ctx.font = RewardUtils.canvasFontString(footerSmallerFontSize, Lato);
         var siteLink = "codebounty.co";
         ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
         ctx.textAlign = "left";
@@ -239,7 +238,7 @@ RewardUtils.statusComment = function (options) {
         // Draw claimed by text
         if (status === "closed" && options.claimedBy) {
             ctx.fillStyle = footerFontColor;
-            ctx.font = RewardUtils.canvasFontString(footerFontSize, futuraLT);
+            ctx.font = RewardUtils.canvasFontString(footerFontSize, Lato);
             var claimedByText = "Claimed by: ";
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
 
@@ -317,14 +316,14 @@ RewardUtils.statusComment = function (options) {
         // Draw poster user
         ctx.textAlign = "center";
         ctx.fillStyle = posterUserFontColor;
-        ctx.font = RewardUtils.canvasFontString(posterUserFontSize, futuraLT, "bold");
+        ctx.font = RewardUtils.canvasFontString(posterUserFontSize, Lato, "bold");
         var posterUser = formatter.getUserName();
         ctx.fillText(posterUser, posterUserOriginX, posterUserOriginY);
         ctx.textAlign = "left";
 
         // Draw claimed by text
         if (options.claimedBy) {
-            ctx.font = RewardUtils.canvasFontString(claimedByFontSize, futuraLT, "bold");
+            ctx.font = RewardUtils.canvasFontString(claimedByFontSize, Lato, "bold");
             ctx.fillStyle = claimedByFontColor;
             var claimedByText = "Claimed by: ";
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
