@@ -61,7 +61,6 @@ RewardFormatter.prototype._formatCurrency = function (amount) {
 
 RewardFormatter.prototype.getRewardAmount = function () {
     var rewardAmount = this._formatCurrency(this.options.amount);
-    // TODO: convert unit
     
     return rewardAmount;
 };
