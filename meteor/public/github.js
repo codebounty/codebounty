@@ -210,6 +210,18 @@
             });
         },
 
+        _validateInput: function (input) {
+            if (!input) {
+                return false;
+            }
+
+            var value = parseFloat(input);
+
+            if (value % 1 === 0 && value >= 5)
+                return true;
+            else
+                return false;
+        },
         /**
          * Creates the post a bounty button and a numeric up / down (for setting the bounty amount)
          * @param {number} initValue
@@ -218,7 +230,7 @@
             ui.render(function () {
                 var bountyDiv = "" +
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>$</label>" +
-                    "<input id='bountyInput' type='number' value='" + initValue + "' min='0' step='5'/></div>" +
+                    "<input id='bountyInput' type='number' value='" + initValue + "' min='5' step='1'/></div>" +
                     "<a id='postBounty' class='bountyButton button minibutton bigger' href='#'>" +
                     "Post Bounty" +
                     "</a>";
@@ -228,17 +240,36 @@
                 $("#postBounty").click(function (e) {
                     //TODO: Input validation.
                     var amount = $("#bountyInput").val();
-                    var target = rootUrl + "/addFunds?amount=" + amount + "&url=" + thisIssueUrl + "&currency=usd";
-                    ui.openWindow(target);
-                    e.stopPropagation();
-                    e.preventDefault();
+                    if (ui._validateInput(amount)) {
+                        var target = rootUrl + "/addFunds?amount=" + amount + "&url=" + thisIssueUrl + "&currency=usd";
+                        ui.openWindow(target);
+                        e.stopPropagation();
+                        e.preventDefault();                        
+                    } else {
+                        ui.disablePostBounty();
+                    }
                 });
 
                 $("#bountyInput").keyup(function () {
                     var amount = $("#bountyInput").val();
-                    ui._changeBountyStatusIcon(amount);
+                    if (ui._validateInput(amount)) {
+                        ui.enablePostBounty();
+                        ui.changeBountyStatusIcon(amount);
+                    } else {
+                        ui.disablePostBounty();
+                    }
                 });
             }, "setupPostBounty");
+        },
+
+        disablePostBounty: function () {
+            if (!($("#postBounty").hasClass("disabled")))
+                $("#postBounty").addClass("disabled");
+        },
+
+        enablePostBounty: function () {
+            if ($("#postBounty").hasClass("disabled"))
+                $("#postBounty").removeClass("disabled");
         },
 
         setupRewardBounty: function () {
@@ -272,7 +303,7 @@
             }, "setBountyAmount");
         },
 
-        _changeBountyStatusIcon: function () {
+        changeBountyStatusIcon: function () {
             var getCashLevel = function (amount) {
                 if (amount < 20)
                     return 0;
@@ -331,7 +362,7 @@
                 if ($(".state-indicator.open").length) {
                     // If open
                     var amount = getBountyAmount();
-                    ui._changeBountyStatusIcon(amount);
+                    ui.changeBountyStatusIcon(amount);
                 }
             }, "showBountyStatusIcon");
         },
@@ -397,7 +428,7 @@
         //synchronize the total bounty reward for this issue, and show it
         events.register("rewardChanged", function (handle, message) {
             ui.setBountyAmount(message.amount);
-            ui._changeBountyStatusIcon(message.amount);
+            ui.changeBountyStatusIcon(message.amount);
         });
     });
 })();
