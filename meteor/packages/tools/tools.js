@@ -49,8 +49,12 @@ Tools.endsWith = function (str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 };
 
-Tools.formatDate = function (date) {
-    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+Tools.formatDate = function (date, dateOnly) {
+    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug",
+                      "Sept", "Oct", "Nov", "Dec"];
+    var monthNamesFull = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November",
+                          "December"];
 
     // TODO: take care of timezone
     var day = date.getDate(), month = date.getMonth(),
@@ -67,21 +71,26 @@ Tools.formatDate = function (date) {
     else
         ordinalIndicator = "th";
 
-    var period;
-    if (hour < 12)
-        period = "am";
-    else
-        period = "pm";
+    if (!dateOnly) {
+        var period;
+        if (hour < 12)
+            period = "am";
+        else
+            period = "pm";
 
-    if (hour === 0)
-        hour = 12;
-    else if (hour > 12)
-        hour = hour - 12;
+        if (hour === 0)
+            hour = 12;
+        else if (hour > 12)
+            hour = hour - 12;
 
-    if (0 <= minute && minute <= 9)
-        minute = "0" + minute;
+        if (0 <= minute && minute <= 9)
+            minute = "0" + minute;
 
-    return monthNames[month] + " " + day + ordinalIndicator + ", " + year + " at " + hour + ":" + minute + period;
+        return monthNames[month] + " " + day + ordinalIndicator + ", " + year +
+               " at " + hour + ":" + minute + period;        
+    } else {
+        return monthNamesFull[month] + " " + day + ordinalIndicator + ", " + year;
+    }
 };
 
 
