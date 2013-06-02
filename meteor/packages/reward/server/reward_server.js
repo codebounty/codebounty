@@ -84,7 +84,6 @@ Reward.prototype.addFund = function (amount, funder, callback) {
     if (!fundExists) {
         that.funds.push(fund);
     }
-    console.log(that.funds);
 };
 
 /**
