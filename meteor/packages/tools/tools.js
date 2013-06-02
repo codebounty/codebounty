@@ -11,6 +11,7 @@ Tools.addMinutes = function (minutes) {
 /**
  * Add / subtract days from now
  * @param days Can be negative
+ * @returns {Date}
  */
 Tools.addDays = function (days) {
     var endDate = new Date();

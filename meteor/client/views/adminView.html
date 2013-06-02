@@ -1,4 +1,4 @@
-<template name="adminSideNav">
+<template name="adminTopNav">
     <ul class="nav nav-tabs">
         <li class="{{active '/admin'}}">
             <a href="/admin"><i class="icon-dashboard"></i> Dashboard</a>
@@ -13,9 +13,5 @@
 </template>
 
 <template name="adminView">
-    {{> adminSideNav}}
-</template>
-
-<template name="adminRewardsView">
-    {{> adminSideNav}}
+    {{> adminTopNav}}
 </template>

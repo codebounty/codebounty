@@ -7,7 +7,7 @@ FundUtils = {
 /**
  * Funds for payment
  * @param {{_id: string, amount: Big, approved: Date, currency: string, details: *,
- *          expires: Date, paid: Date, paymentError: string, processor: string}} options
+ *          expires: Date, refunded: Date=, paid: Date, paymentError: string, processor: string}} options
  * @constructor
  */
 Fund = function (options) {
@@ -23,18 +23,23 @@ Fund = function (options) {
         this._id = options._id;
 
     this.amount = options.amount;
+    this.approved = options.approved;
     this.currency = options.currency;
     this.details = options.details;
     this.expires = options.expires;
+    this.refunded = options.refunded;
+    this.paid = options.paid;
+    this.paymentError = options.paymentError;
     this.processor = options.processor;
 };
 
 Fund.prototype.isAvailable = function () {
-    return this.approved && (!this.expires || this.expires >= new Date()) && !this.paid && !this.paymentError;
+    return this.approved && (!this.expires || this.expires >= new Date()) && !this.paid && !this.paymentError && !this.refunded;
 };
 
 Fund.prototype.toString = function () {
-    return (this.approved ? "(approved)" : "(not approved)") + " " + this.amount + " " + this.currency;
+    return (this.approved ? "(approved)" : "(not approved)") + (this.refunded ? " (refunded) " : " ") + this.amount +
+        " " + this.currency;
 };
 
 PayPalFundUtils = {
@@ -57,7 +62,7 @@ BitcoinFundUtils = {
 
 /**
  * @param {{_id: string, amount: Big, approved: Date, currency: string, details: *,
- *          expires: Date, paid: string, paymentError: string, preapprovalKey: string}} options
+ *          expires: Date, refunded: Date=, paid: string, paymentError: string, preapprovalKey: string}} options
  * @constructor
  */
 PayPalFund = function (options) {
@@ -66,9 +71,6 @@ PayPalFund = function (options) {
     Fund.call(this, options);
 
     this.preapprovalKey = options.preapprovalKey;
-    this.paid = options.paid;
-    this.approved = options.approved;
-    this.paymentError = options.paymentError;
 };
 
 PayPalFund.prototype = Object.create(Fund.prototype);
@@ -84,6 +86,7 @@ PayPalFund.prototype.clone = function () {
         currency: that.currency,
         details: that.details,
         expires: that.expires,
+        refunded: that.refunded,
         paid: that.paid,
         paymentError: that.paymentError,
         preapprovalKey: that.preapprovalKey
@@ -94,9 +97,10 @@ PayPalFund.prototype.equals = function (other) {
     if (!(other instanceof PayPalFund))
         return false;
 
-    return EJSON.equals(this._id, other._id) && this.amount.cmp(other.amount) === 0 && this.approved === other.approved &&
-        this.currency === other.currency && _.isEqual(this.details, other.details) && this.expires === other.expires &&
-        this.paid === other.paid && this.paymentError === other.paymentError && this.preapprovalKey === other.preapprovalKey;
+    return EJSON.equals(this._id, other._id) && this.amount.cmp(other.amount) === 0 && this.approved === other.approved
+        && this.currency === other.currency && _.isEqual(this.details, other.details) && this.expires === other.expires
+        && this.paid === other.paid && this.paymentError === other.paymentError
+        && this.preapprovalKey === other.preapprovalKey && this.refunded === other.refunded;
 };
 
 PayPalFund.prototype.typeName = function () {
@@ -112,6 +116,7 @@ PayPalFund.prototype.toJSONValue = function () {
         currency: that.currency,
         details: that.details,
         expires: that.expires,
+        refunded: that.refunded,
         paid: that.paid,
         paymentError: that.paymentError,
         processor: that.processor,
@@ -148,6 +153,7 @@ PayPalFund.prototype.initiatePreapproval = function (reward, funder, callback) {
         //store the preapproval key
         that.preapprovalKey = data.preapprovalKey;
         Fiber(function () {
+            //TODO REPLACE WITH SPECIFIC UPDATE
             Rewards.update(reward._id, reward.toJSONValue());
         }).run();
 
@@ -155,6 +161,10 @@ PayPalFund.prototype.initiatePreapproval = function (reward, funder, callback) {
     });
 };
 
+/**
+ * NOTE: Do not confuse with refund. This is if the fund is not approved.
+ * @param reward
+ */
 PayPalFund.prototype.cancel = function (reward) {
     var that = this;
 
@@ -165,7 +175,7 @@ PayPalFund.prototype.cancel = function (reward) {
     if (that.funds.length <= 0)
         Rewards.remove(reward._id);
     else
-        Rewards.update(reward._id, reward.toJSONValue());
+        Rewards.update(reward._id, reward.toJSONValue()); //TODO REPLACE WITH SPECIFIC UPDATE
 
     console.log("PayPal fund cancelled", that._id.toString());
 };
@@ -188,6 +198,7 @@ PayPalFund.prototype.confirm = function (reward, params) {
         //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
         //after new funds are approved distribute the reward equally among all the contributors
         reward.distributeEqually();
+        //TODO REPLACE WITH SPECIFIC UPDATE
         Rewards.update(reward._id, reward.toJSONValue());
         reward.fundApproved();
     }
@@ -214,7 +225,7 @@ PayPalFund.prototype.pay = function (fundDistribution) {
 
         if (error) {
             update.$set["funds.$.paymentError"] = error;
-            console.log("ERROR: PayPal Payment", error);
+            console.log("ERROR: PayPal payment", error);
         } else {
             update.$set["funds.$.paid"] = new Date();
             console.log("PayPal paid", that._id.toString());
@@ -226,6 +237,29 @@ PayPalFund.prototype.pay = function (fundDistribution) {
     });
 };
 
+/**
+ * Refund the fund
+ */
+PayPalFund.prototype.refund = function () {
+    var that = this;
+    console.log("Refund", that.toString());
+
+    PayPal.cancelPreapproval(that.preapprovalKey, function (error, data) {
+        var update = { $set: { } };
+
+        if (error) {
+            update.$set["funds.$.refundError"] = error;
+            console.log("ERROR: PayPal refund", error);
+        } else {
+            update.$set["funds.$.refunded"] = new Date();
+            console.log("PayPal refunded", that._id.toString());
+        }
+
+        Fiber(function () {
+            Rewards.update({ "funds._id": that._id }, update);
+        }).run();
+    });
+};
 
 /******************************************
  * BITCOIN FUND DEFINITIONS
@@ -448,3 +482,4 @@ BitcoinFund.prototype.pay = function (fundDistribution) {
         }).run();
     });
 };
+
