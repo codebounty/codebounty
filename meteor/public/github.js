@@ -170,17 +170,27 @@
             ui._container.insertAfter(".discussion-stats .state-indicator");
         },
 
-        _validateInput: function (input) {
-            if (!input) {
-                return false;
+        _validateInput: function (currency) {
+            var valid = false;
+
+            var inputVal = $("#bountyInput").val();
+
+            //there is not input
+            if (currency === "btc")
+                valid = true;
+            else if (currency !== "usd" || !inputVal)
+                valid = false;
+            else {
+                var value = parseFloat(inputVal);
+                valid = value % 1 === 0 && value >= 5;
             }
 
-            var value = parseFloat(input);
-
-            if (value % 1 === 0 && value >= 5)
-                return true;
+            if (valid)
+                ui.enablePostBounty();
             else
-                return false;
+                ui.disablePostBounty();
+
+            return valid;
         },
         /**
          * Creates the post a bounty button and a numeric up / down (for setting the bounty amount)
@@ -203,11 +213,15 @@
                 $usdDiv.insertAfter(ui._container);
 
                 $("#currencyToggle")
-                    .on('toggle', function (e, usd) {
-                        $("#currencyInput").val(usd ? "usd" : "btc");
+                    .on("toggle", function (e, usd) {
+                        var currency = usd ? "usd" : "btc";
+                        $("#currencyInput").val(currency);
+
                         $(".btc.currencySymbol").toggle(!usd);
                         $(".usd.currencySymbol").toggle(usd);
                         $(".inputWrapper").toggle(usd);
+
+                        ui._validateInput(currency);
                     })
                     .toggles({
                         animate: 0,
@@ -217,28 +231,25 @@
                     });
 
                 $("#postBounty").click(function (e) {
-                    //TODO: Input validation.
+                    e.stopPropagation();
+                    e.preventDefault();
+
                     var amount = $("#bountyInput").val();
                     var currency = $("#currencyInput").val();
-                    if (ui._validateInput(amount) || currency != "usd") {
-                        var target = rootUrl + "/addFunds?amount=" + amount + "&currency=" + currency + "&url=" + thisIssueUrl;
+                    if (!ui._validateInput(currency))
+                        return;
 
-                        ui.openWindow(target);
-                        e.stopPropagation();
-                        e.preventDefault();
-                    } else {
-                        ui.disablePostBounty();
-                    }
+                    var target = rootUrl + "/addFunds?amount=" + amount + "&currency=" + currency + "&url=" + thisIssueUrl;
+                    ui.openWindow(target);
                 });
 
                 $("#bountyInput").keyup(function () {
                     var amount = $("#bountyInput").val();
-                    if (ui._validateInput(amount)) {
-                        ui.enablePostBounty();
-                        ui.changeBountyStatusIcon(amount);
-                    } else {
-                        ui.disablePostBounty();
-                    }
+                    if (!ui._validateInput("usd"))
+                        return;
+
+                    ui.enablePostBounty();
+                    ui.changeBountyStatusIcon(amount);
                 });
             }, "setupPostBounty");
         },
@@ -404,5 +415,11 @@
     });
 
     messenger.initialize();
-    ui.initialize();
+
+    events.register("authenticated", function (handle) {
+        //only initialize once
+        handle();
+
+        ui.initialize();
+    });
 })();
