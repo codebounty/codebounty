@@ -20,6 +20,15 @@ OS X / Linux / Ubuntu
 
 4. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki)
 
+5. Install Bitcoin and put this in your bitcoin.conf file:
+
+        rpcuser=oldgregg
+        rpcpassword=4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ
+        testnet=1
+        server=1
+
+Check out [Bitcoin.org](http://bitcoin.org/en/download) for the Bitcoin binaries, and check out the [Bitcoin wiki](https://en.bitcoin.it/wiki/Data_directory) for information on how to find your bitcoin.conf file.
+
 ###Run Project
 
 1. Start meteor project (this will also install meteorite packages) 
@@ -30,5 +39,9 @@ OS X / Linux / Ubuntu
 
 		cd codebounty/tools
 		node web-server.js
+
+3. Start bitcoind
+
+        ./bitcoind -daemon
 			
-3. If you are trying to test out the images use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json
+4. If you are trying to test out the images use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json
