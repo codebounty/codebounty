@@ -27,7 +27,7 @@ var RewardFormatter = function (options) {
 
 RewardFormatter.prototype.CONFIGS = {
     USER_NAME_MAX_CHARACTER: 10,
-    CLAIMER_MAX_COUNT: 2,
+    CLAIMER_MAX_COUNT: 3,
     CLAIMER_USER_NAME_MAX_CHARACTER: 10
 };
 
@@ -69,32 +69,47 @@ RewardFormatter.prototype.getUserName = function () {
     return this._limitStringLength(this.options.userName, this.CONFIGS.USER_NAME_MAX_CHARACTER);
 };
 
-/**
- * Generate reward claimer strings. Default only displays limited entries, others
- * will be replaced by "+X others".
- * @return {Array.String}
- */
-RewardFormatter.prototype.getClaimerStrings = function () {
+RewardFormatter.prototype.getClaimers = function (limit) {
     var claimers = [];
 
-    var i, claimer;
-    var max = Math.min(this.options.claimedBy.length, this.CONFIGS.CLAIMER_MAX_COUNT);
+    if (!limit)
+        limit = this.CONFIGS.CLAIMER_MAX_COUNT;
+
+    var i, claimer, amount;
+    var max = Math.min(this.options.claimedBy.length, limit);
 
     for (i = 0; i < max; i++) {
         claimer = this._limitStringLength(this.options.claimedBy[i].userName,
-                  this.CONFIGS.CLAIMER_USER_NAME_MAX_CHARACTER) + " " +
-                  this._formatCurrency(this.options.claimedBy[i].amount);
+                  this.CONFIGS.CLAIMER_USER_NAME_MAX_CHARACTER);
+        amount = this._formatCurrency(this.options.claimedBy[i].amount);
 
-        claimers.push(claimer);
+        claimers.push({"claimer": claimer, "amount": amount});
     }
 
     var othersCount = this.options.claimedBy.length - max;
     if (othersCount === 1)
-        claimers.push("+1 other");
+        claimer = "+1 other";
     else if (othersCount > 1)
-        claimers.push("+" + othersCount + " others");
+        claimer = "+" + othersCount + " others";
+
+    claimers.push({"claimer": claimer, "amount": ""});
 
     return claimers;
+};
+
+var drawClaimers = function (ctx, color, font, claimers, positions) {
+    ctx.fillStyle = color;
+    ctx.font = font;
+
+    claimers.forEach(function (element, i) {
+        if (element.claimer) {
+            ctx.fillText(element.claimer, positions.claimerX[i], positions.claimerY[i]);
+        }
+
+        if (element.amount) {
+            ctx.fillText(element.amount, positions.amountX[i], positions.amountY[i]);
+        }
+    });
 };
 
 //setup fonts
@@ -196,21 +211,29 @@ RewardUtils.statusComment = function (options) {
         var bountyExpirationOriginY = bountyAmountOriginY + 37;
 
         // Bounty Footer (align right)
-        var footerOriginX = centerX + 319;
-        var posterUserOriginY = bountyStatusOriginY + 321;
+        var footerOriginX = centerX + 331;
+        var posterUserOriginY = bountyStatusOriginY + 331;
 
         // Claimed by text (when closed)
-        var claimedByTextOriginX = centerX - 35;
+        var claimedByTextOriginX = centerX + 20;
         var claimedByTextOriginY = bountyExpirationOriginY + 45;
         var claimedByPersonOriginX = {
-            0: claimedByTextOriginX + 142,
-            1: claimedByTextOriginX + 142,
-            2: claimedByTextOriginX + 142
+            0: claimedByTextOriginX,
+            1: claimedByTextOriginX,
+            2: claimedByTextOriginX,
+            3: claimedByTextOriginX
+        };
+        var claimedByAmountOriginX = {
+            0: claimedByPersonOriginX[0] + 195,
+            1: claimedByPersonOriginX[1] + 195,
+            2: claimedByPersonOriginX[2] + 195,
+            3: claimedByPersonOriginX[3] + 195
         };
         var claimedByPersonOriginY = {
             0: claimedByTextOriginY,
             1: claimedByTextOriginY + 30,
-            2: claimedByTextOriginY + 60
+            2: claimedByTextOriginY + 60,
+            3: claimedByTextOriginY + 90
         };
 
         //
@@ -238,16 +261,16 @@ RewardUtils.statusComment = function (options) {
 
         // Draw claimed by text
         if (status === "closed" && options.claimedBy) {
-            ctx.fillStyle = footerFontColor;
-            ctx.font = RewardUtils.canvasFontString(footerFontSize, Lato);
-            var claimedByText = "Claimed by: ";
-            ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
-
-            // Only display two claimers
-            var claimers = formatter.getClaimerStrings();
-            claimers.forEach(function (element, index) {
-                ctx.fillText(element, claimedByPersonOriginX[index], claimedByPersonOriginY[index]);
-            });
+            drawClaimers(ctx,
+                         footerFontColor,
+                         RewardUtils.canvasFontString(footerFontSize, Lato),
+                         formatter.getClaimers(),
+                         {
+                            "claimerX": claimedByPersonOriginX,
+                            "claimerY": claimedByPersonOriginY,
+                            "amountX": claimedByAmountOriginX,
+                            "amountY": claimedByPersonOriginY
+                         });
         }
 
         // Draw bounty status image
@@ -296,12 +319,14 @@ RewardUtils.statusComment = function (options) {
         var claimedByPersonOriginX = {
             0: claimedByTextOriginX + 142,
             1: claimedByTextOriginX + 142,
-            2: claimedByTextOriginX + 142
+            2: claimedByTextOriginX + 142,
+            3: claimedByTextOriginX + 142
         };
         var claimedByPersonOriginY = {
             0: claimedByTextOriginY,
             1: claimedByTextOriginY + 30,
-            2: claimedByTextOriginY + 60
+            2: claimedByTextOriginY + 60,
+            3: claimedByTextOriginY + 90
         };
 
         //
@@ -330,9 +355,9 @@ RewardUtils.statusComment = function (options) {
             ctx.fillText(claimedByText, claimedByTextOriginX, claimedByTextOriginY);
 
             // Only display two claimers
-            var claimers = formatter.getClaimerStrings();
+            var claimers = formatter.getClaimers(2);
             claimers.forEach(function (element, index) {
-                ctx.fillText(element, claimedByPersonOriginX[index], claimedByPersonOriginY[index]);
+                ctx.fillText(element.claimer + " " + element.amount, claimedByPersonOriginX[index], claimedByPersonOriginY[index]);
             });
         }
 
