@@ -208,21 +208,24 @@ Meteor.methods({
      * Get the rewards that can be manually rewarded by the current user
      * for the issue url which have contributors
      * @param issueUrl
+     * @param {boolean} [byAdmin] If this was initiated by an admin
      * @returns {Array.<Reward>}
      */
-    "getRewards": function (issueUrl) {
+    "getRewards": function (issueUrl, byAdmin) {
         var user = Meteor.user();
-        AuthUtils.requireAuthorization(user);
+        AuthUtils.requireAuthorization(user, byAdmin ? "admin" : null);
 
         issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
 
         var selector = {
-            userId: user._id,
             //make sure there is an approved not expired fund
             funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
         };
+
+        if (!byAdmin)
+            selector.userId = user._id;
 
         var gitHub = new GitHub(user);
 
@@ -246,24 +249,74 @@ Meteor.methods({
         return Bitcoin.addressForIssue(this.userId, url).proxyAddress;
      },
 
-    //TODO
     /**
-     * used by moderators to hold a bounties reward until a dispute is resolved
-     * @param id
+     * used by admins to hold a reward until a dispute is resolved
+     * @param {string} id
+     * @param {string} reason
      */
-    "holdReward": function (id) {
+    "holdReward": function (id, reason) {
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user, "admin");
+
+        var logItem = "Reward held on " + new Date().toString() +
+            " by " + user._id + " because " + reason;
+
+        Rewards.update(id, {
+            $set: { status: "held" },
+            $push: { log: logItem }
+        });
+
+        return logItem;
+    },
+
+    /**
+     * used by admins to refund a reward
+     * @param {string} id
+     * @param {string} reason
+     */
+    "refundReward": function (id, reason) {
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user, "admin");
+
+        var reward = Rewards.findOne(id);
+        var logItem = reward.refund(user._id, reason);
+
+        Rewards.update(id, {
+            $set: { status: "refunded" },
+            $push: { log: logItem }
+        });
+
+        return logItem;
     },
 
     /**
      * Initiate the reward payout process
      * @param reward
+     * @param {boolean} [byAdmin] If this was initiated by an admin
+     * @param {string} [reason] Required if initiated by an admin
      * @returns true if there is no error
      */
-    "reward": function (reward) {
+    "reward": function (reward, byAdmin, reason) {
         var user = Meteor.user();
-        AuthUtils.requireAuthorization(user);
+        AuthUtils.requireAuthorization(user, byAdmin ? "admin" : null);
 
-        var myReward = Rewards.findOne({_id: reward._id, userId: user._id});
+        var selector = {
+            _id: reward._id
+        };
+        if (!byAdmin)
+            selector.userId = user._id;
+
+        console.log(reason);
+
+        var myReward = Rewards.findOne(selector);
+        if (byAdmin) {
+            var logItem = "Rewarded on " + new Date().toString() +
+                " by " + user._id + " because " + reason;
+
+            Rewards.update(reward._id, {
+                $push: { log: logItem }
+            });
+        }
 
         var fut = new Future();
 
@@ -285,7 +338,7 @@ Meteor.methods({
                     myReceiver.setReward(receiver.amount);
                 });
 
-                myReward.initiatePayout(user._id, function (error, success) {
+                myReward.initiatePayout(byAdmin ? "admin" : user._id, function (error, success) {
                     fut.ret(success);
 
                     if (error)

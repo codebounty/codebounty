@@ -45,6 +45,8 @@ var execute = function (operation, fields, callback) {
     });
 };
 
+//Adaptive Payments https://developer.paypal.com/webapps/developer/docs/classic/api/
+
 //callback passes an error or the pre-approval of funds data and url
 PayPal.getApproval = function (amount, description, endDate, cancelUrl, confirmUrl, callback) {
     var startDate = new Date();
@@ -74,6 +76,23 @@ PayPal.getApproval = function (amount, description, endDate, cancelUrl, confirmU
     });
 };
 
+//https://developer.paypal.com/webapps/developer/docs/classic/api/adaptive-payments/CancelPreapproval_API_Operation/
+PayPal.cancelPreapproval = function (preapprovalKey, callback) {
+    var params = {
+        preapprovalKey: preapprovalKey,
+        requestEnvelope: {
+            errorLanguage: "en_US"
+        }
+    };
+
+    execute("CancelPreapproval", params, function (error, data) {
+        if (error)
+            callback(error);
+        else if (data)
+            callback(null, data);
+    });
+};
+
 PayPal.confirmApproval = function (preapprovalKey, callback) {
     var params = {
         preapprovalKey: preapprovalKey,
@@ -92,13 +111,13 @@ PayPal.confirmApproval = function (preapprovalKey, callback) {
 
 /**
  * Make a payment to a set of receivers
+ * https://developer.paypal.com/webapps/developer/docs/classic/api/adaptive-payments/Preapproval_API_Operation/
  * @param preapprovalKey
  * @param receiverList ex. [{email: "perl.jonathan@gmail.com", amount: 100.12}, ..]
  * @param callback (error, data)
  */
 PayPal.pay = function (preapprovalKey, receiverList, callback) {
-    //details here https://www.x.com/developers/paypal/documentation-tools/api/Pay-api-operation
-    //note fee calculation here: https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
+    //fee calculation here: https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
 
     //only need to pay the people getting > $0
     //remove any decimals past 0.01

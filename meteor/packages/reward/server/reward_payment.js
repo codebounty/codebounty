@@ -77,13 +77,13 @@ Reward.prototype.distributeEqually = function () {
  * Initiates a payout by changing the status to initiated and storing the payout
  * after 72 hours if no one disputes the reward will automatically be paid out
  * NOTE: Only call this after updating the reward's receivers
- * @param by Who the reward was initiated by (the backer userId, "system", future: "moderator")
+ * @param by Who the reward was initiated by (the backer userId, "system", "admin")
  * @param callback (error, success)
  */
 Reward.prototype.initiatePayout = function (by, callback) {
     var that = this;
 
-    if (by !== that.userId && by !== "system") {
+    if (by !== that.userId && by !== "system" && by !== "admin") {
         callback("Reward cannot be initiated by " + by, false);
         return;
     }
@@ -106,6 +106,7 @@ Reward.prototype.initiatePayout = function (by, callback) {
     Fiber(function () {
         //TODO only update what could have changed (receiver amounts, not funds, etc..)
         //after the payout is set, it will automatically be paid
+        //TODO REPLACE WITH SPECIFIC UPDATE
         Rewards.update(that._id, that.toJSONValue());
 
         callback(null, true);
@@ -121,9 +122,7 @@ Reward.prototype.pay = function () {
 
     Rewards.update(that._id, {$set: {status: "paying"}});
 
-    console.log("Pay reward", that._id.toString(), _.map(fundDistributions, function (fundPayment) {
-        return fundPayment.payments;
-    }));
+    console.log("Pay reward", that._id.toString());
 
     var funds = that.funds;
     var fundIndex = 0;
@@ -141,6 +140,25 @@ Reward.prototype.pay = function () {
 
     //update the reward's status
     Rewards.update(that._id, {$set: {status: "paid"}});
+};
+
+/**
+ * Return all the funds
+ * @param {string} adminId
+ * @param {string} reason
+ * @returns {string} logItem
+ */
+Reward.prototype.refund = function (adminId, reason) {
+    this.status = "refunded";
+
+    _.each(this.funds, function (fund) {
+        fund.refund();
+    });
+
+    var logItem = "Reward refunded on " + new Date().toString() +
+        " by " + adminId + " because " + reason;
+
+    return logItem;
 };
 
 /**

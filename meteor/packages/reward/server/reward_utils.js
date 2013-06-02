@@ -28,6 +28,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             reward.addFund(amount, user, callback);
 
             Fiber(function () {
+                //TODO REPLACE WITH SPECIFIC UPDATE
                 Rewards.update(reward._id, reward.toJSONValue());
             }).run();
 
@@ -38,6 +39,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             currency: currency,
             funds: [],
             issueUrl: issueUrl,
+            log: [],
             receivers: [],
             status: "open",
             userId: user._id
@@ -136,7 +138,8 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                     reward.updateReceivers(contributorsEmails);
                     reward.lastSync = new Date();
 
-                    Rewards.update({_id: reward._id}, reward.toJSONValue());
+                    //TODO REPLACE WITH SPECIFIC UPDATE
+                    Rewards.update(reward._id, reward.toJSONValue());
 
                     reward.checkStatus(issueEvents);
                 });

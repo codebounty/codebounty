@@ -9,7 +9,7 @@ Meteor.Router.add("/reward/:id", function (id) {
         return "No reward found";
 
     var status = reward.status;
-    if (_.contains(["initiated", "expired", "paying", "hold"], status))
+    if (_.contains(["initiated", "expired", "paying", "held", "refunded"], status))
         status = "closed";
     else if (status === "paid")
         status = "claimed";
@@ -67,21 +67,28 @@ Meteor.Router.add("/ipn", function () {
         if (error)
             throw error;
 
-        Fiber(function () {
-            var reward = Rewards.findOne({
-                funds: { $elemMatch: { preapprovalKey: params.preapproval_key }}
-            });
+        if (params.transaction_type === "Adaptive Payment PREAPPROVAL") {
+            if (params.status === "ACTIVE") {
+                Fiber(function () {
+                    var reward = Rewards.findOne({
+                        funds: { $elemMatch: { preapprovalKey: params.preapproval_key }}
+                    });
 
-            if (!reward) {
-                error = "PayPalFund approved but not found " + EJSON.stringify(params);
-                throw error;
+                    if (!reward) {
+                        error = "PayPalFund approved but not found " + EJSON.stringify(params);
+                        throw error;
+                    }
+
+                    var paypalFund = _.find(reward.funds, function (fund) {
+                        return fund.preapprovalKey === params.preapproval_key;
+                    });
+                    paypalFund.confirm(reward, params);
+                }).run();
+            } else if (params.status === "CANCELED") {
+                //TODO unless refund, shame status
+
             }
-
-            var paypalFund = _.find(reward.funds, function (fund) {
-                return fund.preapprovalKey === params.preapproval_key;
-            });
-            paypalFund.confirm(reward, params);
-        }).run();
+        }
     });
 
     //prevents paypal from continually sending message

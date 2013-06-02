@@ -193,7 +193,7 @@ Meteor.setInterval(function () {
     var expiredRewards = Rewards.find({
         $and: [
             //eligible to be rewarded
-            { status: { $in: ["open", "reopened"] } },
+            { status: { $in: ["open", "reopened", "held"] } },
             //has an expired fund
             { funds: { $elemMatch: { expires: { $lt: new Date() } } } }
         ]

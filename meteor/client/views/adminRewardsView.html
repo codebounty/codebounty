@@ -1,0 +1,137 @@
+<template name="holdModal">
+    <div class="holdModal modal fade" tabindex="-1" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Hold the reward ({{reward._id}})</h4>
+            </div>
+            <div class="modal-body">
+                <p>Reason</p>
+                <textarea class="reason" placeholder="Please be descriptive"></textarea>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-default" data-dismiss="modal">Cancel</a>
+                <a class="btn btn-primary action">Hold it</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template name="refundModal">
+    <div class="refundModal modal fade" tabindex="-1" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Refund the reward ({{reward._id}})</h4>
+            </div>
+            <div class="modal-body">
+                <p>Reason</p>
+                <textarea class="reason" placeholder="Please be descriptive"></textarea>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-default" data-dismiss="modal">Cancel</a>
+                <a class="btn btn-primary action">Refund it</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template name="rewardModal">
+    <div class="rewardModal modal fade" tabindex="-1" style="display: none;">
+        <div class="modal-content">
+            <div class="why">
+                <div class="modal-header">
+                    <h4 class="modal-title">Reward ({{reward._id}})</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Reason</p>
+                    <textarea class="reason" placeholder="Please be descriptive"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-default" data-dismiss="modal">Cancel</a>
+                    <a class="btn btn-primary action">Reward it</a>
+                </div>
+            </div>
+            <iframe style="display: none;"></iframe>
+        </div>
+    </div>
+</template>
+
+<template name="adminRewardsView">
+    {{> holdModal}}
+    {{> refundModal}}
+    {{> rewardModal}}
+
+    <div class="adminRewardsView">
+        {{> adminTopNav}}
+        <div class="row">
+            <div class="searchFilters col col-lg-3 panel">
+                <div class="panel-heading">Rewards
+                </div>
+                <input type="text" class="rewardId" placeholder="id">
+                <input type="text" class="rewardRepo" placeholder="codebounty/codebounty">
+                <input type="text" class="rewardIssueNumber" placeholder="50">
+                <select class="rewardStatus">
+                    <option>any</option>
+                    <option>closed</option>
+                    <option>held</option>
+                    <option>initiated</option>
+                    <option>open</option>
+                    <option>paid</option>
+                    <option>reopened</option>
+                </select>
+                <button class="btn btn-default pull-right">Search</button>
+            </div>
+            <div class="col col-lg-9">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Status</th>
+                        <th>Repo</th>
+                        <th>Issue</th>
+                        <th>Receiver Total</th>
+                        <th>Expires</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{#each rewards}}
+                    <tr>
+                        <td>{{_id}}</td>
+                        <td>{{status}}</td>
+                        <td>{{issue}}</td>
+                        <td>{{repo}}</td>
+                        <td>{{receiverTotal}}</td>
+                        <td>{{_expires}}</td>
+                        <td>
+                            {{#if statusIs "refunded" "paid" }}
+                            None Available
+                            {{/if}}
+                            {{#unless statusIs "refunded" "paid" }}
+                            <div class="btn-group">
+                                <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                    <i class="icon-money"></i> Reward<span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    {{#unless statusIs "held" "refunded"}}
+                                    <li><a class="openHoldModal">Hold</a></li>
+                                    {{/unless}}
+                                    {{#unless statusIs "refunded"}}
+                                    <li><a class="openRefundModal">Refund</a></li>
+                                    {{/unless}}
+                                    {{#if canReward}}
+                                    {{#if statusIs "open" "reopened"}}
+                                    <li><a class="openRewardModal">Reward</a></li>
+                                    {{/if}}
+                                    {{/if}}
+                                </ul>
+                            </div>
+                            {{/unless}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</template>

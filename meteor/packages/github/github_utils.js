@@ -1,29 +1,5 @@
 GitHubUtils = {};
 
-var Url = Npm.require("url");
-
-/**
- * Return the unique author email's of the commits
- * @param commits
- * @param [excludeUser] If passed, exclude the user
- * @return Array.<string>
- */
-GitHubUtils.authorsEmails = function (commits, excludeUser) {
-    var authors = _.map(commits, function (commit) {
-        return commit.author;
-    });
-    authors = _.uniq(authors, false, function (author) {
-        return author.email;
-    });
-
-    var authorsEmails = _.pluck(authors, "email");
-
-    if (excludeUser)
-        authorsEmails = _.without(authorsEmails, AuthUtils.email(excludeUser));
-
-    return authorsEmails;
-};
-
 /**
  * Parse out the issue object
  * @param issueUrl The github url
@@ -32,18 +8,20 @@ GitHubUtils.authorsEmails = function (commits, excludeUser) {
 GitHubUtils.issue = function (issueUrl) {
     issueUrl = Tools.stripHash(issueUrl);
 
-    var parsedUrl = Url.parse(issueUrl, true);
+    //gets ['url', 'scheme', 'slash', 'host', 'port', 'path', 'query', 'hash']
+    var parseUrl = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
+    var parsed = parseUrl.exec(issueUrl);
 
-    var path = parsedUrl.pathname;
-    if (parsedUrl.hostname !== "github.com" || path.indexOf("/issues") < 0)
+    var path = parsed[5]; //codebounty/codebounty/issues/25
+    if (parsed[3] !== "github.com" || path.indexOf("/issues") < 0)
         throw "Only accepting bounties for github issues currently";
 
     var paths = path.split("/");
 
     //parse repository and issue
-    var repo = {name: paths[2], user: paths[1]};
+    var repo = {name: paths[1], user: paths[0]};
 
-    var issue = parseFloat(paths[4]);
+    var issue = parseFloat(paths[3]);
     if (isNaN(issue))
         throw "Cannot parse issue number";
 

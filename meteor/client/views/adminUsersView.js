@@ -32,7 +32,7 @@ Template.adminUsersView.rendered = function () {
 };
 
 Template.adminUsersView.events({
-    "click .userSearch .btn": function () {
+    "click .searchFilters .btn": function () {
         var userId = $(".userId").val();
         var userGithub = $(".userGithub").val();
 

@@ -1,8 +1,3 @@
-//TODO before publish: remove Bounties / Responses / rewards, packages: autosubscribe and insecure
-Bounties = new Meteor.Collection("bounties");
-Responses = new Meteor.Collection("responses");
-Rewards = new Meteor.Collection("rewards");
-
 Meteor.Router.add({
     //admin dashboard
     "/admin": function () {
@@ -32,6 +27,9 @@ Meteor.Router.add({
 
     //funds
     "/addFunds": function () {
+        if (Meteor.loggingIn())
+            return "loadingView";
+
         var amount = window.url("?amount");
         var url = window.url("?url");
         var currency = window.url("?currency");
@@ -54,6 +52,9 @@ Meteor.Router.add({
         }
     },
     "/cancelFunds": function () {
+        if (Meteor.loggingIn())
+            return "loadingView";
+
         var id = window.url("?id");
 
         Meteor.call("cancelFunds", id, function (error) {
@@ -76,18 +77,21 @@ Meteor.Router.add({
         RewardUtils.trackTotal(url);
 
         AuthUtils.afterLogin(function () {
-            Messenger.listen();
-            Messenger.send({event: "authenticated"});
+            Messenger.send({ event: "authenticated" }, Messenger.target.plugin);
         });
 
         return "messengerView";
     },
 
     "/reward": function () {
+        if (Meteor.loggingIn())
+            return "loadingView";
+
         var url = window.url("?url");
         Session.set("url", url);
 
-        Meteor.call("getRewards", url, function (error, result) {
+        var admin = window.url("?admin");
+        Meteor.call("getRewards", url, admin, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
 
