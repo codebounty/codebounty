@@ -34,37 +34,45 @@ Messenger.registerEvent = function (name, callback) {
     callbacks.push(callback);
 };
 
-//listen for messages
-window.addEventListener("message", function (event) {
-    //only process messages from known targets
-    var knownTarget = _.some(Messenger.target, function (target) {
-        return  event.origin === target;
-    });
-    if (!knownTarget)
+var listening = false;
+
+/**
+ * Listen for messages from a target
+ * @param {Messenger.target} from
+ */
+Messenger.listen = function (from) {
+    if (listening)
         return;
+    listening = true;
 
-    var message = event.data;
+    window.addEventListener("message", function (event) {
+        //only process messages from who we want to listen to
+        if (event.origin !== from)
+            return;
 
-    //if there is an event parameter, trigger any registered event callbacks
-    if (message.event) {
-        var callbacks = eventCallbacks[message.event];
-        if (callbacks)
-            _.each(callbacks, function (callback) {
-                callback(message);
+        var message = event.data;
+
+        //if there is an event parameter, trigger any registered event callbacks
+        if (message.event) {
+            var callbacks = eventCallbacks[message.event];
+            if (callbacks)
+                _.each(callbacks, function (callback) {
+                    callback(message);
+                });
+        }
+
+        //if there is a method parameter, the sender wants to call a meteor method
+        if (message.method) {
+            //setup Meteor.call params (methodName, param1, param2..., callback)
+            var callParams = [message.method];
+            callParams = _.union(callParams, message.params);
+
+            //add the callback
+            callParams.push(function (error, result) {
+                Messenger.send({id: message.id, error: error, result: result}, Messenger.target.plugin);
             });
-    }
 
-    //if there is a method parameter, the sender wants to call a meteor method
-    if (message.method) {
-        //setup Meteor.call params (methodName, param1, param2..., callback)
-        var callParams = [message.method];
-        callParams = _.union(callParams, message.params);
-
-        //add the callback
-        callParams.push(function (error, result) {
-            Messenger.send({id: message.id, error: error, result: result}, Messenger.target.plugin);
-        });
-
-        Meteor.call.apply(null, callParams);
-    }
-}, false);
+            Meteor.call.apply(null, callParams);
+        }
+    }, false);
+};

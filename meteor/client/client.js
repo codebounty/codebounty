@@ -4,21 +4,22 @@ Meteor.Router.add({
         return "adminView";
     },
     "/admin/rewards": function () {
+        Messenger.listen(Messenger.target.application);
         return "adminRewardsView";
     },
     "/admin/users": function () {
         return "adminUsersView";
     },
-   
+
     // Bitcoin setup
     "/btcAddressForIssue": function () {
         var url = window.url;
     },
-    
+
     "/setupReceiverAddress": function () {
         var redirect = window.url("?redirect");
         var address = window.url("?receiverAddress");
-        
+
         Meteor.call("setupReceiverAddress", address, redirect,
             function (error, result) {
                 window.location.href = decodeURIComponent(result);
@@ -37,7 +38,7 @@ Meteor.Router.add({
         Meteor.call("addFunds", amount, currency, url, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
-            
+
             if (currency == "usd") {
                 window.location.href = result;
             } else if (currency == "btc") {
@@ -74,6 +75,7 @@ Meteor.Router.add({
     //used by a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
         var url = window.url("?url");
+        Messenger.listen(Messenger.target.plugin);
         RewardUtils.trackTotal(url);
 
         AuthUtils.afterLogin(function () {
@@ -102,7 +104,7 @@ Meteor.Router.add({
 
         return "rewardView";
     },
-    
+
     "/logout": function () {
         Meteor.logout();
         window.close();

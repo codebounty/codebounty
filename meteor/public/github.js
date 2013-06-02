@@ -1,6 +1,5 @@
 //the injected github UI
 (function (undefined) {
-    
     var rootUrl = "http://localhost:3000",
         staticRootUrl = "https://localhost/meteor/public",
         thisIssueUrl = encodeURI(window.location.href);
@@ -10,32 +9,6 @@
     var events = {
         //where the callbacks are stored
         _registry: [],
-        //store messages until callbacks are associated
-        _mailbox: [],
-        //get the event callback
-        _callback: function (name) {
-            var callback = events._registry[name];
-            return callback;
-        },
-        /**
-         * Trigger the callback for an event
-         * @param name The event name
-         * @param message
-         * @returns {Boolean} whether there is a registered callback
-         */
-        _triggerCallback: function (name, message) {
-            var callback = events._callback(name);
-
-            if (!callback)
-                return false;
-
-            //pass a function (handle) to stop the listener and the message
-            callback(function () {
-                delete events._registry[name];
-            }, message);
-
-            return true;
-        },
 
         /**
          * Called when an event message is received
@@ -43,13 +16,15 @@
          * @param message
          */
         received: function (name, message) {
-            if (!events._triggerCallback(name, message)) {
-                var mailbox = events._mailbox[name];
-                if (!mailbox)
-                    events._mailbox[name] = mailbox = [];
+            //get the event callback
+            var callback = events._registry[name];
+            if (!callback)
+                return;
 
-                mailbox.push(message);
-            }
+            //pass a function (handle) to stop the listener and the message
+            callback(function () {
+                delete events._registry[name];
+            }, message);
         },
 
         /**
@@ -60,16 +35,6 @@
          */
         register: function (name, callback) {
             events._registry[name] = callback;
-
-            //check the mailbox
-            var mailbox = events._mailbox[name];
-            if (mailbox) {
-                mailbox.forEach(function (message) {
-                    events._triggerCallback(name, message);
-                });
-
-                delete events._mailbox[name];
-            }
         }
     };
 
@@ -85,7 +50,6 @@
             messengerIFrame.contentWindow.postMessage(message, rootUrl + "/");
         },
         initialize: function () {
-            var that = this;
             messengerIFrame = document.createElement("iframe");
             messengerIFrame.style.display = "none";
             messengerIFrame.src = rootUrl + "/messenger?url=" + thisIssueUrl;
@@ -204,11 +168,6 @@
         setupContainer: function () {
             ui._container = $("<div id='codeBountyContainer'></div>");
             ui._container.insertAfter(".discussion-stats .state-indicator");
-
-            //go through and run the render functions
-            ui._renderFunctions.forEach(function (renderFunction) {
-                renderFunction.render();
-            });
         },
 
         _validateInput: function (input) {
@@ -231,32 +190,31 @@
             ui.render(function () {
                 var currencyToggle = "<div id='currencyToggle' class='toggle-light'></div>";
                 $(currencyToggle).insertAfter(ui._container);
-                
+
                 var $usdDiv = $("" +
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>" +
                     "<span class='usd currencySymbol'>$</span>" +
                     "</label><input id='bountyInput' type='number' value='" + initValue + "' min='5' step='1'/></div>" +
-                    "<input id='currencyInput' type='hidden' value='usd' />" + 
+                    "<input id='currencyInput' type='hidden' value='usd' />" +
                     "<a id='postBounty' class='bountyButton button minibutton bigger' href='#'>" +
                     "Post Bounty" +
                     "</a>");
 
                 $usdDiv.insertAfter(ui._container);
-            
-                
+
                 $("#currencyToggle")
-                .on('toggle', function (e, usd) {
-                    $("#currencyInput").val(usd ? "usd" : "btc");
-                    $(".btc.currencySymbol").toggle(!usd);
-                    $(".usd.currencySymbol").toggle(usd);
-                    $(".inputWrapper").toggle(usd);
-                })
-                .toggles({
-                    animate: 0,
-                    type: "select", 
-                    text: {on: "USD", off: "BTC"},
-                    on: true
-                });
+                    .on('toggle', function (e, usd) {
+                        $("#currencyInput").val(usd ? "usd" : "btc");
+                        $(".btc.currencySymbol").toggle(!usd);
+                        $(".usd.currencySymbol").toggle(usd);
+                        $(".inputWrapper").toggle(usd);
+                    })
+                    .toggles({
+                        animate: 0,
+                        type: "select",
+                        text: {on: "USD", off: "BTC"},
+                        on: true
+                    });
 
                 $("#postBounty").click(function (e) {
                     //TODO: Input validation.
@@ -264,10 +222,10 @@
                     var currency = $("#currencyInput").val();
                     if (ui._validateInput(amount) || currency != "usd") {
                         var target = rootUrl + "/addFunds?amount=" + amount + "&currency=" + currency + "&url=" + thisIssueUrl;
-                    
+
                         ui.openWindow(target);
                         e.stopPropagation();
-                        e.preventDefault();                        
+                        e.preventDefault();
                     } else {
                         ui.disablePostBounty();
                     }
@@ -380,7 +338,7 @@
                 var openText = $(".state-indicator.open").text();
                 return openText.substring(openText.indexOf("$") + 1);
             };
-            
+
             ui.render(function () {
                 if ($(".state-indicator.open").length) {
                     // If open
@@ -438,20 +396,13 @@
         }
     };
 
-    messenger.initialize();
     events.register("closeOverlay", ui.closeOverlay);
     events.register("bountyRewarded", ui.removeRewardButton);
-
-    events.register("authenticated", function (handle) {
-        //only handle authentication event once
-        handle();
-
-        ui.initialize();
-
-        //synchronize the total bounty reward for this issue, and show it
-        events.register("rewardChanged", function (handle, message) {
-            ui.setBountyAmount(message.amount);
-            ui.changeBountyStatusIcon(message.amount);
-        });
+    //synchronize the total bounty reward for this issue, and show it
+    events.register("rewardChanged", function (handle, message) {
+        ui.setBountyAmount(message.amount);
     });
+
+    messenger.initialize();
+    ui.initialize();
 })();
