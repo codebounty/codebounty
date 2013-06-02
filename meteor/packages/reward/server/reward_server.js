@@ -81,7 +81,7 @@ Reward.prototype.addFund = function (amount, funder, callback) {
         return fund.equals(_fund);
     });
     
-    if (!fundExists) {
+    if (!fundExists && fund.userId != null) {
         that.funds.push(fund);
     }
 };
