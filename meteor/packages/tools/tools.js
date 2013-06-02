@@ -77,6 +77,9 @@ Tools.formatDate = function (date) {
     else if (hour > 12)
         hour = hour - 12;
 
+    if (0 <= minute && minute <= 9)
+        minute = "0" + minute;
+
     return monthNames[month] + " " + day + ordinalIndicator + ", " + year + " at " + hour + ":" + minute + period;
 };
 
