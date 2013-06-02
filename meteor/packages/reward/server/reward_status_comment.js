@@ -132,24 +132,32 @@ RewardUtils.statusComment = function (options) {
 
     // Draw background
     ctx.fillStyle = LIGHT_ORANGE;
-    ctx.fillRect(0, 0, width, height);
+    ctx.rect(0, 0, width, height);
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = LIGHT_GREY;
+    ctx.stroke();
 
     if (status === "open" || status === "closed" || status === "reopened") {
         var statusHeader;
         var bountyAmount;
+        var bountyExpiration;
         var bountyStatusImageFile;
 
         if (status === "open") {
             statusHeader = "BOUNTY NOW OPEN!";
             bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
+            bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
             bountyStatusImageFile = "banner-bounty-open.png";
         } else if (status === "closed") {
             statusHeader = "BOUNTY CLOSED";
-            bountyAmount = "This bounty was posted for " + formatter.getRewardAmount();
+            bountyAmount = "This " + formatter.getRewardAmount() + " bounty will be paid out";
+            bountyExpiration = "on " + Tools.formatDate(options.expiredDate) + " to";
             bountyStatusImageFile = "banner-bounty-closed.png";
         } else if (status === "reopened") {
             statusHeader = "BOUNTY REOPENED";
             bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
+            bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
             bountyStatusImageFile = "banner-bounty-reopened.png";
         }
 
@@ -189,8 +197,7 @@ RewardUtils.statusComment = function (options) {
 
         // Bounty Footer (align right)
         var footerOriginX = centerX + 319;
-        var siteLinkOriginY = bountyStatusOriginY + 321;
-        var posterUserOriginY = status !== "closed" ? siteLinkOriginY - 31 : siteLinkOriginY - 23;
+        var posterUserOriginY = bountyStatusOriginY + 321;
 
         // Claimed by text (when closed)
         var claimedByTextOriginX = centerX - 35;
@@ -219,20 +226,14 @@ RewardUtils.statusComment = function (options) {
         ctx.font = RewardUtils.canvasFontString(contentFontSize, Lato, "bold");
         ctx.fillStyle = contentFontColor;
         ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
-        var bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
         ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
 
         // Draw codebounty plug and link (align right)
         ctx.textAlign = "right";
-        ctx.fillStyle = posterFontColor;
+        ctx.fillStyle = footerFontColor;
         ctx.font = RewardUtils.canvasFontString(posterFontSize, Lato);            
         var posterUser = "Posted by " + formatter.getUserName();
         ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
-
-        ctx.fillStyle = footerFontColor;
-        ctx.font = RewardUtils.canvasFontString(footerSmallerFontSize, Lato);
-        var siteLink = "codebounty.co";
-        ctx.fillText(siteLink, footerOriginX, siteLinkOriginY);
         ctx.textAlign = "left";
 
         // Draw claimed by text
