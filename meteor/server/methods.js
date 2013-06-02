@@ -48,6 +48,7 @@ Meteor.methods({
     "setupReceiverAddress": function (receiverAddress, redirect) {
         var fut = new Future();
         var userId = this.userId;
+        var user = Meteor.user();
         
         Fiber(function () {
             
@@ -59,28 +60,31 @@ Meteor.methods({
             if (!registeredAddress) {
                 
                 // We need to get this user's email address.
-                var gitHub = new GitHub(Meteor.user());
+                var gitHub = new GitHub(user);
         
-                gitHub.getUser(function (error, user) {
-                    Bitcoin.ReceiverAddresses.insert({ userId: this.userId,
-                        email: user.email, address: receiverAddress});
-                    
-                    Fiber(function () {
-                        // See if we set up a temporary address for this user and
-                        // forward any BTC in it to their receiving address.
-                        Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
-                            
-                            if (address) {
-                                Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
+                Fiber(function () {
+                    gitHub.getUser(function (error, user) {
+                        Fiber(function () {
+                            Bitcoin.ReceiverAddresses.insert({ userId: this.userId,
+                                email: user.email, address: receiverAddress});
+                        
+                        
+                            // See if we set up a temporary address for this user and
+                            // forward any BTC in it to their receiving address.
+                            Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
                                 
-                                    if (received) {
-                                        Bitcoin.Client.sendToAddress(receiverAddress, received);
-                                    }
-                                });
-                            }
-                        });
-                    }).run();
-                });
+                                if (address) {
+                                    Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
+                                    
+                                        if (received) {
+                                            Bitcoin.Client.sendToAddress(receiverAddress, received);
+                                        }
+                                    });
+                                }
+                            });
+                        }).run();
+                    });
+                }).run();
             }
             fut.ret(redirect);
         }).run();
