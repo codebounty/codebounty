@@ -331,7 +331,7 @@ BitcoinFund.prototype.initiatePreapproval = function (reward, funder, callback) 
                     var cancel = rootUrl + "cancelFunds?id=" + that._id;
                     var confirm = rootUrl + "confirmFunds?id=" + that._id;
 
-                    var issue = GitHubUtils.getIssue(reward.issueUrl);
+                    var issue = GitHubUtils.issue(reward.issueUrl);
                     var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
                     var address = Bitcoin.addressForIssue(reward.issueUrl);
                     
