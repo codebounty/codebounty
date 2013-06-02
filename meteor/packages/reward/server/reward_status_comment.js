@@ -370,5 +370,74 @@ RewardUtils.statusComment = function (options) {
         return canvas;
     }
 
+    if (status === "expired" || status === "refunded") {
+        var statusHeader;
+
+        if (status === "expired") {
+            statusHeader = "BOUNTY EXPIRED";
+        } else if (status === "refunded") {
+            statusHeader = "BOUNTY REFUNDED";
+        }
+
+        // Setup styles
+        var headerFontColor = DARK_GREY,
+            dateFontColor = LIGHT_GREY,
+            posterFontColor = LIGHT_GREY;
+
+        var headerFontSize = LARGE,
+            dateFontSize = MEDIUM,
+            posterFontSize = SMALL;
+
+        //
+        // Align elements
+        //
+
+        // Status Header
+        var statusHeaderOriginX = 24;
+        var statusHeaderOriginY = 70;
+
+        // Expire / Refund date
+        var bountyDateOriginX = statusHeaderOriginX;
+        var bountyDateOriginY = statusHeaderOriginY + 41;
+
+        // Poster
+        var posterOriginX = statusHeaderOriginX;
+        var posterOriginY = height - 20;
+
+        // Antagonist
+        var antagonistOriginX = 345;
+        var antagonistOriginY = 30;
+
+        //
+        // Draw elements
+        //
+
+        // Draw Status Header
+        ctx.font = RewardUtils.canvasFontString(headerFontSize, woodshop);
+        ctx.fillStyle = headerFontColor;
+        ctx.fillText(statusHeader, statusHeaderOriginX, statusHeaderOriginY);
+
+        // Draw date
+        ctx.font = RewardUtils.canvasFontString(dateFontSize, Lato, "bold");
+        ctx.fillStyle = dateFontColor;
+        var expiredDateText = "on " + Tools.formatDate(options.expiredDate, true);
+        ctx.fillText(expiredDateText, bountyDateOriginX, bountyDateOriginY);
+
+        // Draw poster
+        ctx.font = RewardUtils.canvasFontString(posterFontSize, Lato);
+        ctx.fillStyle = posterFontColor;
+        var posterText = formatter.getRewardAmount() + " posted by " + formatter.getUserName();
+        ctx.fillText(posterText, posterOriginX, posterOriginY);
+
+        // Draw Antagonist
+        var antagonistImageFile = "antagonist.png";
+        var antagonistImage = new Image();
+        antagonistImage.src = fs.readFileSync(RewardUtils.assetFile(antagonistImageFile));
+        ctx.textAlign = "right";
+        ctx.drawImage(antagonistImage, antagonistOriginX, antagonistOriginY);
+
+        return canvas;
+    }
+
     throw "Unknown bounty status";
 };
