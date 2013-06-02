@@ -27,7 +27,7 @@ OS X / Linux / Ubuntu
         testnet=1
         server=1
 
-Check out [Bitcoin.org](http://bitcoin.org/en/download) for the Bitcoin binaries, and check out the [Bitcoin wiki](https://en.bitcoin.it/wiki/Data_directory) for information on how to find your bitcoin.conf file.
+Check out [Bitcoin.org](http://bitcoin.org/en/download) for the Bitcoin binaries, and check out the [Bitcoin wiki](https://en.bitcoin.it/wiki/Data_directory) for information on how to find your bitcoin.conf file. To install bitcoind on mac: `sudo port install bitcoin`.
 
 ###Run Project
 
