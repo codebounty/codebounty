@@ -357,7 +357,7 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
 GitHub.prototype.getUser = function (callback) {
     var that = this;
     that._conditionalCrawlAndCache("User.get", {
-        user: that._userGitHub.username
+        user: AuthUtils.username(that.user)
     }, false, function (error, result) {
         callback(error, !error ? result.data[0] : undefined);
     });
