@@ -71,6 +71,22 @@ RewardUtils.cashLevel = function (amount, currency) {
         return 4;
     }
 
+    if (currency === "btc") {
+        if (amount < 0.04)
+            return 0;
+
+        if (amount <= 0.15 && amount < 0.4)
+            return 1;
+
+        if (0.4 <= amount && amount < 0.8)
+            return 2;
+
+        if (0.8 <= amount && amount < 2)
+            return 3;
+
+        return 4;
+    }
+
     throw currency + " not implemented";
 };
 
