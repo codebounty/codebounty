@@ -61,7 +61,6 @@ Meteor.Router.add("/badge/:user/:repo", function (user, repo) {
 
 //the paypal IPN callback
 //https://www.x.com/developers/paypal/documentation-tools/ipn/integration-guide/IPNIntro
-//http://jsfiddle.net/zkcb6/1/
 Meteor.Router.add("/ipn", function () {
     PayPal.verify(this.request, this.response, function (error, params) {
         if (error)
@@ -96,25 +95,23 @@ Meteor.Router.add("/ipn", function () {
     return [200];
 });
 
-// The Blockchain.info IPN callback.
-// http://blockchain.info/api/api_receive
+// The Blockchain.info IPN callback - http://blockchain.info/api/api_receive
+// test with http://jsfiddle.net/jperl/KzAjx/
 Meteor.Router.add("/bitcoin-ipn", function () {
     var fut = new Future();
-    
+
     Bitcoin.verify(this.request, this.response, function (error, params) {
         if (error)
             throw error;
-            
+
         if (params.confirmations >= Bitcoin.Settings.minimumConfirmations) {
             Fiber(function () {
                 var reward = Rewards.findOne({
-                    funds: { $elemMatch:
-                        { address: params.destination_address,
-                          proxyAddress: params.input_address
-                        }
+                    funds: {
+                        $elemMatch: { proxyAddress: params.input_address }
                     }
                 });
-                
+
                 if (!reward) {
                     error = "BitcoinFund approved but not found " + EJSON.stringify(params);
                     throw error;
@@ -125,7 +122,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                 });
                 bitcoinFund.confirm(reward, params);
             }).run();
-            
+
             // To prevent Blockchain.info from continually resending the transaction.
             fut.ret([200, "*ok*"]);
         } else {
@@ -134,6 +131,6 @@ Meteor.Router.add("/bitcoin-ipn", function () {
             fut.ret([200]);
         }
     });
-    
+
     return fut.wait();
 });

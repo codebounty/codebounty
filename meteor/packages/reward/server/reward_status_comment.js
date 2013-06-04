@@ -40,19 +40,18 @@ RewardFormatter.prototype._limitStringLength = function (string, maxCharacter) {
 
 RewardFormatter.prototype._formatCurrency = function (amount) {
     if (this.options.currency === "usd") {
-        if (amount > 999999999) {
+        if (amount > 999999999)
             return "$" + parseFloat((amount / 1000000000).toFixed(2)) + "B";
-        }
 
-        if (amount > 999999) {
+        if (amount > 999999)
             return "$" + parseFloat((amount / 1000000).toFixed(2)) + "M";
-        }
 
-        if (amount > 999) {
+        if (amount > 999)
             return "$" + parseFloat((amount / 1000).toFixed(2)) + "K";
-        }
 
         return "$" + parseFloat(amount.toFixed(2));
+    } else if (this.options.currency === "btc") {
+        return amount + " BTC";
     } else {
         throw this.options.currency + " not implemented";
     }
@@ -61,7 +60,7 @@ RewardFormatter.prototype._formatCurrency = function (amount) {
 
 RewardFormatter.prototype.getRewardAmount = function () {
     var rewardAmount = this._formatCurrency(this.options.amount);
-    
+
     return rewardAmount;
 };
 
@@ -80,7 +79,7 @@ RewardFormatter.prototype.getClaimers = function (limit) {
 
     for (i = 0; i < max; i++) {
         claimer = this._limitStringLength(this.options.claimedBy[i].userName,
-                  this.CONFIGS.CLAIMER_USER_NAME_MAX_CHARACTER);
+            this.CONFIGS.CLAIMER_USER_NAME_MAX_CHARACTER);
         amount = this._formatCurrency(this.options.claimedBy[i].amount);
 
         claimers.push({"claimer": claimer, "amount": amount});
@@ -254,7 +253,7 @@ RewardUtils.statusComment = function (options) {
         // Draw codebounty plug and link (align right)
         ctx.textAlign = "right";
         ctx.fillStyle = footerFontColor;
-        ctx.font = RewardUtils.canvasFontString(posterFontSize, Lato);            
+        ctx.font = RewardUtils.canvasFontString(posterFontSize, Lato);
         var posterUser = "Posted by " + formatter.getUserName();
         ctx.fillText(posterUser, footerOriginX, posterUserOriginY);
         ctx.textAlign = "left";
@@ -262,15 +261,15 @@ RewardUtils.statusComment = function (options) {
         // Draw claimed by text
         if (status === "closed" && options.claimedBy) {
             drawClaimers(ctx,
-                         footerFontColor,
-                         RewardUtils.canvasFontString(footerFontSize, Lato),
-                         formatter.getClaimers(),
-                         {
-                            "claimerX": claimedByPersonOriginX,
-                            "claimerY": claimedByPersonOriginY,
-                            "amountX": claimedByAmountOriginX,
-                            "amountY": claimedByPersonOriginY
-                         });
+                footerFontColor,
+                RewardUtils.canvasFontString(footerFontSize, Lato),
+                formatter.getClaimers(),
+                {
+                    "claimerX": claimedByPersonOriginX,
+                    "claimerY": claimedByPersonOriginY,
+                    "amountX": claimedByAmountOriginX,
+                    "amountY": claimedByPersonOriginY
+                });
         }
 
         // Draw bounty status image

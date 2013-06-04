@@ -19,8 +19,8 @@ BitcoinFund = function (options) {
 
     Fund.call(this, options);
 
-    this.userId = options.userId;
     this.address = options.address;
+    this.userId = options.userId;
     this.proxyAddress = options.proxyAddress;
 };
 
@@ -32,13 +32,14 @@ BitcoinFund.prototype.clone = function () {
     var that = this;
     return new BitcoinFund({
         _id: EJSON.clone(that._id),
-        userId: EJSON.clone(that.userId),
+        address: that.address,
         amount: that.amount,
+        approved: that.approved,
         currency: that.currency,
         details: that.details,
         expires: that.expires,
-        address: that.address,
-        proxyAdress: that.proxyAddress
+        proxyAddress: that.proxyAddress,
+        userId: EJSON.clone(that.userId)
     });
 };
 
@@ -46,8 +47,7 @@ BitcoinFund.prototype.equals = function (other) {
     if (!(other instanceof BitcoinFund))
         return false;
 
-    return this.userId == other.userId && this.currency === other.currency &&
-        this.address === other.address && this.proxyAddress === other.proxyAddress;
+    return _.isEqual(this, other);
 };
 
 BitcoinFund.prototype.typeName = function () {
@@ -58,14 +58,15 @@ BitcoinFund.prototype.toJSONValue = function () {
     var that = this;
     return {
         _id: that._id,
-        userId: that.userId,
+        address: that.address,
         amount: that.amount.toString(),
+        approved: that.approved,
         currency: that.currency,
         details: that.details,
         expires: that.expires,
-        address: that.address,
+        processor: that.processor,
         proxyAddress: that.proxyAddress,
-        processor: that.processor
+        userId: that.userId
     };
 };
 
@@ -99,13 +100,6 @@ BitcoinFund.prototype.initiatePreapproval = function (reward, funder, callback) 
                     { email: user.email });
 
                 if (receivingAddress) {
-
-                    var rootUrl = Meteor.settings["ROOT_URL"];
-                    var cancel = rootUrl + "cancelFunds?id=" + that._id;
-                    var confirm = rootUrl + "confirmFunds?id=" + that._id;
-
-                    var issue = GitHubUtils.issue(reward.issueUrl);
-                    var description = that.amount.toString() + " BTC bounty for Issue #" + issue.number + " in " + issue.repo.name;
                     var address = Bitcoin.addressForIssue(reward.issueUrl);
 
                     that.address = address.address;
@@ -179,13 +173,19 @@ BitcoinFund.prototype.cancel = function (reward) {
  */
 BitcoinFund.prototype.confirm = function (reward, params) {
     var that = this;
-    that.amount = that.amount.plus(Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN))); // Value is passed as number of satoshi.
+
+    var firstApproval = !that.approved;
+
+    that.amount = that.amount.plus(Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN))); // Value is passed as number of satoshi
+    that.approved = true;
 
     //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
     //after new funds are approved distribute the reward equally among all the contributors
     reward.distributeEqually();
     Rewards.update(reward._id, reward.toJSONValue());
-    reward.fundApproved();
+
+    if (firstApproval)
+        reward.fundApproved();
 };
 
 /**
