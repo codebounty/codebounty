@@ -196,24 +196,24 @@ Meteor.methods({
         issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
-        Meteor.call("getRewards", issueUrl, function (err, rewards) {
+        Meteor.call("getReward", issueUrl, function (err, reward) {
             if (err)
                 throw err;
 
-            fut.ret(rewards.length > 0);
+            fut.ret(!!reward);
         });
 
         return fut.wait();
     },
 
     /**
-     * Get the rewards that can be manually rewarded by the current user
+     * Get the most valuable reward that can be manually rewarded by the current user
      * for the issue url which have contributors
      * @param issueUrl
      * @param {boolean} [byAdmin] If this was initiated by an admin
-     * @returns {Array.<Reward>}
+     * @returns {Reward}
      */
-    "getRewards": function (issueUrl, byAdmin) {
+    "getReward": function (issueUrl, byAdmin) {
         var user = Meteor.user();
         AuthUtils.requireAuthorization(user, byAdmin ? "admin" : null);
 
@@ -234,9 +234,16 @@ Meteor.methods({
         RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
             if (contributorsEmails && contributorsEmails.length > 0) {
                 var clientRewards = _.map(rewards, RewardUtils.clientReward);
-                fut.ret(clientRewards);
+
+                //order by size
+                clientRewards = _.sortBy(clientRewards, function (reward) {
+                    return parseFloat(BigUtils.sum(reward.availableFundAmounts()).toString());
+                });
+
+                //return the largest one
+                fut.ret(clientRewards.length > 0 ? _.last(clientRewards) : null);
             } else
-                fut.ret([]);
+                fut.ret(null);
         });
 
         return fut.wait();

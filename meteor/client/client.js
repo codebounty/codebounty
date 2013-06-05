@@ -93,13 +93,11 @@ Meteor.Router.add({
         Session.set("url", url);
 
         var admin = window.url("?admin");
-        Meteor.call("getRewards", url, admin, function (error, result) {
+        Meteor.call("getReward", url, admin, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
 
-            //TODO change this to accept multiple rewards
-            var reward = result[0];
-            Session.set("reward", reward);
+            Session.set("reward", result);
         });
 
         return "rewardView";
