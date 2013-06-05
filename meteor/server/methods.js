@@ -44,38 +44,38 @@ Meteor.methods({
 
         return fut.wait();
     },
-    
+
     "setupReceiverAddress": function (receiverAddress, redirect) {
         var fut = new Future();
         var userId = this.userId;
         var user = Meteor.user();
-        
+
         Fiber(function () {
-            
+
             var registeredAddress = Bitcoin.ReceiverAddresses.findOne(
                 { userId: userId });
-            
+
             // Make sure an address has not been assigned to this user
             // before assigning one.
             if (!registeredAddress) {
-                
+
                 // We need to get this user's email address.
                 var gitHub = new GitHub(user);
-        
+
                 Fiber(function () {
                     gitHub.getUser(function (error, user) {
                         Fiber(function () {
                             Bitcoin.ReceiverAddresses.insert({ userId: this.userId,
                                 email: user.email, address: receiverAddress});
-                        
-                        
+
+
                             // See if we set up a temporary address for this user and
                             // forward any BTC in it to their receiving address.
                             Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
-                                
+
                                 if (address) {
                                     Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
-                                    
+
                                         if (received) {
                                             Bitcoin.Client.sendToAddress(receiverAddress, received);
                                         }
@@ -88,8 +88,8 @@ Meteor.methods({
             }
             fut.ret(redirect);
         }).run();
-    
-        
+
+
         return fut.wait();
     },
 
@@ -146,9 +146,11 @@ Meteor.methods({
             throw currency + " is an invalid currency";
 
         // Specifying fund amount before funds are actually received
-        // is not supported by the Bitcoin flow.
+        // is not supported by the Bitcoin flow
         if (currency == "usd") {
             amount = new Big(amount);
+            if (amount.cmp(ReceiverUtils.minimum("usd")) < 0)
+                throw "Cannot add less than the minimum funds";
         } else if (currency == "btc") {
             amount = new Big(0);
         }
@@ -239,15 +241,15 @@ Meteor.methods({
 
         return fut.wait();
     },
-    
+
     /**
      * Take an issue and return the user's Bitcoin address for it.
      * @param url the url to return an address for
      * @returns {String}
      */
-     "btcAddressForIssue": function (url) {
+    "btcAddressForIssue": function (url) {
         return Bitcoin.addressForIssue(this.userId, url).proxyAddress;
-     },
+    },
 
     /**
      * used by admins to hold a reward until a dispute is resolved
