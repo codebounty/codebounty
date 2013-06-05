@@ -20,15 +20,6 @@ Meteor.publish("totalReward", function (issueUrl) {
                 if (!initializing) //need to wait until it is added
                     subscription.changed("totalReward", docId, {amount: totalReward.toString()});
             },
-            //having an issue with Fund.amount getting cloned incorrectly / meteor not using the .clone method?
-//            changed: function (reward, oldReward) {
-//                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
-//                var lastTotalBounties = BigUtils.sum(oldReward.availableFundAmounts());
-//                var addedReward = totalBounties.minus(lastTotalBounties);
-//                totalReward = totalReward.plus(addedReward);
-//
-//                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
-//            },
             removed: function (reward) {
                 var totalBounties = BigUtils.sum(reward.availableFundAmounts());
                 totalReward = totalReward.minus(totalBounties);
@@ -203,7 +194,6 @@ Meteor.setInterval(function () {
             //has an expired fund
             { funds: { $elemMatch: { expires: { $lt: new Date() } } } }
         ]
-
     }, {
         limit: 50
     }).fetch();
