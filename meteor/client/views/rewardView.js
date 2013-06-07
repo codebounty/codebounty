@@ -125,18 +125,21 @@ Template.rewardView.events({
 
     "click .rewardButton": function () {
         var url = Session.get("url");
+        var admin = window.url("?admin");
+        var reason = window.url("?reason");
+        if (reason)
+            reason = decodeURIComponent(reason);
 
         $.blockUI();
-        Meteor.call("reward", reward(), function (error, success) {
+        Meteor.call("reward", reward(), admin, reason, function (error, success) {
             $.unblockUI();
             Messenger.send({event: "closeOverlay"});
             if (!ErrorUtils.handle(error)) {
                 return;
             }
 
-            if (success) {
+            if (success)
                 Messenger.send({event: "bountyRewarded"});
-            }
         });
     },
 

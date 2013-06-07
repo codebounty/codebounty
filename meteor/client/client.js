@@ -1,29 +1,25 @@
-//TODO before publish: remove Bounties / Responses / rewards, packages: autosubscribe and insecure
-Bounties = new Meteor.Collection("bounties");
-Responses = new Meteor.Collection("responses");
-Rewards = new Meteor.Collection("rewards");
-
 Meteor.Router.add({
     //admin dashboard
     "/admin": function () {
         return "adminView";
     },
     "/admin/rewards": function () {
+        Messenger.listen(Messenger.target.application);
         return "adminRewardsView";
     },
     "/admin/users": function () {
         return "adminUsersView";
     },
-   
+
     // Bitcoin setup
     "/btcAddressForIssue": function () {
         var url = window.url;
     },
-    
+
     "/setupReceiverAddress": function () {
         var redirect = window.url("?redirect");
         var address = window.url("?receiverAddress");
-        
+
         Meteor.call("setupReceiverAddress", address, redirect,
             function (error, result) {
                 window.location.href = decodeURIComponent(result);
@@ -32,6 +28,9 @@ Meteor.Router.add({
 
     //funds
     "/addFunds": function () {
+        if (Meteor.loggingIn())
+            return "loadingView";
+
         var amount = window.url("?amount");
         var url = window.url("?url");
         var currency = window.url("?currency");
@@ -39,7 +38,7 @@ Meteor.Router.add({
         Meteor.call("addFunds", amount, currency, url, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
-            
+
             if (currency == "usd") {
                 window.location.href = result;
             } else if (currency == "btc") {
@@ -54,6 +53,9 @@ Meteor.Router.add({
         }
     },
     "/cancelFunds": function () {
+        if (Meteor.loggingIn())
+            return "loadingView";
+
         var id = window.url("?id");
 
         Meteor.call("cancelFunds", id, function (error) {
@@ -73,32 +75,34 @@ Meteor.Router.add({
     //used by a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {
         var url = window.url("?url");
+        Messenger.listen(Messenger.target.plugin);
         RewardUtils.trackTotal(url);
 
         AuthUtils.afterLogin(function () {
-            Messenger.listen();
-            Messenger.send({event: "authenticated"});
+            Messenger.send({ event: "authenticated" }, Messenger.target.plugin);
         });
 
         return "messengerView";
     },
 
     "/reward": function () {
+        if (Meteor.loggingIn())
+            return "loadingView";
+
         var url = window.url("?url");
         Session.set("url", url);
 
-        Meteor.call("getRewards", url, function (error, result) {
+        var admin = window.url("?admin");
+        Meteor.call("getReward", url, admin, function (error, result) {
             if (!ErrorUtils.handle(error))
                 return;
 
-            //TODO change this to accept multiple rewards
-            var reward = result[0];
-            Session.set("reward", reward);
+            Session.set("reward", result);
         });
 
         return "rewardView";
     },
-    
+
     "/logout": function () {
         Meteor.logout();
         window.close();
