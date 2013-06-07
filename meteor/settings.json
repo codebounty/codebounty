@@ -2,8 +2,8 @@
     "BITCOIN_CLIENT": {
         "host": "localhost",
         "port": 18332,
-        "username": "oldgregg",
-        "password": "4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ"
+        "user": "oldgregg",
+        "pass": "4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ"
     },
     "BITCOIN_SECRET": "moEcxlV1bvVaXIqvAQ1NwF5ZtdMJeyrET5rRQtaWi32Qez3y82nEvEssDLw2Qq5",
     "GITHUB_CLIENTID": "a2087b445e1e1493bb7b",
