@@ -4,7 +4,7 @@ Meteor.publish("totalReward", function (issueUrl) {
 
     var subscription = this;
     var docId = Meteor.uuid();
-    var totalReward = new Big(0);
+    var totalReward = { usd: new Big(0), btc: new Big(0) };
     var initializing = true;
 
     var handle = Rewards.find({
@@ -15,10 +15,13 @@ Meteor.publish("totalReward", function (issueUrl) {
     }).observe({
             added: function (reward) {
                 var totalBounties = BigUtils.sum(reward.availableFundAmounts());
-                totalReward = totalReward.plus(totalBounties);
+                totalReward[reward.currency] = totalReward[reward.currency].plus(totalBounties);
 
                 if (!initializing) //need to wait until it is added
-                    subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+                    subscription.changed("totalReward", docId, {
+                        usd: totalReward.usd.toString(),
+                        btc: totalReward.btc.toString()
+                    });
             },
             //having an issue with Fund.amount getting cloned incorrectly / meteor not using the .clone method?
 //            changed: function (reward, oldReward) {
@@ -31,14 +34,20 @@ Meteor.publish("totalReward", function (issueUrl) {
 //            },
             removed: function (reward) {
                 var totalBounties = BigUtils.sum(reward.availableFundAmounts());
-                totalReward = totalReward.minus(totalBounties);
+                totalReward[reward.currency] = totalReward[reward.currency].minus(totalBounties);
 
-                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
+                subscription.changed("totalReward", docId, {
+                    usd: totalReward.usd.toString(),
+                    btc: totalReward.btc.toString()
+                });
             }
         });
 
     initializing = false;
-    subscription.added("totalReward", docId, {amount: totalReward.toString()});
+    subscription.added("totalReward", docId, {
+        usd: totalReward.usd.toString(),
+        btc: totalReward.btc.toString()
+    });
     subscription.ready();
 
     // turn off observe when client unsubscribes
