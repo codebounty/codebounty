@@ -28,6 +28,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             reward.addFund(amount, user, callback);
 
             Fiber(function () {
+                //TODO REPLACE WITH SPECIFIC UPDATE
                 Rewards.update(reward._id, reward.toJSONValue());
             }).run();
 
@@ -38,6 +39,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             currency: currency,
             funds: [],
             issueUrl: issueUrl,
+            log: [],
             receivers: [],
             status: "open",
             userId: user._id
@@ -64,6 +66,22 @@ RewardUtils.cashLevel = function (amount, currency) {
             return 2;
 
         if (100 <= amount && amount < 250)
+            return 3;
+
+        return 4;
+    }
+
+    if (currency === "btc") {
+        if (amount < 0.04)
+            return 0;
+
+        if (amount <= 0.15 && amount < 0.4)
+            return 1;
+
+        if (0.4 <= amount && amount < 0.8)
+            return 2;
+
+        if (0.8 <= amount && amount < 2)
             return 3;
 
         return 4;
@@ -136,7 +154,8 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                     reward.updateReceivers(contributorsEmails);
                     reward.lastSync = new Date();
 
-                    Rewards.update({_id: reward._id}, reward.toJSONValue());
+                    //TODO REPLACE WITH SPECIFIC UPDATE
+                    Rewards.update(reward._id, reward.toJSONValue());
 
                     reward.checkStatus(issueEvents);
                 });

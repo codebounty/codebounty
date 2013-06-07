@@ -23,15 +23,6 @@ Meteor.publish("totalReward", function (issueUrl) {
                         btc: totalReward.btc.toString()
                     });
             },
-            //having an issue with Fund.amount getting cloned incorrectly / meteor not using the .clone method?
-//            changed: function (reward, oldReward) {
-//                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
-//                var lastTotalBounties = BigUtils.sum(oldReward.availableFundAmounts());
-//                var addedReward = totalBounties.minus(lastTotalBounties);
-//                totalReward = totalReward.plus(addedReward);
-//
-//                subscription.changed("totalReward", docId, {amount: totalReward.toString()});
-//            },
             removed: function (reward) {
                 var totalBounties = BigUtils.sum(reward.availableFundAmounts());
                 totalReward[reward.currency] = totalReward[reward.currency].minus(totalBounties);
@@ -63,6 +54,7 @@ Rewards = new Meteor.Collection("rewards", {
 
 /**
  * @param {Big} amount
+ * @param funder
  * @param {Function} callback (fundingUrl)
  */
 Reward.prototype.addFund = function (amount, funder, callback) {
@@ -75,23 +67,28 @@ Reward.prototype.addFund = function (amount, funder, callback) {
     } else if (that.currency === "btc") {
         fundClass = BitcoinFund;
     }
-    
+
     var fund = new fundClass({
         amount: amount,
         currency: that.currency,
         expires: expires
     });
     fund.initiatePreapproval(that, funder, callback);
-    
-    // See if a fund matching the new fund already exists.
-    // If one does, don't bother adding the new fund to the reward object.
-    // If one doesn't, add the new fund to this Reward object.
-    var fundExists = _.some(that.funds, function (_fund) {
-        return fund.equals(_fund);
-    });
-    
-    if (!fundExists && fund.userId != null) {
+
+    if (that.currency === "usd") {
         that.funds.push(fund);
+    }
+    else if (that.currency === "btc") {
+        // See if a fund matching the new fund already exists.
+        // If one does, don't bother adding the new fund to the reward object.
+        // If one doesn't, add the new fund to this Reward object.
+        var fundExists = _.some(that.funds, function (_fund) {
+            return fund.equals(_fund);
+        });
+
+        if (!fundExists && fund.userId != null) {
+            that.funds.push(fund);
+        }
     }
 };
 
@@ -202,11 +199,10 @@ Meteor.setInterval(function () {
     var expiredRewards = Rewards.find({
         $and: [
             //eligible to be rewarded
-            { status: { $in: ["open", "reopened"] } },
+            { status: { $in: ["open", "reopened", "held"] } },
             //has an expired fund
             { funds: { $elemMatch: { expires: { $lt: new Date() } } } }
         ]
-
     }, {
         limit: 50
     }).fetch();

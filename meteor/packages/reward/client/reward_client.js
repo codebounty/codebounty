@@ -4,12 +4,12 @@ TotalReward = new Meteor.Collection("totalReward");
 RewardUtils.trackTotal = function (url) {
     TotalReward.find().observe({
         added: function (total) {
-            Messenger.send(
-                { event: "rewardChanged", usd: total.usd, btc: total.btc });
+            Messenger.send({ event: "rewardChanged", usd: total.usd, btc: total.btc },
+                Messenger.target.plugin);
         },
         changed: function (total) {
-            Messenger.send(
-                { event: "rewardChanged", usd: total.usd, btc: total.btc });
+            Messenger.send({ event: "rewardChanged", usd: total.usd, btc: total.btc },
+                Messenger.target.plugin);
         }
     });
 

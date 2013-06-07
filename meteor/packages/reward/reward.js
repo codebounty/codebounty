@@ -26,10 +26,12 @@ RewardUtils.fromJSONValue = function (value) {
 
     var options = {
         _id: value._id,
+        _expires: value._expires,
         currency: value.currency,
         funds: funds,
         issueUrl: value.issueUrl,
         lastSync: value.lastSync,
+        log: value.log,
         payout: value.payout,
         receivers: receivers,
         status: value.status,
@@ -45,11 +47,11 @@ RewardUtils.fromJSONValue = function (value) {
 
 /**
  * Reward for an issue
- * @param {{_id: string=, currency: string, funds: Array.<Fund>, issueUrl: string, lastSync: Date=,
+ * @param {{_id: string=, currency: string, funds: Array.<Fund>, issueUrl: string, lastSync: Date=, log: Array.<string>,
  *          payout: {by: string, on: Date}=, receivers: Array.<Receiver>, status: string, userId: string}} options
  * - _id, lastSync, and payout are optional, they will only be set on existing rewards
  * - currency Ex. "btc", "usd"
- * - status Ex. "open", "reopened", "initiated", "paid", "hold"
+ * - status Ex. "expired", "held", "initiated", "open", "paid", "paying", "refunded", "reopened"
  * @constructor
  */
 Reward = function (options) {
@@ -58,7 +60,7 @@ Reward = function (options) {
             throw requiredProperty + " is required";
     });
 
-    if (!_.contains(["open", "expired", "initiated", "paying", "paid", "reopened", "hold"], options.status))
+    if (!_.contains(["expired", "held", "initiated", "open", "paid", "paying", "refunded", "reopened"], options.status))
         throw options.status + " is not a valid reward status name";
 
     //generate one
@@ -71,10 +73,15 @@ Reward = function (options) {
     if (options._availableFundAmounts)
         this._availableFundAmounts = options._availableFundAmounts;
 
+    //for the client
+    if (options._expires)
+        this._expires = options._expires;
+
     this.currency = options.currency;
     this.funds = options.funds;
     this.issueUrl = options.issueUrl;
     this.lastSync = options.lastSync;
+    this.log = options.log;
     this.payout = options.payout;
     this.receivers = options.receivers;
     this._receiversDep = new Deps.Dependency;
@@ -108,6 +115,7 @@ Reward.prototype = {
             funds: clonedFunds,
             issueUrl: that.issueUrl,
             lastSync: that.lastSync,
+            log: that.log,
             payout: that.payout,
             receivers: clonedReceivers,
             status: that.status,
@@ -125,10 +133,10 @@ Reward.prototype = {
             return false;
 
         var that = this;
-        return that.currency === other.currency && that.issueUrl === other.issueUrl && _.isEqual(that.status, other.status)
-            && _.isEqual(that.payout, other.payout) && that.userId === other.userId &&
-            Tools.arraysAreEqual(that.funds, other.funds) &&
-            Tools.arraysAreEqual(that.receivers, other.receivers);
+        return that.currency === other.currency && that.issueUrl === other.issueUrl &&
+            _.isEqual(that.log, other.log) && _.isEqual(that.status, other.status) &&
+            _.isEqual(that.payout, other.payout) && that.userId === other.userId &&
+            Tools.arraysAreEqual(that.funds, other.funds) && Tools.arraysAreEqual(that.receivers, other.receivers);
     },
 
     typeName: function () {
@@ -151,6 +159,7 @@ Reward.prototype = {
             funds: funds,
             issueUrl: that.issueUrl,
             lastSync: that.lastSync,
+            log: that.log,
             payout: that.payout,
             receivers: receivers,
             status: that.status,
@@ -162,6 +171,9 @@ Reward.prototype = {
             json._availableFundAmounts = _.map(that._availableFundAmounts, function (amount) {
                 return amount.toString()
             });
+
+        //for the client
+        json._expires = that.expires();
 
         return json;
     }
@@ -198,7 +210,14 @@ Reward.prototype.expires = function () {
         return fund.expires;
     }));
 
-    return lastExpiration.expires;
+    if (lastExpiration)
+        return lastExpiration.expires;
+
+    //for the client
+    if (this._expires)
+        return this._expires;
+
+    return null;
 };
 
 Reward.prototype.fee = function () {

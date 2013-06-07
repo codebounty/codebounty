@@ -44,38 +44,38 @@ Meteor.methods({
 
         return fut.wait();
     },
-    
+
     "setupReceiverAddress": function (receiverAddress, redirect) {
         var fut = new Future();
         var userId = this.userId;
         var user = Meteor.user();
-        
+
         Fiber(function () {
-            
+
             var registeredAddress = Bitcoin.ReceiverAddresses.findOne(
                 { userId: userId });
-            
+
             // Make sure an address has not been assigned to this user
             // before assigning one.
             if (!registeredAddress) {
-                
+
                 // We need to get this user's email address.
                 var gitHub = new GitHub(user);
-        
+
                 Fiber(function () {
                     gitHub.getUser(function (error, user) {
                         Fiber(function () {
                             Bitcoin.ReceiverAddresses.insert({ userId: this.userId,
                                 email: user.email, address: receiverAddress});
-                        
-                        
+
+
                             // See if we set up a temporary address for this user and
                             // forward any BTC in it to their receiving address.
                             Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
-                                
+
                                 if (address) {
                                     Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
-                                    
+
                                         if (received) {
                                             Bitcoin.Client.sendToAddress(receiverAddress, received);
                                         }
@@ -88,8 +88,8 @@ Meteor.methods({
             }
             fut.ret(redirect);
         }).run();
-    
-        
+
+
         return fut.wait();
     },
 
@@ -146,9 +146,11 @@ Meteor.methods({
             throw currency + " is an invalid currency";
 
         // Specifying fund amount before funds are actually received
-        // is not supported by the Bitcoin flow.
+        // is not supported by the Bitcoin flow
         if (currency == "usd") {
             amount = new Big(amount);
+            if (amount.cmp(ReceiverUtils.minimum("usd")) < 0)
+                throw "Cannot add less than the minimum funds";
         } else if (currency == "btc") {
             amount = new Big(0);
         }
@@ -194,76 +196,136 @@ Meteor.methods({
         issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
-        Meteor.call("getRewards", issueUrl, function (err, rewards) {
+        Meteor.call("getReward", issueUrl, function (err, reward) {
             if (err)
                 throw err;
 
-            fut.ret(rewards.length > 0);
+            fut.ret(!!reward);
         });
 
         return fut.wait();
     },
 
     /**
-     * Get the rewards that can be manually rewarded by the current user
+     * Get the most valuable reward that can be manually rewarded by the current user
      * for the issue url which have contributors
      * @param issueUrl
-     * @returns {Array.<Reward>}
+     * @param {boolean} [byAdmin] If this was initiated by an admin
+     * @returns {Reward}
      */
-    "getRewards": function (issueUrl) {
+    "getReward": function (issueUrl, byAdmin) {
         var user = Meteor.user();
-        AuthUtils.requireAuthorization(user);
+        AuthUtils.requireAuthorization(user, byAdmin ? "admin" : null);
 
         issueUrl = Tools.stripHash(issueUrl);
 
         var fut = new Future();
 
         var selector = {
-            userId: user._id,
             //make sure there is an approved not expired fund
             funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
         };
+
+        if (!byAdmin)
+            selector.userId = user._id;
 
         var gitHub = new GitHub(user);
 
         RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
             if (contributorsEmails && contributorsEmails.length > 0) {
                 var clientRewards = _.map(rewards, RewardUtils.clientReward);
-                fut.ret(clientRewards);
+
+                //order by size
+                clientRewards = _.sortBy(clientRewards, function (reward) {
+                    return parseFloat(BigUtils.sum(reward.availableFundAmounts()).toString());
+                });
+
+                //return the largest one
+                fut.ret(clientRewards.length > 0 ? _.last(clientRewards) : null);
             } else
-                fut.ret([]);
+                fut.ret(null);
         });
 
         return fut.wait();
     },
-    
+
     /**
      * Take an issue and return the user's Bitcoin address for it.
      * @param url the url to return an address for
      * @returns {String}
      */
-     "btcAddressForIssue": function (url) {
+    "btcAddressForIssue": function (url) {
         return Bitcoin.addressForIssue(this.userId, url).proxyAddress;
-     },
+    },
 
-    //TODO
     /**
-     * used by moderators to hold a bounties reward until a dispute is resolved
-     * @param id
+     * used by admins to hold a reward until a dispute is resolved
+     * @param {string} id
+     * @param {string} reason
      */
-    "holdReward": function (id) {
+    "holdReward": function (id, reason) {
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user, "admin");
+
+        var logItem = "Reward held on " + new Date().toString() +
+            " by " + user._id + " because " + reason;
+
+        Rewards.update(id, {
+            $set: { status: "held" },
+            $push: { log: logItem }
+        });
+
+        return logItem;
+    },
+
+    /**
+     * used by admins to refund a reward
+     * @param {string} id
+     * @param {string} reason
+     */
+    "refundReward": function (id, reason) {
+        var user = Meteor.user();
+        AuthUtils.requireAuthorization(user, "admin");
+
+        var reward = Rewards.findOne(id);
+        var logItem = reward.refund(user._id, reason);
+
+        Rewards.update(id, {
+            $set: { status: "refunded" },
+            $push: { log: logItem }
+        });
+
+        return logItem;
     },
 
     /**
      * Initiate the reward payout process
      * @param reward
+     * @param {boolean} [byAdmin] If this was initiated by an admin
+     * @param {string} [reason] Required if initiated by an admin
      * @returns true if there is no error
      */
-    "reward": function (reward) {
+    "reward": function (reward, byAdmin, reason) {
         var user = Meteor.user();
-        AuthUtils.requireAuthorization(user);
+        AuthUtils.requireAuthorization(user, byAdmin ? "admin" : null);
 
-        var myReward = Rewards.findOne({_id: reward._id, userId: user._id});
+        var selector = {
+            _id: reward._id
+        };
+        if (!byAdmin)
+            selector.userId = user._id;
+
+        console.log(reason);
+
+        var myReward = Rewards.findOne(selector);
+        if (byAdmin) {
+            var logItem = "Rewarded on " + new Date().toString() +
+                " by " + user._id + " because " + reason;
+
+            Rewards.update(reward._id, {
+                $push: { log: logItem }
+            });
+        }
 
         var fut = new Future();
 
@@ -285,7 +347,7 @@ Meteor.methods({
                     myReceiver.setReward(receiver.amount);
                 });
 
-                myReward.initiatePayout(user._id, function (error, success) {
+                myReward.initiatePayout(byAdmin ? "admin" : user._id, function (error, success) {
                     fut.ret(success);
 
                     if (error)
