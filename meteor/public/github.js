@@ -293,14 +293,15 @@
          * @param amount
          */
         setBountyAmount: function (amount) {
+            console.log(amount);
             ui.render(function () {
                 var text = "Open $" + amount.usd;
                 
                 if (amount.btc > 0) {
-                    text += " + " + amount.btc + " BTC";
+                    text += " + " + amount.btc.substr(0, 4) + " BTC";
                 }
                 
-                $(".state-indicator.open").html();
+                $(".state-indicator.open").html(text);
             }, "setBountyAmount");
         },
 
