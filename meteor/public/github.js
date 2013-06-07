@@ -277,7 +277,10 @@
                     var amount = $("#bountyInput").val();
                     if (ui._validateInput(amount)) {
                         ui.enablePostBounty();
-                        ui.changeBountyStatusIcon(amount);
+                        // TODO: Shouldn't this line change the icon based on
+                        // the *total* bounty size on the issue, not just how
+                        // much the user is deciding to add to it at the moment?
+                        ui.changeBountyStatusIcon({usd: amount, btc: 0});
                     } else {
                         ui.disablePostBounty();
                     }
@@ -322,12 +325,21 @@
          */
         setBountyAmount: function (amount) {
             ui.render(function () {
-                $(".state-indicator.open").html("Open <span class='currencySymbol'>$</span>" + amount);
+                var text = "Open $" + amount.usd;
+                
+                if (amount.btc > 0) {
+                    text += " + " + amount.btc + " BTC";
+                }
+                
+                $(".state-indicator.open").html();
             }, "setBountyAmount");
         },
 
         changeBountyStatusIcon: function () {
             var getCashLevel = function (amount) {
+                // TODO: Make BTC multiplier dynamic based on exchange rate.
+                amount = amount.usd + (amount.btc * 120);
+                
                 if (amount < 20)
                     return 0;
                 else if (20 <= amount && amount < 50)
@@ -354,6 +366,7 @@
                     throw "Unknown cash level.";
             };
             return function (amount) {
+                
                 var cashLevel = getCashLevel(amount);
                 var statusIconUrl = getStatusIconUrl(cashLevel);
                 var statusIcon = $("#statusIcon");
@@ -450,8 +463,8 @@
 
         //synchronize the total bounty reward for this issue, and show it
         events.register("rewardChanged", function (handle, message) {
-            ui.setBountyAmount(message.amount);
-            ui.changeBountyStatusIcon(message.amount);
+            ui.setBountyAmount(message);
+            ui.changeBountyStatusIcon(message);
         });
     });
 })();
