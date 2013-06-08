@@ -19,38 +19,55 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
     var gitHub = new GitHub(user);
 
     RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
-        //TODO try and consolidate them if there are rewards of the same currency
         var reward;
 
         //add to the existing reward
+        //TODO try and consolidate them if there are rewards of the same currency
         if (rewards.length > 0) {
             reward = rewards[0];
-            reward.addFund(amount, user, callback);
 
-            Fiber(function () {
-                //TODO REPLACE WITH SPECIFIC UPDATE
-                Rewards.update(reward._id, reward.toJSONValue());
-            }).run();
+            reward.addFund(amount, user, function (fundingUrl) {
+                Fiber(function () {
+                    // Just update the reward funds. Receivers are updated
+                    // in the eligibleForManualReward for existing rewards
+                    var funds = _.map(reward.funds, function (fund) {
+                        return fund.toJSONValue();
+                    });
+                    Rewards.update(reward._id, {
+                        $set: {
+                            funds: funds,
+                            lastSync: new Date()
+                        }
+                    });
 
-            return;
+                    //then return the fundingUrl
+                    callback(fundingUrl);
+                }).run();
+            });
         }
+        //create a new reward
+        else {
+            var options = {
+                currency: currency,
+                funds: [],
+                issueUrl: issueUrl,
+                log: [],
+                receivers: [],
+                status: "open",
+                userId: user._id
+            };
 
-        var options = {
-            currency: currency,
-            funds: [],
-            issueUrl: issueUrl,
-            log: [],
-            receivers: [],
-            status: "open",
-            userId: user._id
-        };
-
-        reward = new Reward(options);
-        reward.addFund(amount, user, callback);
-        Fiber(function () {
+            reward = new Reward(options);
             reward.updateReceivers(contributorsEmails);
-            Rewards.insert(reward.toJSONValue());
-        }).run();
+
+            reward.addFund(amount, user, function (fundingUrl) {
+                Fiber(function () {
+                    //insert the whole new reward (including the newly added fund)
+                    Rewards.insert(reward.toJSONValue());
+                    callback(fundingUrl);
+                }).run();
+            });
+        }
     });
 };
 
@@ -142,26 +159,29 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
     //if the contributorsIssueUrl was not passed just return the rewards
     if (!contributorsIssueUrl) {
         callback(rewards);
+        return;
     }
+
     //if the contributorsIssueUrl was passed, also load the contributors / issue events
-    else {
-        gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
-            var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
-            Fiber(function () {
-                //update the status and receivers since we are already loading the issueEvents & contributors
-                _.each(rewards, function (reward) {
-                    //must update the receivers first, because check status relies on them being up to date
-                    reward.updateReceivers(contributorsEmails);
-                    reward.lastSync = new Date();
-
-                    //TODO REPLACE WITH SPECIFIC UPDATE
-                    Rewards.update(reward._id, reward.toJSONValue());
-
-                    reward.checkStatus(issueEvents);
+    gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
+        var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
+        Fiber(function () {
+            //update the status and receivers since we are already loading the issueEvents & contributors
+            _.each(rewards, function (reward) {
+                //must update the receivers before doing checkStatus
+                //because it relies on them being up to date
+                reward.updateReceivers(contributorsEmails);
+                Rewards.update(reward._id, {
+                    $set: {
+                        receivers: reward.receivers,
+                        lastSync: new Date()
+                    }
                 });
 
-                callback(rewards, contributorsEmails);
-            }).run();
-        });
-    }
+                reward.checkStatus(issueEvents);
+            });
+
+            callback(rewards, contributorsEmails);
+        }).run();
+    });
 };
