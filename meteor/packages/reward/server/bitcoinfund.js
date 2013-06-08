@@ -73,95 +73,44 @@ BitcoinFund.prototype.toJSONValue = function () {
 EJSON.addType("BitcoinFund", BitcoinFundUtils.fromJSONValue);
 
 /**
- * Get a Bitcoin address for this issue/user pair.
+ * Issue a refund
  * @param reward
- * @param funder
- * @param callback (preapprovalUrl)
  */
-BitcoinFund.prototype.initiatePreapproval = function (reward, funder, callback) {
+BitcoinFund.prototype.refund = function (reward) {
     var that = this;
-    var fut = new Future();
 
-    Fiber(function () {
-        // TODO: See if the line below is in error...
-        if (that.address)
-            throw "This fund already has a Bitcoin address";
-
-        var gitHub = new GitHub(funder);
-
-        gitHub.getUser(function (error, user) {
-            if (error) {
-                console.log(error);
-            }
-            Fiber(function () {
-                // Make sure this user has a receiving address set up before
-                // we issue them an address to send us funds through.
-                var receivingAddress = Bitcoin.ReceiverAddresses.findOne(
-                    { email: user.email });
-
-                if (receivingAddress) {
-                    var address = Bitcoin.addressForIssue(reward.issueUrl);
-
-                    that.address = address.address;
-                    that.proxyAddress = address.proxyAddress;
-                    that.userId = EJSON.clone(funder._id);
-
-                    Fiber(function () {
-                        Rewards.update(reward._id, reward.toJSONValue());
-                    }).run();
-
-                    fut.ret(callback({address: address.proxyAddress}));
-
-                } else {
-                    // No receiving address set. Send back an empty response.
-                    fut.ret(callback({}));
-                }
-            }).run();
-        });
-    }).run();
-
-    return fut.wait();
-};
-
-BitcoinFund.prototype.cancel = function (reward) {
-    var that = this;
-    var gitHub = new GitHub(Meteor.user());
+    //TODO move validation towards calling method when updating admin console to allow for refunds
+    var user = Meteor.user();
+    if (!user._id !== that.userId)
+        throw "Not authorized to refund this";
 
     that.funds = _.reject(that.funds, function (fund) {
         return EJSON.equals(fund._id, that._id);
     });
 
-    // Issue a refund.
-    // First make sure this BitcoinFund actually belongs to the
-    // currently logged in user.
-    if (Meteor.userId() == that.userId) {
-        gitHub.getUser(function (error, user) {
-            // And then make sure they have a refund address set.
-            var refundAddress = ReceiverAddress.find({ email: user.email });
-
-            // They shouldn't have been able to send us any bitcoin
-            // if they didn't set up a receiving address first. If they're
-            // trying to refund without having set up a refund address, something's
-            // probably afoot...
-            if (refundAddress) {
-                Bitcoin.Client.getReceivedByAddress(that.address, function (err, received) {
-
-                    // Send whatever has been sent to this Fund's address to the
-                    // user's refund address.
-                    Bitcoin.Client.sendToAddress(refundAddress.address, received);
-                });
-
-                // Remove this Fund from its Reward.
-                if (that.funds.length <= 0)
-                    Rewards.remove(reward._id);
-                else
-                    Rewards.update(reward._id, reward.toJSONValue());
-            } else {
-                console.log("Error: Refund attempted by user ("
-                    + user.email + ") without a receiving address!");
-            }
-        });
+    var email = AuthUtils.email(user);
+    // And then make sure they have a refund address set
+    var refundAddress = ReceiverAddress.find({ email: email });
+    if (!refundAddress) {
+        // They shouldn't have been able to send us any bitcoin
+        // if they didn't set up a receiving address first. If they're
+        // trying to refund without having set up a refund address, something is
+        // probably afoot...
+        console.log("Error: Refund attempted by user (" + user._id + ") without a receiving address!");
+        return;
     }
+
+    Bitcoin.Client.getReceivedByAddress(that.address, function (err, received) {
+        // Send whatever has been sent to this Fund's address to the
+        // user's refund address.
+        Bitcoin.Client.sendToAddress(refundAddress.address, received);
+    });
+
+    // Remove this Fund from its Reward
+    if (that.funds.length <= 0)
+        Rewards.remove(reward._id);
+    else
+        Rewards.update(reward._id, reward.toJSONValue());
 
     console.log("Bitcoin fund cancelled", that._id.toString());
 };
