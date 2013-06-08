@@ -42,10 +42,7 @@ PayPalFund.prototype.equals = function (other) {
     if (!(other instanceof PayPalFund))
         return false;
 
-    return EJSON.equals(this._id, other._id) && this.amount.cmp(other.amount) === 0 && this.approved === other.approved
-        && this.currency === other.currency && _.isEqual(this.details, other.details) && this.expires === other.expires
-        && this.paid === other.paid && this.paymentError === other.paymentError
-        && this.preapprovalKey === other.preapprovalKey && this.refunded === other.refunded;
+    return _.isEqual(this, other);
 };
 
 PayPalFund.prototype.typeName = function () {
@@ -116,7 +113,7 @@ PayPalFund.prototype.cancel = function (reward) {
     if (that.funds.length <= 0)
         Rewards.remove(reward._id);
     else
-        Rewards.update(reward._id, reward.toJSONValue()); //TODO REPLACE WITH SPECIFIC UPDATE
+        Rewards.update(reward._id, {$pull: {"funds": {"_id": that._id}}});
 
     console.log("PayPal fund cancelled", that._id.toString());
 };
@@ -139,8 +136,15 @@ PayPalFund.prototype.confirm = function (reward, params) {
         //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
         //after new funds are approved distribute the reward equally among all the contributors
         reward.distributeEqually();
-        //TODO REPLACE WITH SPECIFIC UPDATE
-        Rewards.update(reward._id, reward.toJSONValue());
+
+        Rewards.update({ "funds._id": that._id }, {
+            receivers: reward.receivers,
+            "funds.$": {
+                approved: that.approved,
+                amount: that.amount
+            }
+        });
+
         reward.fundApproved();
     }
 };
