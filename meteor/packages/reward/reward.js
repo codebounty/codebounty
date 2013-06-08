@@ -8,7 +8,6 @@ RewardUtils = {};
  */
 RewardUtils.clientReward = function (reward) {
     reward = reward.clone();
-    reward._availableFundAmounts = reward.availableFundAmounts();
     reward.funds = [];
     return reward;
 };
@@ -124,6 +123,9 @@ Reward.prototype = {
 
         if (that._availableFundAmounts)
             options._availableFundAmounts = that._availableFundAmounts;
+
+        if (that._expires)
+            options.expires = that.expires;
 
         return new Reward(options);
     },

@@ -36,7 +36,12 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
                     Rewards.update(reward._id, {
                         $set: {
                             funds: funds,
-                            lastSync: new Date()
+                            lastSync: new Date(),
+                            //for the client
+                            _availableFundAmounts: _.map(reward.availableFundAmounts(), function (amount) {
+                                return amount.toString()
+                            }),
+                            _expires: reward.expires()
                         }
                     });
 
