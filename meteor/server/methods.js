@@ -253,6 +253,7 @@ Meteor.methods({
      * @param {string} reason
      */
     "refundReward": function (id, reason) {
+        console.log("made it here");
         var user = Meteor.user();
         AuthUtils.requireAuthorization(user, "admin");
 
@@ -288,8 +289,7 @@ Meteor.methods({
 
         var myReward = Rewards.findOne(selector);
         if (byAdmin) {
-            var logItem = "Rewarded on " + new Date().toString() +
-                " by " + user._id + " because " + reason;
+            var logItem = "Rewarded on " + new Date().toString() + " by " + user._id + " because " + reason;
 
             Rewards.update(reward._id, {
                 $push: { log: logItem }

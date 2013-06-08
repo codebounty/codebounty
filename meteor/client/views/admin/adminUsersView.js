@@ -27,8 +27,13 @@ Template.adminUsersView.created = function () {
 };
 
 Template.adminUsersView.rendered = function () {
-    $("[rel=tooltip]").tooltip();
-    $("[data-toggle=dropdown]").dropdown();
+    var tooltips = $("[rel=tooltip]");
+    if (tooltips.length > 0)
+        tooltips.tooltip();
+
+    var dropdowns = $("[data-toggle=dropdown]");
+    if (dropdowns.length > 0)
+        dropdowns.dropdown();
 };
 
 Template.adminUsersView.events({

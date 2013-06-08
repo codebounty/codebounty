@@ -2,7 +2,6 @@
     "packages": {
         "bootstrap-3": {},
         "router": {},
-        "node-modules": {},
         "session-extras": {},
         "font-awesome": {}
     }
