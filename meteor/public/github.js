@@ -198,8 +198,7 @@
          */
         setupPostBounty: function (initValue) {
             ui.render(function () {
-                var currencyToggle = "<div id='currencyToggle' class='toggle-light'></div>";
-                $(currencyToggle).insertAfter(ui._container);
+                var currencyToggle = "<div id='currencyToggle' class='toggle-github'></div>";
 
                 var $usdDiv = $("" +
                     "<div class='inputWrapper'><label for='bountyInput' class='bountyCurrency'>" +
@@ -211,6 +210,7 @@
                     "</a>");
 
                 $usdDiv.insertAfter(ui._container);
+                $(currencyToggle).insertBefore(".discussion-stats .inputWrapper");
 
                 $("#currencyToggle")
                     .on("toggle", function (e, usd) {
