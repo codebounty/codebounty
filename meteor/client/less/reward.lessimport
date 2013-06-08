@@ -52,7 +52,7 @@
 
 .contributorRow input, .rewardPercent {
     font-size: 1em;
-    width: 80px;
+    width: 90px;
     margin-left: 5px;
     padding: 3px;
     border: 1px solid #cccccc;

@@ -13,10 +13,10 @@
                 <label name="contributorName" class="contributorName">{{email}}</label>
 
                 <div class="rewardInputGroup">
-                    <div class="rewardSlider"></div>
+                    <div class="rewardSlider noUiSlider"></div>
                     <div class="inputWrapper">
                         {{{currencySymbol}}}
-                        <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}"
+                        <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}" step="{{step}}"
                                value="{{receiverReward}}" {{#unless receiverHasReward}}disabled {{/unless}}/>
                     </div>
                     <div class="inputWrapper">
