@@ -104,11 +104,15 @@ Reward.prototype.initiatePayout = function (by, callback) {
     that.status = "initiated";
 
     Fiber(function () {
+        var jsonReceivers = _.map(that.receivers, function (receiver) {
+            return receiver.toJSONValue();
+        });
+
         //after the payout is set, it will automatically be paid
         Rewards.update(that._id, {
             $set: {
                 payout: that.payout,
-                receivers: that.receivers,
+                receivers: jsonReceivers,
                 status: that.status
             }
         });
