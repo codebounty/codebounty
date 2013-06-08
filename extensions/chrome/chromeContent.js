@@ -2,7 +2,7 @@
 var css = [
     "https://localhost/meteor/public/codebounty.css",
     "https://localhost/meteor/public/toggles.css",
-    "https://localhost/meteor/public/toggles-light.css"
+    "https://localhost/meteor/public/toggles-github.css"
 ];
 var link;
 
