@@ -244,15 +244,12 @@
                 });
 
                 $("#bountyInput").keyup(function () {
-                    var amount = $("#bountyInput").val();
+                    var amountUsd = $("#bountyInput").val();
                     if (!ui._validateInput("usd"))
                         return;
 
                     ui.enablePostBounty();
-                    // TODO: Shouldn't this line change the icon based on
-                    // the *total* bounty size on the issue, not just how
-                    // much the user is deciding to add to it at the moment?
-                    ui.changeBountyStatusIcon(amount);
+                    ui.changeBountyStatusIcon(amountUsd);
                 });
             }, "setupPostBounty");
         },
@@ -290,25 +287,25 @@
 
         /**
          * Sets how much the total bounty is
-         * @param amount
+         * @param {{btc: string, usd: string}} amount
          */
         setBountyAmount: function (amount) {
             ui.render(function () {
                 var text = "Open $" + amount.usd;
-                
+
                 if (amount.btc > 0) {
                     text += " + " + amount.btc.substr(0, 4) + " BTC";
                 }
-                
+
                 $(".state-indicator.open").html(text);
             }, "setBountyAmount");
         },
 
+        /**
+         * @param amount (In USD, cannot choose BTC amount here)
+         */
         changeBountyStatusIcon: function () {
             var getCashLevel = function (amount) {
-                // TODO: Make BTC multiplier dynamic based on exchange rate.
-                amount = amount.usd + (amount.btc * 120);
-                
                 if (amount < 20)
                     return 0;
                 else if (20 <= amount && amount < 50)
@@ -335,13 +332,12 @@
                     throw "Unknown cash level.";
             };
             return function (amount) {
-                
                 var cashLevel = getCashLevel(amount);
                 var statusIconUrl = getStatusIconUrl(cashLevel);
                 var statusIcon = $("#statusIcon");
 
                 if (statusIcon.length) {
-                    if (statusIcon.attr("cashLevel") != cashLevel) {
+                    if (statusIcon.attr("cashLevel") !== cashLevel) {
                         statusIcon.attr("src", statusIconUrl);
                         statusIcon.attr("cashLevel", cashLevel);
                     }
@@ -354,23 +350,6 @@
                 }
             };
         }(),
-        /**
-         * Show bounty status icon based on bounty amount
-         */
-        showBountyStatusIcon: function () {
-            var getBountyAmount = function () {
-                var openText = $(".state-indicator.open").text();
-                return openText.substring(openText.indexOf("$") + 1);
-            };
-
-            ui.render(function () {
-                if ($(".state-indicator.open").length) {
-                    // If open
-                    var amount = getBountyAmount();
-                    ui.changeBountyStatusIcon(amount);
-                }
-            }, "showBountyStatusIcon");
-        },
 
         /**
          * Initialize the ui (after the user is authenticated)
@@ -398,7 +377,7 @@
 
                     if (message.result) {
                         ui.setupPostBounty(5);
-                        ui.showBountyStatusIcon();
+                        ui.changeBountyStatusIcon(5);
                     }
                 }
             );

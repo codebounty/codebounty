@@ -118,10 +118,10 @@ BitcoinFund.prototype.confirm = function (reward, params) {
     reward.distributeEqually();
 
     Rewards.update({ "funds._id": that._id }, {
-        receivers: reward.receivers,
-        "funds.$": {
-            approved: that.approved,
-            amount: that.amount
+        $set: {
+            receivers: reward.receivers,
+            "funds.$.approved": that.approved,
+            "funds.$.amount": that.amount.toString()
         }
     });
 

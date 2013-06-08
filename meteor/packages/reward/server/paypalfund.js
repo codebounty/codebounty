@@ -137,11 +137,15 @@ PayPalFund.prototype.confirm = function (reward, params) {
         //after new funds are approved distribute the reward equally among all the contributors
         reward.distributeEqually();
 
+        var jsonReceivers = _.map(that.receivers, function (receiver) {
+            return receiver.toJSONValue();
+        });
+
         Rewards.update({ "funds._id": that._id }, {
-            receivers: reward.receivers,
-            "funds.$": {
-                approved: that.approved,
-                amount: that.amount
+            $set: {
+                receivers: jsonReceivers,
+                "funds.$.approved": that.approved,
+                "funds.$.amount": that.amount.toString()
             }
         });
 

@@ -171,9 +171,14 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                 //must update the receivers before doing checkStatus
                 //because it relies on them being up to date
                 reward.updateReceivers(contributorsEmails);
+
+                var jsonReceivers = _.map(reward.receivers, function (receiver) {
+                    return receiver.toJSONValue();
+                });
+
                 Rewards.update(reward._id, {
                     $set: {
-                        receivers: reward.receivers,
+                        receivers: jsonReceivers,
                         lastSync: new Date()
                     }
                 });
