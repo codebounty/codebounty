@@ -1,3 +1,5 @@
+var rootUrl = Meteor.settings["ROOT_URL"];
+
 // publish the total available reward for an issue url
 Meteor.publish("totalReward", function (issueUrl) {
     issueUrl = Tools.stripHash(issueUrl);
@@ -53,43 +55,63 @@ Rewards = new Meteor.Collection("rewards", {
 });
 
 /**
+ * NOTE: This will update the object, but not the database
  * @param {Big} amount
  * @param funder
  * @param {Function} callback (fundingUrl)
  */
 Reward.prototype.addFund = function (amount, funder, callback) {
-    var fundClass;
-    var that = this;
-
-    var expires = Tools.addDays(FundUtils.expiresAfterDays);
-    if (that.currency === "usd") {
-        fundClass = PayPalFund;
-    } else if (that.currency === "btc") {
-        fundClass = BitcoinFund;
-    }
-
-    var fund = new fundClass({
-        amount: amount,
-        currency: that.currency,
-        expires: expires
-    });
-    fund.initiatePreapproval(that, funder, callback);
+    var that = this,
+        expires = Tools.addDays(FundUtils.expiresAfterDays),
+        fund;
 
     if (that.currency === "usd") {
+        fund = new PayPalFund({
+            amount: amount,
+            currency: that.currency,
+            expires: expires
+        });
         that.funds.push(fund);
-    }
-    else if (that.currency === "btc") {
-        // See if a fund matching the new fund already exists.
-        // If one does, don't bother adding the new fund to the reward object.
-        // If one doesn't, add the new fund to this Reward object.
-        var fundExists = _.some(that.funds, function (_fund) {
-            return fund.equals(_fund);
+        fund.initiatePreapproval(that, function (preapprovalUrl) {
+            callback(preapprovalUrl);
         });
 
-        if (!fundExists && fund.userId != null) {
+        return;
+    }
+
+    if (that.currency === "btc") {
+        var address = Bitcoin.addressForIssue(funder._id, that.issueUrl);
+        var fundingUrl = rootUrl + "addBitcoinFunds?issueAddress=" + address.proxyAddress;
+
+        //only need to setup a fund for btc if there is not one already
+        if (that.funds.length > 0) {
+            callback(fundingUrl);
+            return;
+        } else {
+            fund = new BitcoinFund({
+                address: address.address,
+                amount: new Big(0), //will always start as 0
+                currency: that.currency,
+                expires: expires,
+                proxyAddress: address.proxyAddress,
+                userId: funder._id
+            });
             that.funds.push(fund);
         }
+
+        // Make sure this user has a receiving address set up before
+        // we issue them an address to send us funds through in the add bitcoin funds view
+        var email = AuthUtils.email(funder);
+        var receivingAddress = Bitcoin.ReceiverAddresses.findOne({ email: email });
+        if (!receivingAddress)
+            callback(rootUrl + "setupReceiverAddress?redirect=" + encodeURIComponent(fundingUrl));
+        else
+            callback(fundingUrl);
+
+        return;
     }
+
+    throw "Unhandled add funds scenario";
 };
 
 /**
@@ -129,8 +151,7 @@ Reward.prototype.checkStatus = function (issueEvents) {
  * Post the reward comment the first time this is called
  */
 Reward.prototype.fundApproved = function () {
-    var that = this,
-        rootUrl = Meteor.settings["ROOT_URL"];
+    var that = this;
 
     //not using available funds because a fund could have been available
     //but then expired causing a duplicate comment on the next approved fund

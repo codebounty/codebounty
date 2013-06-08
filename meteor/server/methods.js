@@ -45,52 +45,30 @@ Meteor.methods({
         return fut.wait();
     },
 
-    "setupReceiverAddress": function (receiverAddress, redirect) {
-        var fut = new Future();
-        var userId = this.userId;
+    "setupReceiverAddress": function (receiverAddress) {
         var user = Meteor.user();
 
-        Fiber(function () {
+        //TODO check this is a valid bitcoin address?
 
-            var registeredAddress = Bitcoin.ReceiverAddresses.findOne(
-                { userId: userId });
+        // Make sure an address has not been assigned to this user before assigning one
+        var registeredAddress = Bitcoin.ReceiverAddresses.findOne({ userId: user._id });
+        if (registeredAddress)
+            throw "Receiver address already setup for user";
 
-            // Make sure an address has not been assigned to this user
-            // before assigning one.
-            if (!registeredAddress) {
+        var email = AuthUtils.email(user);
+        Bitcoin.ReceiverAddresses.insert({ userId: user._id, email: email, address: receiverAddress});
 
-                // We need to get this user's email address.
-                var gitHub = new GitHub(user);
+        // See if we set up a temporary address for this user and
+        // forward any BTC in it to their receiving address
+        Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
+            if (!address)
+                return;
 
-                Fiber(function () {
-                    gitHub.getUser(function (error, user) {
-                        Fiber(function () {
-                            Bitcoin.ReceiverAddresses.insert({ userId: this.userId,
-                                email: user.email, address: receiverAddress});
-
-
-                            // See if we set up a temporary address for this user and
-                            // forward any BTC in it to their receiving address.
-                            Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
-
-                                if (address) {
-                                    Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
-
-                                        if (received) {
-                                            Bitcoin.Client.sendToAddress(receiverAddress, received);
-                                        }
-                                    });
-                                }
-                            });
-                        }).run();
-                    });
-                }).run();
-            }
-            fut.ret(redirect);
-        }).run();
-
-
-        return fut.wait();
+            Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
+                if (received)
+                    Bitcoin.Client.sendToAddress(receiverAddress, received);
+            });
+        });
     },
 
     "setIsActive": function (user, isActive, reason) {
@@ -247,15 +225,6 @@ Meteor.methods({
         });
 
         return fut.wait();
-    },
-
-    /**
-     * Take an issue and return the user's Bitcoin address for it.
-     * @param url the url to return an address for
-     * @returns {String}
-     */
-    "btcAddressForIssue": function (url) {
-        return Bitcoin.addressForIssue(this.userId, url).proxyAddress;
     },
 
     /**

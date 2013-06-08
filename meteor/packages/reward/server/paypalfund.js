@@ -1,4 +1,3 @@
-
 PayPalFundUtils = {
     fromJSONValue: function (value) {
         value.amount = new Big(value.amount);
@@ -73,12 +72,12 @@ PayPalFund.prototype.toJSONValue = function () {
 EJSON.addType("PayPalFund", PayPalFundUtils.fromJSONValue);
 
 /**
- * Get and set the preapproval key on this fund, then update the reward
+ * Get and set the preapproval key on this fund
+ * then return the preapprovalUrl in the callback
  * @param reward
- * @param funder NOT USED ATM TODO USE?
  * @param callback (preapprovalUrl)
  */
-PayPalFund.prototype.initiatePreapproval = function (reward, funder, callback) {
+PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
     var that = this;
     if (that.preapprovalKey)
         throw "This fund already has a preapproval key";
@@ -97,13 +96,8 @@ PayPalFund.prototype.initiatePreapproval = function (reward, funder, callback) {
         if (error)
             throw "Could not get preapproval url";
 
-        //store the preapproval key
+        //set the preapproval key
         that.preapprovalKey = data.preapprovalKey;
-        Fiber(function () {
-            //TODO REPLACE WITH SPECIFIC UPDATE
-            Rewards.update(reward._id, reward.toJSONValue());
-        }).run();
-
         callback(approvalUrl);
     });
 };

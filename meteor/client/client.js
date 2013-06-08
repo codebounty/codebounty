@@ -1,5 +1,6 @@
 Meteor.Router.add({
-    //admin dashboard
+    //----------------- admin dashboard --------------------
+    //
     "/admin": function () {
         return "adminView";
     },
@@ -11,22 +12,7 @@ Meteor.Router.add({
         return "adminUsersView";
     },
 
-    // Bitcoin setup
-    "/btcAddressForIssue": function () {
-        var url = window.url;
-    },
-
-    "/setupReceiverAddress": function () {
-        var redirect = window.url("?redirect");
-        var address = window.url("?receiverAddress");
-
-        Meteor.call("setupReceiverAddress", address, redirect,
-            function (error, result) {
-                window.location.href = decodeURIComponent(result);
-            });
-    },
-
-    //funds
+    //----------------- funds ------------------------------
     "/addFunds": function () {
         if (Meteor.loggingIn())
             return "loadingView";
@@ -39,18 +25,10 @@ Meteor.Router.add({
             if (!ErrorUtils.handle(error))
                 return;
 
-            if (currency == "usd") {
-                window.location.href = result;
-            } else if (currency == "btc") {
-                Session.set("result", result);
-            }
+            window.location.href = result;
         });
 
-        if (currency == "usd") {
-            return "processingView";
-        } else if (currency == "btc") {
-            return "bitcoinFundView";
-        }
+        return "processingView";
     },
     "/cancelFunds": function () {
         if (Meteor.loggingIn())
@@ -71,6 +49,19 @@ Meteor.Router.add({
         window.close();
         return "confirmFundsView";
     },
+
+    //bitcoin
+    "/addBitcoinFunds": function () {
+        Session.set("issueAddress", window.url("?issueAddress"));
+        return "addBitcoinFundsView";
+    },
+    "/setupReceiverAddress": function () {
+        var redirect = decodeURIComponent(window.url("?redirect"));
+        Session.set("redirect", redirect);
+        return "setupReceiverAddressView";
+    },
+
+    //-------------------------------------------------------
 
     //used by a hidden iframe view inserted into the GitHub issue page
     "/messenger": function () {

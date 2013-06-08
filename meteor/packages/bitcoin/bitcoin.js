@@ -3,37 +3,33 @@
 Bitcoin = {};
 
 /***********************************************
- * Returns a Bitcoin.IssueAddress for the given issue/
- * user pair. If one does not exist, it assigns
- * one from the pool of unassigned addresses.
+ * Returns a Bitcoin.IssueAddress for the given issue / user pair.
+ * If one does not exist, it assigns one from the pool of unassigned addresses.
  * @param userId
  * @param url
  * @return {Bitcoin.IssueAddress}
  **/
 Bitcoin.addressForIssue = function (userId, url) {
-    var address = Bitcoin.IssueAddresses.findOne(
-    { url: url, userId: userId }, { reactive: false });
-     
+    var address = Bitcoin.IssueAddresses.findOne({ url: url, userId: userId });
+
     // If there is no address associated with this user and issue,
     // grab an unused one and associate it.
-    if (!address) {
-        address = Bitcoin.IssueAddresses.findOne(
-           { used: false }, { reactive: false } );
-           
-        if (address) {
-            Fiber(function () {
-                Bitcoin.IssueAddresses.update({ address: address.address },
-                    { $set: { used: true, url: url, userId: userId } });
-                    
-                // Set the address's "account" via bitcoind,
-                // for extra data redundancy.
-                Bitcoin.Client.setAccount(address.address, userId + ":" + url);
-            }).run();
-        } else {
-            throw "no bitcoin addresses loaded!";
-        }
-    }
-    
+    if (address)
+        return address;
+
+    address = Bitcoin.IssueAddresses.findOne({ used: false });
+    if (!address)
+        throw "No bitcoin addresses loaded!";
+
+    Fiber(function () {
+        Bitcoin.IssueAddresses.update({ address: address.address },
+            { $set: { used: true, url: url, userId: userId } });
+
+        // Set the address's "account" via bitcoind,
+        // for extra data redundancy.
+        Bitcoin.Client.setAccount(address.address, userId + ":" + url);
+    }).run();
+
     return address;
 };
 
@@ -52,7 +48,7 @@ Bitcoin.verify = function (request, response, callback) {
         error = "Error verifying Bitcoin IPN. Secret was " + params.secret;
         console.log(error);
     }
-    
+
     if (callback) {
         callback(error, params);
     }
@@ -74,16 +70,16 @@ Bitcoin.pay = function (address, receiverList, callback) {
     var totalPayout = _.reduce(receiverList, function (receiverA, receiverB) {
         return {"amount": receiverA.amount + receiverB.amount};
     }, {"amount": 0});
-    
+
     // We're using getReceivedByAddress instead of getting the balance of the
     // address because the address could technically be empty. We're only
     // keeping a small portion of the total bounties in the hot wallet.
-    Bitcoin.Client.getReceivedByAddress(address, function (err, received) {        
-        
+    Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
+
         // After fees, total payout should be less than what this address received.
         if (totalPayout.amount < received) {
             _.each(receiverList, function (receiver) {
-                
+
                 // Look for a Bitcoin address for this recipient.
                 // If they don't have one yet, grant them a temporary one
                 // on our server. When they join and set a Bitcoin address,
@@ -91,26 +87,26 @@ Bitcoin.pay = function (address, receiverList, callback) {
                 // contents to the address they set.
                 var payoutAddress = Bitcoin.ReceiverAddresses.find(
                     {"email": receiver.email}, {"reactive": false});
-                    
+
                 if (payoutAddress) {
                     // Send the amount owed the recipient.
                     Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
-                    
+
                 } else {
                     // Grant the recipient an address in our hot wallet
                     // and then send the amount owed to that address.
                     Bitcoin.Client.getAccountAddress(receiver.email,
-                    function (err, payoutAddress) {
-                        Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
-                    });
+                        function (err, payoutAddress) {
+                            Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+                        });
                 }
             });
-            
-        // Okay, if that's not the case, we need to raise an alarm.
-        // We're doing this check because the application should never enter
-        // this state under its normal operating parameters. It's possible
-        // someone's trying to hack us, as this should be a fairly obvious
-        // attack vector.
+
+            // Okay, if that's not the case, we need to raise an alarm.
+            // We're doing this check because the application should never enter
+            // this state under its normal operating parameters. It's possible
+            // someone's trying to hack us, as this should be a fairly obvious
+            // attack vector.
         } else {
             // Only logging the error. It's a good idea to give out less
             // information rather than more in cases like this.
