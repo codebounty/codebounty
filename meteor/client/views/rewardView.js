@@ -27,6 +27,18 @@ Template.rewardView.currencySymbol = function () {
     if (myReward.currency === "btc")
         return bitcoinSymbol;
 };
+
+Template.rewardView.step = function () {
+    var myReward = reward();
+    if (!myReward)
+        return "1";
+
+    if (myReward.currency === "usd")
+        return "0.01";
+    if (myReward.currency === "btc")
+        return "0.0001";
+};
+
 Template.rewardView.receiverTotal = function () {
     var myReward = reward();
     return myReward ? myReward.receiverTotal() : new Big(0);
@@ -53,7 +65,7 @@ var rowReceiver = function (reward, row) {
     return receivers[index];
 };
 
-var setRowAmount = function (row, amount) {
+var setRowAmount = _.debounce(function (row, amount) {
     var myReward = reward();
 
     var receiver = rowReceiver(myReward, row);
@@ -69,12 +81,13 @@ var setRowAmount = function (row, amount) {
     if (amount.cmp(minimum) < 0 && amount.cmp(0) !== 0)
         amount = minimum;
 
+    var numberAmount = parseFloat(amount.toString());
     //need to manually update the slider since it is not bound
-    row.find(".rewardSlider").slider("value", amount.toString());
+    row.find(".rewardSlider").val(numberAmount);
 
     receiver.setReward(amount);
     updateReward(myReward);
-};
+}, 250);
 
 var showError = _.debounce(function (show) {
     if (show)
@@ -93,8 +106,8 @@ Template.rewardView.rendered = function () {
     if (!myReward)
         return;
 
-    var total = rewardTotal();
-    var minimum = rewardMinimum();
+    var total = rewardTotal(), totalNumber = parseFloat(total.toString());
+    var minimum = rewardMinimum(), minimumNumber = parseFloat(minimum.toString());
 
     var receivers = myReward.getReceivers();
 
@@ -102,23 +115,24 @@ Template.rewardView.rendered = function () {
     $(".contributorRow").each(function (index, row) {
         var receiver = receivers[index];
         row = $(row);
-        row.find(".rewardSlider").slider({
-            animate: "fast",
-            min: 0,
-            max: parseFloat(total.toString()),
-            value: receiver.getReward(),
-            slide: function (event, data) {
-                var amount = new Big(data.value);
+
+        var receiverRewardNumber = parseFloat(receiver.getReward().toString());
+        row.find(".rewardSlider").noUiSlider({
+            handles: 1,
+            range: [minimumNumber, totalNumber],
+            slide: function () {
+                var amount = new Big($(this).val());
                 if (amount.cmp(minimum) < 0)
                     return false;
 
                 setRowAmount(row, amount);
-            }
+            },
+            start: receiverRewardNumber
         });
 
         //enable the row if the reward > 0
         var enabled = receiver.getReward().cmp(0) > 0;
-        row.find(".rewardSlider").slider("option", "disabled", !enabled);
+        row.find(".rewardSlider").noUiSlider("disabled", !enabled);
     });
 
     showError(!isValid());
