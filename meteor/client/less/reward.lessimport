@@ -29,10 +29,11 @@
 /* endregion */
 
 .container {
+    padding: 0 60px;
     position: relative;
     margin: 0 auto;
     width: 100%;
-    padding: 0 60px;
+    min-width: 900px;
 }
 
 /* region Total label */
@@ -83,10 +84,11 @@
     display: inline-block;
     vertical-align: middle;
     width: 70px;
-    height: 25px;
+    height: 36px;
     border: 1px solid #ccc;
     background: #e6e6e6;
     padding-right: 20px;
+    padding-top: 7px;
 }
 
 /* endregion */
@@ -106,13 +108,13 @@
     }
 
     .currencySymbol.usd {
-        top: 5px;
-        left: 8px;
+        top: 8px;
+        left: 12px;
     }
 
     .percentSign {
         position: absolute;
-        top: 4px;
+        top: 8px;
         right: 6px;
     }
 }

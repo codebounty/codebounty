@@ -145,7 +145,12 @@ PayPalFund.prototype.confirm = function (reward, params) {
             $set: {
                 receivers: jsonReceivers,
                 "funds.$.approved": that.approved,
-                "funds.$.amount": that.amount.toString()
+                "funds.$.amount": that.amount.toString(),
+                //for the client
+                _availableFundAmounts: _.map(reward.availableFundAmounts(), function (amount) {
+                    return amount.toString()
+                }),
+                _expires: reward.expires()
             }
         });
 
