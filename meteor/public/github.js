@@ -293,7 +293,6 @@
          * @param amount
          */
         setBountyAmount: function (amount) {
-            console.log(amount);
             ui.render(function () {
                 var text = "Open $" + amount.usd;
                 
