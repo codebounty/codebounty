@@ -1,7 +1,23 @@
 <template name="rewardView">
+    <style type="text/css">
+    .btc.currencySymbol {
+        height: 1em;
+        width: 0.75em;
+        margin-top: 0.15em;
+    }
+    
+    .invalid .btc.currencySymbol path {
+        fill: red;
+    }
+    
+    .payoutTotalLabel .btc.currencySymbol, .calculatedTotal .btc.currencySymbol {
+        position: relative;
+        top: .12em;
+    }
+    </style>
     <div class="container">
         <h3>Contributor Payout:
-            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount"><span class="currencySymbol">$</span>{{total}}</span></span>
+            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount"><span class="usd currencySymbol">$</span>{{total}}</span></span>
         </h3>
         <ul>
             {{#each reward.receivers}}
@@ -12,7 +28,7 @@
                 <div class="rewardInputGroup">
                     <div class="rewardSlider"></div>
                     <div class="inputWrapper">
-                        <span class="currencySymbol">$</span>
+                        <span class="usd currencySymbol">$</span>
                         <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}"
                                value="{{receiverReward}}" {{#unless receiverHasReward}}disabled {{/unless}}/>
                     </div>
@@ -24,7 +40,7 @@
             </li>
             {{/each}}
         </ul>
-        <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">Payout Amount: <span class="currencySymbol">$</span><span
+        <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">Payout Amount: <span class="usd currencySymbol">$</span><span
                 class="calculatedTotalAmount">{{receiverTotal}}</span></div>
         <div class="bottomBar">
             <div class="validationError">Please make sure the payout amount is equal to the total.</div>
