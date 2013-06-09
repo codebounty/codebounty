@@ -34,7 +34,8 @@ Fund = function (options) {
 };
 
 Fund.prototype.isAvailable = function () {
-    return this.approved && (!this.expires || this.expires >= new Date()) && !this.paid && !this.paymentError && !this.refunded;
+    return this.approved && (!this.expires || this.expires >= new Date())
+        && !this.paid && !this.paymentError && !this.refunded;
 };
 
 Fund.prototype.toString = function () {
