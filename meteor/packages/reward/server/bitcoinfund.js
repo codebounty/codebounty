@@ -111,7 +111,7 @@ BitcoinFund.prototype.refund = function (adminId) {
 BitcoinFund.prototype.confirm = function (reward, params, insert) {
     var that = this;
 
-    that.amount = Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN)); //Value is passed as number of satoshi
+    that.amount = new Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN)); //value is passed as number of satoshi
     that.approved = new Date();
     that.transactionHash = params.transaction_hash;
 
