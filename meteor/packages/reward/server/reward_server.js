@@ -91,7 +91,6 @@ Reward.prototype.addFund = function (amount, funder, callback) {
             fund = new BitcoinFund({
                 address: address.address,
                 amount: new Big(0), //will always start as 0
-                currency: that.currency,
                 expires: expires,
                 proxyAddress: address.proxyAddress,
                 userId: funder._id
