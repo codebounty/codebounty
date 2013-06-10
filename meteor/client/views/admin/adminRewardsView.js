@@ -31,9 +31,12 @@ Template.adminRewardsView.rewards = function () {
 };
 
 //Reward template functions
-Template.adminRewardsView.canReward = function () {
+Template.adminRewardsView.canPayout = function () {
     return (this.status === "open" || this.status === "reopened" || this.status === "held")
-        && this.receiverTotal().cmp(0) > 0;
+        && this.total().cmp(0) > 0;
+};
+Template.adminRewardsView.total = function () {
+    return this.total();
 };
 Template.adminRewardsView.issue = function () {
     if (!this.issueUrl)
@@ -48,9 +51,6 @@ Template.adminRewardsView.repo = function () {
 
     var issue = GitHubUtils.issue(this.issueUrl);
     return issue.number;
-};
-Template.adminRewardsView.receiverTotal = function () {
-    return this.receiverTotal();
 };
 Template.adminRewardsView.statusIs = function () {
     var that = this;

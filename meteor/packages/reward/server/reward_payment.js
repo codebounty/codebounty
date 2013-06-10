@@ -97,29 +97,34 @@ Reward.prototype.initiatePayout = function (by, callback) {
 
     console.log("Initiated payout by", by, "for", that._id.toString());
 
-    that.status = "initiated";
     that.payout = {
         by: by,
         on: Tools.addMinutes(payoutWindow)
     };
+    that.status = "initiated";
 
     Fiber(function () {
-        var receivers = that.getReceivers();
-        
-        //TODO only update what could have changed (receiver amounts, not funds, etc..)
+        var jsonReceivers = _.map(that.receivers, function (receiver) {
+            return receiver.toJSONValue();
+        });
+
         //after the payout is set, it will automatically be paid
-        //TODO REPLACE WITH SPECIFIC UPDATE
-        Rewards.update(that._id, that.toJSONValue());
+        Rewards.update(that._id, {
+            $set: {
+                payout: that.payout,
+                receivers: jsonReceivers,
+                status: that.status
+            }
+        });
         
-        // Email all recipients and the backer.
-        _.each(receivers, function (receiver) {
+        // Email an alert to all recipients and the backer.
+        _.each(that.receivers, function (receiver) {
             Email.send({
                 to: receiver,
                 from: Meteor.settings["ALERTS_EMAIL"],
                 subject: Reward.Emails.rewarded.subject,
                 text: Reward.Emails.rewarded.text
             });
-        });
 
         callback(null, true);
     }).run();
@@ -138,7 +143,7 @@ Reward.prototype.pay = function () {
 
     var funds = that.funds;
     var fundIndex = 0;
-    
+
     _.each(fundDistributions, function (fundDistribution) {
         var fund = _.find(funds, function (f) {
             return EJSON.equals(f._id, fundDistribution.fundId);
@@ -164,7 +169,7 @@ Reward.prototype.refund = function (adminId, reason) {
     this.status = "refunded";
 
     _.each(this.funds, function (fund) {
-        fund.refund();
+        fund.refund(adminId);
     });
 
     var logItem = "Reward refunded on " + new Date().toString() +

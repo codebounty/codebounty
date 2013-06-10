@@ -253,6 +253,7 @@ Meteor.methods({
      * @param {string} reason
      */
     "refundReward": function (id, reason) {
+        console.log("made it here");
         var user = Meteor.user();
         AuthUtils.requireAuthorization(user, "admin");
 
@@ -284,12 +285,9 @@ Meteor.methods({
         if (!byAdmin)
             selector.userId = user._id;
 
-        console.log(reason);
-
         var myReward = Rewards.findOne(selector);
         if (byAdmin) {
-            var logItem = "Rewarded on " + new Date().toString() +
-                " by " + user._id + " because " + reason;
+            var logItem = "Rewarded on " + new Date().toString() + " by " + user._id + " because " + reason;
 
             Rewards.update(reward._id, {
                 $push: { log: logItem }
@@ -308,12 +306,12 @@ Meteor.methods({
                 //the client should only have changed the receiver amounts
                 //so update the corresponding receiver amounts on the reward we fetched from the db
                 //then check the reward is still valid
-                _.each(reward._receivers, function (receiver) {
-                    var myReceiver = _.find(myReward._receivers, function (r) {
+                _.each(reward.receivers, function (receiver) {
+                    var myReceiver = _.find(myReward.receivers, function (r) {
                         return r.email === receiver.email;
                     });
 
-                    myReceiver.setReward(receiver.amount);
+                    myReceiver.setReward(receiver.getReward());
                 });
 
                 myReward.initiatePayout(byAdmin ? "admin" : user._id, function (error, success) {

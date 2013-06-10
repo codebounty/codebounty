@@ -36,7 +36,12 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
                     Rewards.update(reward._id, {
                         $set: {
                             funds: funds,
-                            lastSync: new Date()
+                            lastSync: new Date(),
+                            //for the client
+                            _availableFundAmounts: _.map(reward.availableFundAmounts(), function (amount) {
+                                return amount.toString()
+                            }),
+                            _expires: reward.expires()
                         }
                     });
 
@@ -171,9 +176,14 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                 //must update the receivers before doing checkStatus
                 //because it relies on them being up to date
                 reward.updateReceivers(contributorsEmails);
+
+                var jsonReceivers = _.map(reward.receivers, function (receiver) {
+                    return receiver.toJSONValue();
+                });
+
                 Rewards.update(reward._id, {
                     $set: {
-                        receivers: reward.receivers,
+                        receivers: jsonReceivers,
                         lastSync: new Date()
                     }
                 });

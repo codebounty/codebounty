@@ -8,7 +8,6 @@
     "basePackages": {
       "bootstrap-3": {},
       "router": {},
-      "node-modules": {},
       "session-extras": {},
       "font-awesome": {}
     },
@@ -22,11 +21,6 @@
         "git": "https://github.com/tmeasday/meteor-router.git",
         "tag": "v0.5.1",
         "commit": "32e377c7703bb119acccc859fc7296882903cbe7"
-      },
-      "node-modules": {
-        "git": "https://github.com/possibilities/meteor-node-modules.git",
-        "tag": "v0.0.5",
-        "commit": "d502e5091759073a6baed856fadd93012749842d"
       },
       "session-extras": {
         "git": "https://github.com/belisarius222/meteor-session-extras.git",

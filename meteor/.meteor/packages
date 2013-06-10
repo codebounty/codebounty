@@ -6,6 +6,7 @@
 accounts-base
 accounts-ui
 accounts-github
+bootstrap-3
 font-awesome
 force-ssl
 less

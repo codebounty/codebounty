@@ -49,9 +49,8 @@ Bitcoin.verify = function (request, response, callback) {
         console.log(error);
     }
 
-    if (callback) {
+    if (callback)
         callback(error, params);
-    }
 };
 
 /**
