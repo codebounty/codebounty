@@ -86,12 +86,15 @@ RewardFormatter.prototype.getClaimers = function (limit) {
     }
 
     var othersCount = this.options.claimedBy.length - max;
-    if (othersCount === 1)
-        claimer = "+1 other";
-    else if (othersCount > 1)
-        claimer = "+" + othersCount + " others";
 
-    claimers.push({"claimer": claimer, "amount": ""});
+    if (othersCount > 0) {
+        if (othersCount === 1)
+            claimer = "+1 other";
+        else if (othersCount > 1)
+            claimer = "+" + othersCount + " others";
+
+        claimers.push({"claimer": claimer, "amount": ""});
+    }
 
     return claimers;
 };

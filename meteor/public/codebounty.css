@@ -56,7 +56,7 @@
 
 #currencyToggle {
     position: relative;
-    margin: 1em auto;
+    margin: 0 auto 8px;
 }
 
 #iframecontainer {
