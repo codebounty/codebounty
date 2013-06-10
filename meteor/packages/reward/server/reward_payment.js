@@ -104,10 +104,22 @@ Reward.prototype.initiatePayout = function (by, callback) {
     };
 
     Fiber(function () {
+        var receivers = that.getReceivers();
+        
         //TODO only update what could have changed (receiver amounts, not funds, etc..)
         //after the payout is set, it will automatically be paid
         //TODO REPLACE WITH SPECIFIC UPDATE
         Rewards.update(that._id, that.toJSONValue());
+        
+        // Email all recipients and the backer.
+        _.each(receivers, function (receiver) {
+            Email.send({
+                to: receiver,
+                from: Meteor.settings["ALERTS_EMAIL"],
+                subject: Reward.Emails.rewarded.subject,
+                text: Reward.Emails.rewarded.text
+            });
+        });
 
         callback(null, true);
     }).run();
