@@ -121,6 +121,20 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                     return fund.proxyAddress === params.input_address;
                 });
                 bitcoinFund.confirm(reward, params);
+                
+                // If the reward amount is less than the minimum required
+                // amount, send the user an alert.
+                var totalReward = BigUtils.sum(reward.availableFundAmounts());
+                
+                if (totalReward < Bitcoin.Settings.minimumFundAmount) {
+                    Email.send({
+                        to: AuthUtils.email(
+                            Meteor.users.find({_id: reward.userId})),
+                        from: Meteor.settings["ALERTS_EMAIL"],
+                        subject: Bitcoin.Emails.insufficient_funds.subject,
+                        text: Bitcoin.Emails.insufficient_funds.text
+                    });
+                }
             }).run();
 
             // To prevent Blockchain.info from continually resending the transaction.
