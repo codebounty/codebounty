@@ -13,7 +13,7 @@
             "19": "icon16.png",
             "38": "icon48.png"
         },
-        "default_title": "CodeBounty"
+        "default_title": "Code Bounty"
     },
     "permissions": [
         "tabs",
@@ -27,10 +27,13 @@
             "matches": ["https://github.com/*/*/issues/*"],
             "exclude_matches": ["https://github.com/*/*/issues/new"],
             "js": ["jquery-1.9.1.min.js", "chromeContent.js"],
-            "run_at": "document_end"
+            "run_at": "document_end",
+            "all_frames": true
         }
     ],
-    "background": { "scripts": ["chrome.js"] },
+    "background": {
+        "scripts": ["chrome.js"]
+    },
     "homepage_url": "http://codebounty.co",
     "options_page": "options.html",
     "web_accessible_resources": []

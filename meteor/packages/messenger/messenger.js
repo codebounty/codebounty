@@ -17,7 +17,7 @@ Messenger.send = function (message, target) {
     if (!target)
         target = "*";
 
-    top.postMessage(message, target);
+    parent.postMessage(message, target);
 };
 
 var eventCallbacks = [];
