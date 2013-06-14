@@ -1,10 +1,14 @@
 {
-    "name": "codebounty",
-    "description": "A bounty system for GitHub",
-    "version": "0.0.1",
-    "private": true,
-    "devDependencies": {
-        "grunt": "~0.4.1",
-        "intern": "1.1.0"
-    }
+  "name": "codebounty",
+  "description": "A bounty system for GitHub",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "intern": "1.1.0",
+    "grunt-crx": "~0.2.3",
+    "grunt-contrib-clean": "~0.4.1",
+    "grunt-bg-shell": "~2.0.2",
+    "matchdep": "~0.1.2"
+  }
 }
