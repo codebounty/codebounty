@@ -12,14 +12,14 @@ OS X / Linux / Ubuntu
 
 		git clone https://github.com/codebounty/codebounty codebounty
 		cd codebounty
-		
+
 3. Install the dependencies (only needed for testing right now)
 
 		npm install --dev
 
 3. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer
 
-		# OS X  
+		# OS X
 		Open `https://localhost` in safari, choose certificate details, and select always trust this certificate, then reopen chrome and test it by visiting `https://localhost`.
 
 4. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki)
@@ -31,28 +31,17 @@ OS X / Linux / Ubuntu
         testnet=1
         server=1
 
-	Check out [Bitcoin.org](http://bitcoin.org/en/download) for the 	Bitcoin binaries, and check out the [Bitcoin wiki](https://	en.bitcoin.it/wiki/Data_directory) for information on how to find 	your bitcoin.conf file. 
-	
+	Check out [Bitcoin.org](http://bitcoin.org/en/download) for the 	Bitcoin binaries, and check out the [Bitcoin wiki](https://	en.bitcoin.it/wiki/Data_directory) for information on how to find 	your bitcoin.conf file.
+
 	To install bitcoind on mac: `sudo port install bitcoin`
 
 6. For testing you will also need [selenium server](http://docs.seleniumhq.org/download/) and make sure [chromedriver](https://code.google.com/p/chromedriver/downloads/list) is in your PATH.
 
 ###Run Project
 
-1. Start meteor project (this will also install meteorite packages) 
+        grunt server
 
-		mrt --settings settings.json
-
-2. Start the https web server for the github.js file in another terminal**  
-
-		cd codebounty/tools
-		node web-server.js
-
-3. Start bitcoind
-
-        ./bitcoind -daemon
-			
-4. If you are trying to test out the images use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json
+If you are trying to test out the images use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json
 
 ###Run Tests
 

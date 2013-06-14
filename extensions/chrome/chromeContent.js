@@ -1,8 +1,8 @@
 //Inject css - will probably want to squash all into one file someday.
 var css = [
-    "https://localhost/meteor/public/codebounty.css",
-    "https://localhost/meteor/public/toggles.css",
-    "https://localhost/meteor/public/toggles-github.css"
+    "https://localhost:8888/meteor/public/codebounty.css",
+    "https://localhost:8888/meteor/public/toggles.css",
+    "https://localhost:8888/meteor/public/toggles-github.css"
 ];
 var link;
 
@@ -16,8 +16,8 @@ for (var i = 0; i < css.length; i++) {
 
 //Inject javascript - will probably want to squash all into one file someday.
 var js = [
-    "https://localhost/meteor/public/github.js",
-    "https://localhost/meteor/public/toggles.min.js"
+    "https://localhost:8888/meteor/public/github.js",
+    "https://localhost:8888/meteor/public/toggles.min.js"
 ];
 
 for (var i = 0; i < js.length; i++) {

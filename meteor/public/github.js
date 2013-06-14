@@ -1,7 +1,7 @@
 //the injected github UI
 (function (undefined) {
     var rootUrl = "http://localhost:3000",
-        staticRootUrl = "https://localhost/meteor/public",
+        staticRootUrl = "https://localhost:8888/meteor/public",
         thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
