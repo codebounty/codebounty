@@ -18,9 +18,7 @@
     "permissions": [
         "tabs",
         "contentSettings",
-        "http://*.codebounty.co/*",
-        "https://localhost/meteor/public/github.js",
-        "https://localhost/meteor/public/codebounty.css"
+        "http://*.codebounty.co/*"
     ],
     "content_scripts": [
         {
