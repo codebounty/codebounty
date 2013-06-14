@@ -3,10 +3,11 @@
 var util = require('util'),
     https = require('https'),
     fs = require('fs'),
+    path = require('path'),
     url = require('url'),
     events = require('events');
 
-var DEFAULT_PORT = 443;
+var DEFAULT_PORT = 8888;
 
 function main(argv) {
     new HttpServer({
@@ -38,8 +39,8 @@ function HttpServer(handlers) {
 
     //from http://silas.sewell.org/blog/2010/06/03/node-js-https-ssl-server-example/
     var options = {
-        key: fs.readFileSync('privatekey.pem'),
-        cert: fs.readFileSync('certificate.pem')
+        key: fs.readFileSync(path.join(__dirname, 'privatekey.pem')),
+        cert: fs.readFileSync(path.join(__dirname, 'certificate.pem'))
     };
 
     this.server = https.createServer(options, this.handleRequest_.bind(this));
