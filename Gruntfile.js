@@ -58,7 +58,7 @@ module.exports = function (grunt) {
             webserver: {
                 cmd: [
                     "node tools/web-server.js"
-                ].join("&&"),
+                ],
                 bg: true,
                 stdout: false,
                 stderr: false
