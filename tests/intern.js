@@ -1,37 +1,43 @@
-define({
+define([
+    "../build/codebounty.crx"
+], function (extension) {
+    return {
+        proxyPort: 9000,
+        proxyUrl: "http://localhost:9000/",
 
-	proxyPort: 9000,
-	proxyUrl: "http://localhost:9000/",
+        capabilities: {
+            "selenium-version": "2.30.0",
+            "chromeOptions": {
+                "extensions": [extension.base64]
+            }
+        },
 
-	capabilities: {
-		"selenium-version": "2.30.0"
-	},
+        environments: [
+            { browserName: "chrome" }
+        ],
 
-	environments: [
-        { browserName: "chrome" }
-    ],
+        maxConcurrency: 3,
+        useSauceConnect: false,
 
-	maxConcurrency: 3,
-	useSauceConnect: false,
+        // Connection information for the remote WebDriver service. If using Sauce Labs, keep your username and password
+        // in the SAUCE_USERNAME and SAUCE_ACCESS_KEY environment variables unless you are sure you will NEVER be
+        // publishing this configuration file somewhere
+        webdriver: {
+            host: "localhost",
+            port: 4444
+        },
 
-	// Connection information for the remote WebDriver service. If using Sauce Labs, keep your username and password
-	// in the SAUCE_USERNAME and SAUCE_ACCESS_KEY environment variables unless you are sure you will NEVER be
-	// publishing this configuration file somewhere
-	webdriver: {
-		host: "localhost",
-		port: 4444
-	},
+        // Configuration options for the module loader; any AMD configuration options supported by the Dojo loader can be
+        // used here
+        loader: { },
 
-	// Configuration options for the module loader; any AMD configuration options supported by the Dojo loader can be
-	// used here
-	loader: { },
+        // Non-functional test suite(s) to run in each browser
+        suites: [ ],
 
-	// Non-functional test suite(s) to run in each browser
-	suites: [ ],
+        // Functional test suite(s) to run in each browser once non-functional tests are completed
+        functionalSuites: [ "tests/lib/bounty" ],
 
-	// Functional test suite(s) to run in each browser once non-functional tests are completed
-	functionalSuites: [ "tests/lib/functional" ],
-
-	// A regular expression matching URLs to files that should not be included in code coverage analysis
-	excludeInstrumentation: /^/
+        // A regular expression matching URLs to files that should not be included in code coverage analysis
+        excludeInstrumentation: /^/
+    }
 });

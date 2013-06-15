@@ -1,30 +1,45 @@
-# Getting Started
+Code Bounty
+===========
 
+An Open Source Bounty System
+----------------------------
+
+As a project gets more popular, the increase in resources for a project are outstripped by the increase in demand for feature additions and bug fixes.
+
+Our goal is to help create a sustainable model for the suppliers of open source code by putting the weight of cash behind issues.
+
+Copyright © 2013 Code Bounty Developers
+
+Development
+-----------
 ###Setup Project
 
 OS X / Linux / Ubuntu
 
-1. Install [meteorite](http://oortcloud.github.com/meteorite/) ** Ubuntu 12.04 users see [here](https://github.com/oortcloud/meteorite/issues/67)
+1. Install [meteorite](http://oortcloud.github.com/meteorite/): **
 
 		sudo npm install -g meteorite
+		
+	**Ubuntu 12.04 users see [here](https://github.com/oortcloud/meteorite/issues/67).
 
-2. Clone this repo
+2. Clone this repo:
 
 		git clone https://github.com/codebounty/codebounty codebounty
 		cd codebounty
 
-3. Install the dependencies (only needed for testing right now)
+3. Install the dependencies:
 
 		npm install --dev
 
-3. (If this is your first time) Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer
+4. Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer:
 
-		# OS X
-		Open `https://localhost` in safari, choose certificate details, and select always trust this certificate, then reopen chrome and test it by visiting `https://localhost`.
+	**OS X**
 
-4. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki)
+	Open `https://localhost:8888` in safari, choose certificate details, and select always trust this certificate. Then reopen chrome and test it by visiting `https://localhost:8888`.
 
-5. Install Bitcoin and put this in your bitcoin.conf file:
+5. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki).
+
+6. Install Bitcoin and put this in your bitcoin.conf file:
 
         rpcuser=oldgregg
         rpcpassword=4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ
@@ -35,20 +50,23 @@ OS X / Linux / Ubuntu
 
 	To install bitcoind on mac: `sudo port install bitcoin`
 
-6. For testing you will also need [selenium server](http://docs.seleniumhq.org/download/) and make sure [chromedriver](https://code.google.com/p/chromedriver/downloads/list) is in your PATH.
+7. For testing you will also need to download [chromedriver](https://code.google.com/p/chromedriver/downloads/list) into a folder and add that folder to your PATH.
 
 ###Run Project
 
-        grunt server
+Run `grunt server`.
 
-If you are trying to test out the images use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json
+If you are trying to test out the images, or the paypal callback, use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json.
 
 ###Run Tests
 
-1. Run Selenium `java -jar selenium-server.jar`
-2. Run the chrome driver
-3. Run `grunt test`
+Run `grunt selenium` in one terminal to start the selenium server, `grunt server` in another, then `grunt test` in another.
 
-###Writing Tests
+###Write Tests
 
-[Here](https://github.com/admc/wd#supported-methods) are the supported methods.
+[Here](https://github.com/admc/wd#supported-methods) are the supported wd methods.
+
+Discussion
+-----------
+
+- [Hackpad](https://codebounty.hackpad.com)
