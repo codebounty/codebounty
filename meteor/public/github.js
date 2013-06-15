@@ -1,7 +1,10 @@
 //the injected github UI
 (function (undefined) {
+    //TODO uncomment for deployment
+    //var rootUrl = "https://codebounty.co",
+    //publicUrl = rootUrl + "/public/",
     var rootUrl = "http://localhost:3000",
-        staticRootUrl = "https://localhost:8888/meteor/public",
+        publicUrl = "https://localhost:8888/meteor/public/", //locally we use the node server because it is https
         thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
@@ -319,15 +322,15 @@
             };
             var getStatusIconUrl = function (cashLevel) {
                 if (cashLevel === 0)
-                    return staticRootUrl + "/" + "status-coins.png";
+                    return publicUrl + "status-coins.png";
                 else if (cashLevel === 1)
-                    return staticRootUrl + "/" + "status-moneybag.png";
+                    return publicUrl + "status-moneybag.png";
                 else if (cashLevel === 2)
-                    return staticRootUrl + "/" + "status-moneybags.png";
+                    return publicUrl + "status-moneybags.png";
                 else if (cashLevel === 3)
-                    return staticRootUrl + "/" + "status-bars.png";
+                    return publicUrl + "status-bars.png";
                 else if (cashLevel === 4)
-                    return staticRootUrl + "/" + "status-jackpot.png";
+                    return publicUrl + "status-jackpot.png";
                 else
                     throw "Unknown cash level.";
             };
