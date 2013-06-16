@@ -1,8 +1,13 @@
 //Inject css - will probably want to squash all into one file someday.
+
+//TODO uncomment for deployment
+//var publicUrl ="https://codebounty.co/public/";
+var publicUrl = "https://localhost:8888/meteor/public/"; //locally we use the node server because it is https
+
 var css = [
-    "https://localhost/meteor/public/codebounty.css",
-    "https://localhost/meteor/public/toggles.css",
-    "https://localhost/meteor/public/toggles-github.css"
+    publicUrl + "codebounty.css",
+    publicUrl + "toggles.css",
+    publicUrl + "toggles-github.css"
 ];
 var link;
 
@@ -16,8 +21,8 @@ for (var i = 0; i < css.length; i++) {
 
 //Inject javascript - will probably want to squash all into one file someday.
 var js = [
-    "https://localhost/meteor/public/github.js",
-    "https://localhost/meteor/public/toggles.min.js"
+    publicUrl + "github.js",
+    publicUrl + "toggles.min.js"
 ];
 
 for (var i = 0; i < js.length; i++) {
