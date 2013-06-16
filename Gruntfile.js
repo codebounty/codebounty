@@ -1,4 +1,4 @@
-var fs = require('fs'), util = require("util");
+var fs = require("fs"), util = require("util");
 
 module.exports = function (grunt) {
     var gruntConfig = {
@@ -62,14 +62,6 @@ module.exports = function (grunt) {
                 bg: true,
                 stdout: false,
                 stderr: false
-            },
-            selenium: {
-                cmd: [
-                    "java -jar tools/selenium-server.jar"
-                ],
-                bg: false,
-                stdout: true,
-                stderr: true
             }
         },
         encode: {
@@ -92,7 +84,7 @@ module.exports = function (grunt) {
                 var binaryData = fs.readFileSync(file);
 
                 // convert binary data to base64 encoded string
-                var encoded = new Buffer(binaryData).toString('base64');
+                var encoded = new Buffer(binaryData).toString("base64");
 
                 // setup as a requirejs module
                 var moduleTemplate = "define({\n" +
@@ -125,7 +117,6 @@ module.exports = function (grunt) {
     ]);
 
     // the testing tasks
-    grunt.registerTask("selenium", "bgShell:selenium");
     grunt.registerTask("test", "intern:client");
 
     grunt.registerTask("default", "server");
