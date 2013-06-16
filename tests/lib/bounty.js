@@ -1,27 +1,29 @@
 define([
     "intern!object",
     "intern/chai!assert",
-    "require"
-], function (registerSuite, assert, require) {
-    var url = "https://github.com/codebounty/codebounty/issues/26";
+    "../settings"
+], function (registerSuite, assert, settings) {
+    var gitHub = "https://github.com/";
+    var issueUrl = gitHub + "codebounty/codebounty/issues/26";
+    var loginUrl = gitHub + "login";
 
     registerSuite({
         name: "bounty",
 
         "post bounty": function () {
-            var that = this;
-            return that.remote
-//                .init({
-//                    "chrome.switches": "[--start-maximized]"
-//                })
-                .get(require.toUrl(url))
-                .waitForElementById("postBounty", 10000)
-//                .then(function (element) {
-//                    console.log(element);
-//                })
-//                .elementByName("q")
-//                .keys("Sample test")
-//                .submit()
+            var browser = this.remote;
+            return browser.get(loginUrl)
+                .elementByName("login").clickElement().type(settings.GITHUB_USERNAME)
+                .end()
+                .elementByName("password").clickElement().type(settings.GITHUB_PASSWORD)
+                .end()
+                .elementByName("commit").clickElement()
+                .end()
+                .wait(1000)
+                .get(issueUrl)
+                .wait(5000);
+
+            //TODO
         }
     });
 });

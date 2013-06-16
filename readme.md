@@ -60,11 +60,13 @@ If you are trying to test out the images, or the paypal callback, use some form 
 
 ###Run Tests
 
-Run `grunt selenium` in one terminal to start the selenium server, `grunt server` in another, then `grunt test` in another.
+Run `java -jar tools/selenium-server.jar` in one terminal to start the selenium server, `grunt server` in another, then `grunt test` in another.
 
 ###Write Tests
 
-[Here](https://github.com/admc/wd#supported-methods) are the supported wd methods.
+[Here](https://github.com/admc/wd#supported-methods) are the supported wd methods**
+
+** wd's methods are wrapped in Dojo promises [here](https://github.com/theintern/intern/blob/master/lib/wd.js) by intern in a class called PromisedWebDriver.
 
 Discussion
 -----------
