@@ -9,7 +9,7 @@ var cssFiles = [
 ];
 
 var link;
-for (var i = 0; i < css.length; i++) {
+for (var i = 0; i < cssFiles.length; i++) {
     link = document.createElement("link");
     link.href = contentUrl(cssFiles[i]);
     link.type = "text/css";
@@ -23,6 +23,6 @@ var jsFiles = [
     "toggles.min.js"
 ];
 
-for (var i = 0; i < js.length; i++) {
+for (var i = 0; i < jsFiles.length; i++) {
     document.body.appendChild(document.createElement("script")).src = contentUrl(jsFiles[i]);
 }
