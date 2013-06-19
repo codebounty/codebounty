@@ -33,5 +33,5 @@
         "scripts": ["chrome.js"]
     },
     "homepage_url": "http://codebounty.co",
-    "web_accessible_resources": []
+    "web_accessible_resources": ["content/*"]
 }
