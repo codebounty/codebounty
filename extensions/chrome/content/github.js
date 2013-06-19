@@ -2,9 +2,9 @@
 (function (undefined) {
     //TODO uncomment for deployment
     // var rootUrl = "https://app.codebounty.co/",
-    //     publicUrl = rootUrl,
     var rootUrl = "http://localhost:3000",
-        publicUrl = "https://localhost:8888/meteor/public/", //locally we use the node server because it is https
+    //TODO update id for deployment
+        contentUrl = "chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/",
         thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
@@ -322,15 +322,15 @@
             };
             var getStatusIconUrl = function (cashLevel) {
                 if (cashLevel === 0)
-                    return publicUrl + "status-coins.png";
+                    return contentUrl + "status-coins.png";
                 else if (cashLevel === 1)
-                    return publicUrl + "status-moneybag.png";
+                    return contentUrl + "status-moneybag.png";
                 else if (cashLevel === 2)
-                    return publicUrl + "status-moneybags.png";
+                    return contentUrl + "status-moneybags.png";
                 else if (cashLevel === 3)
-                    return publicUrl + "status-bars.png";
+                    return contentUrl + "status-bars.png";
                 else if (cashLevel === 4)
-                    return publicUrl + "status-jackpot.png";
+                    return contentUrl + "status-jackpot.png";
                 else
                     throw "Unknown cash level.";
             };
