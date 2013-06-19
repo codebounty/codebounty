@@ -1,6 +1,8 @@
 {
     "BITCOIN_CLIENT": {
         "host": "localhost",
+        //TODO uncomment for deployment
+        // "port": 8332,
         "port": 18332,
         "user": "oldgregg",
         "pass": "4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ"

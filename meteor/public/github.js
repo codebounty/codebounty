@@ -1,8 +1,8 @@
 //the injected github UI
 (function (undefined) {
     //TODO uncomment for deployment
-    //var rootUrl = "https://codebounty.co",
-    //publicUrl = rootUrl + "/public/",
+    // var rootUrl = "https://app.codebounty.co/",
+    //     publicUrl = rootUrl,
     var rootUrl = "http://localhost:3000",
         publicUrl = "https://localhost:8888/meteor/public/", //locally we use the node server because it is https
         thisIssueUrl = encodeURI(window.location.href);
