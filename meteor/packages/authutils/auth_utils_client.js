@@ -17,9 +17,7 @@ AuthUtils.afterLogin = function (func) {
                 }
                 //if the current user has not logged in: prompt a login
                 else if (!Meteor.userId()) {
-                    //only prompt for login once
-                    if (!loginPrompted)
-                        AuthUtils.promptLogin();
+                    AuthUtils.promptLogin();
                 }
                 //check the user's authorization
                 else {
@@ -40,9 +38,11 @@ AuthUtils.afterLogin = function (func) {
     });
 };
 
-var loginPrompted = false;
-AuthUtils.promptLogin = function () {
-    loginPrompted = true;
-    //TODO before deployment, switch to only public repo
-    Meteor.loginWithGithub({requestPermissions: ["user:email", "repo"]});
-};
+//only allow login prompt once
+AuthUtils.promptLogin = _.once(function () {
+    //wait until the auth services info is loaded
+    _.delay(function () {
+        //TODO DEPLOYMENT: switch to only public repo
+        Meteor.loginWithGithub({requestPermissions: ["user:email", "repo"]});
+    }, 2500);
+});

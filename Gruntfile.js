@@ -54,14 +54,6 @@ module.exports = function (grunt) {
                 bg: false,
                 stdout: true,
                 stderr: true
-            },
-            webserver: {
-                cmd: [
-                    "node tools/web-server.js"
-                ],
-                bg: true,
-                stdout: false,
-                stderr: false
             }
         },
         encode: {
@@ -111,7 +103,6 @@ module.exports = function (grunt) {
 
     // runs all the servers
     grunt.registerTask("server", [
-        "bgShell:webserver",
         "bgShell:bitcoind",
         "bgShell:meteor"
     ]);
