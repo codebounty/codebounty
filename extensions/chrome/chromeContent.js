@@ -1,7 +1,7 @@
 //Inject css - will probably want to squash all into one file someday.
 
 //TODO uncomment for deployment
-//var publicUrl ="https://codebounty.co/public/";
+// var publicUrl ="https://app.codebounty.co/";
 var publicUrl = "https://localhost:8888/meteor/public/"; //locally we use the node server because it is https
 
 var css = [
