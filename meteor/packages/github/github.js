@@ -313,7 +313,7 @@ GitHub.prototype.checkAccess = function (callback) {
 
         var scopes = result.meta["x-oauth-scopes"].replace(" ", "").split(",");
 
-        //TODO before deployment, switch to only public repo
+        //TODO DEPLOYMENT: switch to only public repo
         var haveAccess = _.contains(scopes, "repo") && _.contains(scopes, "user:email");
         callback(haveAccess);
     });

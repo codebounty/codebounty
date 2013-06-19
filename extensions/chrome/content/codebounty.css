@@ -85,7 +85,7 @@
     width: 250px;
     height: 250px;
     margin: auto;
-    /*todo update id for deployment */
+    /*TODO DEPLOYMENT: update id */
     background: url("chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/ajax-loader.gif");
     background-repeat: no-repeat;
 }

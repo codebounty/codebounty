@@ -31,15 +31,9 @@ OS X / Linux / Ubuntu
 
 		npm install --dev
 
-4. Add the certificate under `tools` as a [trusted certificate](http://productforums.google.com/forum/#!topic/chrome/1b7V3cs7BS4) for your computer:
+4. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki).
 
-	**OS X**
-
-	Open `https://localhost:8888` in safari, choose certificate details, and select always trust this certificate. Then reopen chrome and test it by visiting `https://localhost:8888`.
-
-5. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki).
-
-6. Install Bitcoin and put this in your bitcoin.conf file:
+5. Install Bitcoin and put this in your bitcoin.conf file:
 
         rpcuser=oldgregg
         rpcpassword=4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ
@@ -50,7 +44,7 @@ OS X / Linux / Ubuntu
 
 	To install bitcoind on mac: `sudo port install bitcoin`
 
-7. For testing you will also need to download [chromedriver](https://code.google.com/p/chromedriver/downloads/list) into a folder and add that folder to your PATH.
+6. For testing you will also need to download [chromedriver](https://code.google.com/p/chromedriver/downloads/list) into a folder and add that folder to your PATH.
 
 ###Run Project
 

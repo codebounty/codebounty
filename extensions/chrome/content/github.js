@@ -1,9 +1,9 @@
 //the injected github UI
 (function (undefined) {
-    //TODO uncomment for deployment
-    // var rootUrl = "https://app.codebounty.co/",
+    //TODO DEPLOYMENT: switch root url
+//    var rootUrl = "https://app.codebounty.co",
     var rootUrl = "http://localhost:3000",
-    //TODO update id for deployment
+    //TODO DEPLOYMENT: update id
         contentUrl = "chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/",
         thisIssueUrl = encodeURI(window.location.href);
 
