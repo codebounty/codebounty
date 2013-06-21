@@ -1,6 +1,3 @@
-var path = Npm.require("path"),
-    basepath = path.resolve(".") + "/packages/reward";
-
 /**
  * Add the (not yet approved) funds to an existing reward or if one does not exist add it to a new reward
  * Then return the funding url to the callback
@@ -118,7 +115,7 @@ RewardUtils.cashLevel = function (amount, currency) {
  * @return {String}      File path
  */
 RewardUtils.assetFile = function (name) {
-    return path.join(basepath, "/assets/", name);
+    return Tools.publicFolder + "/assets/" + name;
 };
 
 /**

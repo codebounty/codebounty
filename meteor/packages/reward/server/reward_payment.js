@@ -116,7 +116,7 @@ Reward.prototype.initiatePayout = function (by, callback) {
                 status: that.status
             }
         });
-        
+
         // Email an alert to all recipients and the backer.
         _.each(that.receivers, function (receiver) {
             Email.send({
@@ -125,6 +125,7 @@ Reward.prototype.initiatePayout = function (by, callback) {
                 subject: Reward.Emails.rewarded.subject,
                 text: Reward.Emails.rewarded.text
             });
+        });
 
         callback(null, true);
     }).run();

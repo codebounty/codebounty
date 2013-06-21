@@ -26,6 +26,7 @@
     width: 0.75em;
     margin-top: 0.2em;
 }
+
 .btc.currencySymbol {
     display: none;
 }
@@ -84,8 +85,8 @@
     width: 250px;
     height: 250px;
     margin: auto;
-
-    background: url("http://localhost:3000/ajax-loader.gif");
+    /*TODO DEPLOYMENT: update id */
+    background: url("chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/ajax-loader.gif");
     background-repeat: no-repeat;
 }
 

@@ -1,25 +1,28 @@
-//Inject css - will probably want to squash all into one file someday.
-var css = [
-    "https://localhost/meteor/public/codebounty.css",
-    "https://localhost/meteor/public/toggles.css",
-    "https://localhost/meteor/public/toggles-github.css"
-];
-var link;
+var contentUrl = function (file) {
+    return chrome.extension.getURL("content/" + file);
+};
 
-for (var i = 0; i < css.length; i++) {
+var cssFiles = [
+    "codebounty.css",
+    "toggles.css",
+    "toggles-github.css"
+];
+
+var link;
+for (var i = 0; i < cssFiles.length; i++) {
     link = document.createElement("link");
-    link.href = css[i];
+    link.href = contentUrl(cssFiles[i]);
     link.type = "text/css";
     link.rel = "stylesheet";
     document.getElementsByTagName("head")[0].appendChild(link);
 }
 
 //Inject javascript - will probably want to squash all into one file someday.
-var js = [
-    "https://localhost/meteor/public/github.js",
-    "https://localhost/meteor/public/toggles.min.js"
+var jsFiles = [
+    "github.js",
+    "toggles.min.js"
 ];
 
-for (var i = 0; i < js.length; i++) {
-    document.body.appendChild(document.createElement("script")).src = js[i];
+for (var i = 0; i < jsFiles.length; i++) {
+    document.body.appendChild(document.createElement("script")).src = contentUrl(jsFiles[i]);
 }

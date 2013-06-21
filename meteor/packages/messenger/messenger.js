@@ -1,3 +1,4 @@
+//TODO DEPLOYMENT: switch root url
 //var rootUrl = Meteor.settings["ROOT_URL"];
 var rootUrl = "http://localhost:3000";
 
@@ -17,7 +18,7 @@ Messenger.send = function (message, target) {
     if (!target)
         target = "*";
 
-    top.postMessage(message, target);
+    parent.postMessage(message, target);
 };
 
 var eventCallbacks = [];
