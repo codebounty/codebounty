@@ -104,84 +104,91 @@ Meteor.Router.add("/bitcoin-ipn", function () {
         if (error)
             throw error;
 
-        if (params.confirmations < Bitcoin.Settings.minimumConfirmations) {
-            // No *ok* token means Blockchain.info will resend this notification
-            // every time more confirmations are added to the transactions.
-            fut.ret([200]);
-            return;
+        Bitcoin.getTransaction(params.transaction_hash, function (error, transaction) {
+            
+            // Exit the function if the transaction specified isn't in our wallet,
+            // or if the transaction hasn't received enough confirmations.
+            if (params.confirmations < Bitcoin.Settings.minimumConfirmations
+            || !transaction || transaction.confirmations < Bitcoin.Settings.minimumConfirmations)
+            {
+                // No *ok* token means Blockchain.info will resend this notification
+                // every time more confirmations are added to the transactions.
+                fut.ret([200]);
+                return;
+            }
+
+            Fiber(function () {
+                //check if this has already been recorded
+                var existing = Rewards.findOne({
+                    funds: {
+                        $elemMatch: {
+                            transactionHash: params.transaction_hash
+                        }
+                    }
+                });
+                //this transactionHash was already recorded so we have a problem
+                if (existing)
+                    throw "BitcoinFund approval already recorded " + EJSON.stringify(params);
+
+                //find an open reward with a matching address
+                var proxyAddress = params.input_address;
+                var reward = Rewards.findOne({
+                    $or: [
+                        { status: { $in: [ "open", "reopened" ] }},
+                        { $and: [
+                            { status: "initiated" },
+                            { "payout.by": "system" }
+                        ]}
+                    ],
+                    funds: {
+                        $elemMatch: {
+                            proxyAddress: proxyAddress
+                        }
+                    }
+                });
+                if (!reward)
+                    throw "No eligible reward found " + EJSON.stringify(params); //should we just insert a new reward if one does not exist?
+
+                //get the bitcoin fund if there is not a transaction hash (probably the first fund)
+                var bitcoinFund = _.find(reward.funds, function (fund) {
+                    return !fund.transactionHash && fund.proxyAddress === proxyAddress;
+                });
+                var destinationAddress = params.destination_address;
+                var insertNewFund = false;
+                //otherwise add a new fund for this transaction
+                if (!bitcoinFund) {
+                    var expires = Tools.addDays(FundUtils.expiresAfterDays);
+                    bitcoinFund = new BitcoinFund({
+                        address: destinationAddress,
+                        amount: new Big(0), //the amount will be set in the confirm method below
+                        expires: expires,
+                        proxyAddress: proxyAddress,
+                        userId: reward.userId
+                    });
+                    reward.funds.push(bitcoinFund);
+                    insertNewFund = true;
+                }
+
+                bitcoinFund.confirm(reward, params, insertNewFund);
+                
+                // If the reward amount is less than the minimum required
+                // amount, send the user an alert.
+                var totalReward = BigUtils.sum(reward.availableFundAmounts());
+                
+                if (totalReward < Bitcoin.Settings.minimumFundAmount) {
+                    Email.send({
+                        to: AuthUtils.email(
+                            Meteor.users.find({_id: reward.userId})),
+                        from: Meteor.settings["ALERTS_EMAIL"],
+                        subject: Bitcoin.Emails.insufficient_funds.subject,
+                        text: Bitcoin.Emails.insufficient_funds.text
+                    });
+                }
+            }).run();
+
+            // To prevent Blockchain.info from continually resending the transaction.
+            fut.ret([200, "*ok*"]);
         }
-
-        Fiber(function () {
-            //check if this has already been recorded
-            var existing = Rewards.findOne({
-                funds: {
-                    $elemMatch: {
-                        transactionHash: params.transaction_hash
-                    }
-                }
-            });
-            //this transactionHash was already recorded so we have a problem
-            if (existing)
-                throw "BitcoinFund approval already recorded " + EJSON.stringify(params);
-
-            //find an open reward with a matching address
-            var proxyAddress = params.input_address;
-            var reward = Rewards.findOne({
-                $or: [
-                    { status: { $in: [ "open", "reopened" ] }},
-                    { $and: [
-                        { status: "initiated" },
-                        { "payout.by": "system" }
-                    ]}
-                ],
-                funds: {
-                    $elemMatch: {
-                        proxyAddress: proxyAddress
-                    }
-                }
-            });
-            if (!reward)
-                throw "No eligible reward found " + EJSON.stringify(params); //should we just insert a new reward if one does not exist?
-
-            //get the bitcoin fund if there is not a transaction hash (probably the first fund)
-            var bitcoinFund = _.find(reward.funds, function (fund) {
-                return !fund.transactionHash && fund.proxyAddress === proxyAddress;
-            });
-            var destinationAddress = params.destination_address;
-            var insertNewFund = false;
-            //otherwise add a new fund for this transaction
-            if (!bitcoinFund) {
-                var expires = Tools.addDays(FundUtils.expiresAfterDays);
-                bitcoinFund = new BitcoinFund({
-                    address: destinationAddress,
-                    amount: new Big(0), //the amount will be set in the confirm method below
-                    expires: expires,
-                    proxyAddress: proxyAddress,
-                    userId: reward.userId
-                });
-                reward.funds.push(bitcoinFund);
-                insertNewFund = true;
-            }
-
-            bitcoinFund.confirm(reward, params, insertNewFund);
-            
-            // If the reward amount is less than the minimum required
-            // amount, send the user an alert.
-            var totalReward = BigUtils.sum(reward.availableFundAmounts());
-            
-            if (totalReward < Bitcoin.Settings.minimumFundAmount) {
-                Email.send({
-                    to: AuthUtils.email(
-                        Meteor.users.find({_id: reward.userId})),
-                    from: Meteor.settings["ALERTS_EMAIL"],
-                    subject: Bitcoin.Emails.insufficient_funds.subject,
-                    text: Bitcoin.Emails.insufficient_funds.text
-                });
-            }
-        }).run();
-
-        // To prevent Blockchain.info from continually resending the transaction.
-        fut.ret([200, "*ok*"]);
     });
 
     return fut.wait();
