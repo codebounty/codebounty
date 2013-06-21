@@ -1,5 +1,4 @@
-var fs = Npm.require("fs"), path = Npm.require("path"),
-    basepath = path.resolve(".") + "/packages/reward";
+var fs = Npm.require("fs");
 
 // Constants
 
