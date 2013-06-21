@@ -1,0 +1,104 @@
+.bountyButton {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.inputWrapper {
+    position: relative;
+}
+
+.btc.inputWrapper {
+    display: none;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.btc.inputWrapper canvas {
+    margin: auto;
+}
+
+.btc.currencySymbol svg {
+    height: 0.85em;
+    width: 0.75em;
+    margin-top: 0.2em;
+}
+
+.btc.currencySymbol {
+    display: none;
+}
+
+.bountyCurrency {
+    position: absolute;
+    padding-top: 8px;
+    padding-left: 7px;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    pointer-events: none;
+}
+
+#bountyInput {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 8px;
+    padding-left: 20px;
+
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#currencyToggle {
+    position: relative;
+    margin: 0 auto 8px;
+}
+
+#iframecontainer {
+    width: 90%;
+    height: 80%;
+    display: none;
+    position: fixed;
+    margin-top: 5%;
+    margin-left: 5%;
+    background: #FFF;
+    border: 1px solid #666;
+    box-shadow: 2px 2px 40px #222;
+    z-index: 100;
+}
+
+#iframecontainer iframe {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+#loader {
+    width: 250px;
+    height: 250px;
+    margin: auto;
+    /*TODO DEPLOYMENT: update id */
+    background: url("chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/ajax-loader.gif");
+    background-repeat: no-repeat;
+}
+
+#block {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+
+    background: #000;
+    opacity: 0.6;
+    z-index: 100;
+}

@@ -31,11 +31,22 @@ Meteor.Router.add("/reward/:id", function (id) {
         claimedBy: claimedBy
     };
 
+    var imagePath = "rewards/" + id + ".png";
+
+    //find if there is already a matching image
+    var url = ImageCacheTools.get(imagePath, rewardDetails);
+    if (url)
+        return [302, { "Location": url }, null];
+
+    //generate and cache this image, and delete the old one
     var canvas = RewardUtils.statusComment(rewardDetails);
+    var imageBuffer = canvas.toBuffer();
+
+    ImageCacheTools.set(imagePath, imageBuffer, rewardDetails, true);
 
     var response = this.response;
     response.writeHead(200, {"Content-Type": "image/png" });
-    response.write(canvas.toBuffer());
+    response.write(imageBuffer);
     response.end();
 });
 
@@ -48,14 +59,24 @@ Meteor.Router.add("/badge/:user/:repo", function (user, repo) {
         status: { $in: ["open", "reopened"] }
     }).count();
 
-    var repoStatus = {
+    var badgeDetails = {
         open: openRewards
     };
-    var canvas = RewardUtils.repoBadge(repoStatus);
+
+    var imagePath = "badges/" + openRewards + ".png";
+    //find if there is already a matching image
+    var url = ImageCacheTools.get(imagePath, badgeDetails);
+    if (url)
+        return [302, { "Location": url }, null];
+
+    var canvas = RewardUtils.repoBadge(badgeDetails);
+    var imageBuffer = canvas.toBuffer();
+
+    ImageCacheTools.set(imagePath, imageBuffer, badgeDetails, true);
 
     var response = this.response;
     response.writeHead(200, {"Content-Type": "image/png" });
-    response.write(canvas.toBuffer());
+    response.write(imageBuffer);
     response.end();
 });
 
@@ -153,9 +174,25 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                 var bitcoinFund = _.find(reward.funds, function (fund) {
                     return !fund.transactionHash && fund.proxyAddress === proxyAddress;
                 });
+
+                // If the reward amount is less than the minimum required
+                // amount, send the user an alert.
+                var totalReward = BigUtils.sum(reward.availableFundAmounts());
+
+                if (totalReward < Bitcoin.Settings.minimumFundAmount) {
+                    Email.send({
+                        to: AuthUtils.email(
+                            Meteor.users.find({_id: reward.userId})),
+                        from: Meteor.settings["ALERTS_EMAIL"],
+                        subject: Bitcoin.Emails.insufficient_funds.subject,
+                        text: Bitcoin.Emails.insufficient_funds.text
+                    });
+                }
+
                 var destinationAddress = params.destination_address;
                 var insertNewFund = false;
-                //otherwise add a new fund for this transaction
+                
+                // add a new fund for this transaction if one doesn't exist already.
                 if (!bitcoinFund) {
                     var expires = Tools.addDays(FundUtils.expiresAfterDays);
                     bitcoinFund = new BitcoinFund({
@@ -188,7 +225,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
 
             // To prevent Blockchain.info from continually resending the transaction.
             fut.ret([200, "*ok*"]);
-        }
+        });
     });
 
     return fut.wait();
