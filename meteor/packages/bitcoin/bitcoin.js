@@ -54,6 +54,17 @@ Bitcoin.verify = function (request, response, callback) {
 };
 
 /**
+ * Returns a transaction object corresponding to the transaction hash passed in.
+ * Can only retrieve transactions belonging to the server's wallet.
+ * @param transactionHash The transaction we're checking.
+ * @param minConfirmations The minimum number of confirmations we expect.
+ * @param callback (error, data)
+ */
+Bitcoin.getTransaction = function (transactionHash, callback) {
+    Bitcoin.Client.getTransaction(transactionHash, callback);
+};
+
+/**
  * Make a payment to a set of receivers
  * @param address The address we're paying from.
  * @param receiverList ex. [{email: "perl.jonathan@gmail.com", amount: 100.12}, ..]
