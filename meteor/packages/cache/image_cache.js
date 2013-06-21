@@ -39,10 +39,10 @@ ImageCacheTools.get = function (path, meta) {
  * @param {string} path The folder and file name. Ex. "rewards/1234.png"
  * @param {Buffer} pngBuffer
  * @param {*} meta Metadata to store under meta
- * @param {boolean} everyoneCanView If everyone has permission to view the bucket
+ * @param {boolean} publicRead If everyone has permission to read the file
  * @param [callback]
  */
-ImageCacheTools.set = function (path, pngBuffer, meta, everyoneCanView, callback) {
+ImageCacheTools.set = function (path, pngBuffer, meta, publicRead, callback) {
     //return if the user does not have s3 configured
     if (!s3)
         return;
@@ -52,7 +52,7 @@ ImageCacheTools.set = function (path, pngBuffer, meta, everyoneCanView, callback
         Key: path,
         Body: pngBuffer
     };
-    if (everyoneCanView)
+    if (publicRead)
         options.ACL = "public-read";
 
     s3.putObject(options, function (error, data) {
