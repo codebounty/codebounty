@@ -61,14 +61,26 @@ Meteor.Router.add("/badge/:user/:repo", function (user, repo) {
         status: { $in: ["open", "reopened"] }
     }).count();
 
-    var repoStatus = {
+    var badgeDetails = {
         open: openRewards
     };
-    var canvas = RewardUtils.repoBadge(repoStatus);
+
+    var imagePath = "badges/" + openRewards + ".png";
+    //find if there is already a matching image
+    var url = ImageCacheTools.get(imagePath, badgeDetails);
+    if (url)
+        return [302, {
+            "Location": url
+        }, null];
+
+    var canvas = RewardUtils.repoBadge(badgeDetails);
+    var imageBuffer = canvas.toBuffer();
+
+    ImageCacheTools.set(imagePath, imageBuffer, badgeDetails, true);
 
     var response = this.response;
     response.writeHead(200, {"Content-Type": "image/png" });
-    response.write(canvas.toBuffer());
+    response.write(imageBuffer);
     response.end();
 });
 
