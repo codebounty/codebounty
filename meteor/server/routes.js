@@ -31,11 +31,24 @@ Meteor.Router.add("/reward/:id", function (id) {
         claimedBy: claimedBy
     };
 
+    var imagePath = "rewards/" + id + ".png";
+
+    //find if there is already a matching image
+    var url = ImageCacheTools.get(imagePath, rewardDetails);
+    if (url)
+        return [302, {
+            "Location": url
+        }, null];
+
+    //generate and cache this image, and delete the old one
     var canvas = RewardUtils.statusComment(rewardDetails);
+    var imageBuffer = canvas.toBuffer();
+
+    ImageCacheTools.set(imagePath, imageBuffer, rewardDetails, true);
 
     var response = this.response;
     response.writeHead(200, {"Content-Type": "image/png" });
-    response.write(canvas.toBuffer());
+    response.write(imageBuffer);
     response.end();
 });
 
@@ -164,11 +177,11 @@ Meteor.Router.add("/bitcoin-ipn", function () {
             }
 
             bitcoinFund.confirm(reward, params, insertNewFund);
-            
+
             // If the reward amount is less than the minimum required
             // amount, send the user an alert.
             var totalReward = BigUtils.sum(reward.availableFundAmounts());
-            
+
             if (totalReward < Bitcoin.Settings.minimumFundAmount) {
                 Email.send({
                     to: AuthUtils.email(

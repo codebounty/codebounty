@@ -1,4 +1,8 @@
 {
+    "ALERTS_EMAIL": "perl.jonathan@gmail.com",
+    "AWS_ACCESS_KEY_ID": null,
+    "AWS_SECRET_ACCESS_KEY": null,
+    "AWS_IMAGE_BUCKET" : "codebountydev-images",
     "BITCOIN_CLIENT": {
         "host": "localhost",
         "port": 18332,
@@ -18,6 +22,5 @@
     "PAYPAL_SIGNATURE": "AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg",
     "PRODUCTION": false,
     "ROOT_URL": "https://cbounty.fwd.wf/",
-    "SUPPORT_EMAIL": "perl.jonathan@gmail.com",
-    "ALERTS_EMAIL": "perl.jonathan@gmail.com"
+    "SUPPORT_EMAIL": "perl.jonathan@gmail.com"
 }

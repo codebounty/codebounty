@@ -1,7 +1,7 @@
 /**
  * Checks the user is logged in and has given the required scopes
  * otherwise prompt them to login once.
- * Should only be used by the messenger, because after UI will not be setup until authorization has been succesful
+ * Should only be used by the messenger, because after UI will not be setup until authorization has been successful
  * @param func Run this after logged in. TODO figure out why func subscriptions seem to be cancelled
  */
 AuthUtils.afterLogin = function (func) {
