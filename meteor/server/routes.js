@@ -36,9 +36,7 @@ Meteor.Router.add("/reward/:id", function (id) {
     //find if there is already a matching image
     var url = ImageCacheTools.get(imagePath, rewardDetails);
     if (url)
-        return [302, {
-            "Location": url
-        }, null];
+        return [302, { "Location": url }, null];
 
     //generate and cache this image, and delete the old one
     var canvas = RewardUtils.statusComment(rewardDetails);
@@ -69,9 +67,7 @@ Meteor.Router.add("/badge/:user/:repo", function (user, repo) {
     //find if there is already a matching image
     var url = ImageCacheTools.get(imagePath, badgeDetails);
     if (url)
-        return [302, {
-            "Location": url
-        }, null];
+        return [302, { "Location": url }, null];
 
     var canvas = RewardUtils.repoBadge(badgeDetails);
     var imageBuffer = canvas.toBuffer();
