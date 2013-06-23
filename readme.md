@@ -16,12 +16,11 @@ Development
 
 OS X / Linux / Ubuntu
 
-1. Install [meteorite](http://oortcloud.github.com/meteorite/): **
+1. Install [meteor](http://docs.meteor.com/#quickstart) and [meteorite](http://oortcloud.github.com/meteorite/):
 
-		sudo npm install -g meteorite
+        curl https://install.meteor.com | /bin/sh
+		npm install -g meteorite
 		
-	**Ubuntu 12.04 users see [here](https://github.com/oortcloud/meteorite/issues/67).
-
 2. Clone this repo:
 
 		git clone https://github.com/codebounty/codebounty codebounty
@@ -29,7 +28,7 @@ OS X / Linux / Ubuntu
 
 3. Install the dependencies:
 
-		npm install --dev
+		npm install --dev && cd meteor && mrt install && cd ../
 
 4. Install dependencies for node-canvas, please check out [node-canvas wiki](https://github.com/LearnBoost/node-canvas/wiki).
 

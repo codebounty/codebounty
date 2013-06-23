@@ -49,7 +49,7 @@ module.exports = function (grunt) {
             meteor: {
                 cmd: [
                     "cd meteor",
-                    "mrt --settings settings.json"
+                    "meteor --settings settings.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,
