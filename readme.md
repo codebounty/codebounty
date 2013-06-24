@@ -20,7 +20,7 @@ OS X / Linux / Ubuntu
 
         curl https://install.meteor.com | /bin/sh
 		npm install -g meteorite
-		
+
 2. Clone this repo:
 
 		git clone https://github.com/codebounty/codebounty codebounty
