@@ -4,4 +4,8 @@
 
 <body>
 {{renderPage}}
+
+{{#if isAdmin}}
+{{>logs_bootstrap}}
+{{/if}}
 </body>

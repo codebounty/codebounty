@@ -20,7 +20,7 @@
     <div class="roleModal modal fade" tabindex="-1" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{#if isAdmin}}Remove{{else}}Make{{/if}} admin: {{username}}</h4>
+                <h4 class="modal-title">{{#if selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin: {{username}}</h4>
             </div>
             <div class="modal-body">
                 <p>Reason</p>
@@ -28,7 +28,7 @@
             </div>
             <div class="modal-footer">
                 <a class="btn btn-default" data-dismiss="modal">Cancel</a>
-                <a class="btn btn-primary action">{{#if isAdmin}}Remove{{else}}Make{{/if}} admin</a>
+                <a class="btn btn-primary action">{{#if selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a>
             </div>
         </div>
     </div>
@@ -66,7 +66,7 @@
                             {{#unless isActive}}<i class="icon-ban-circle" rel="tooltip" data-placement="bottom"
                                                    title="The user is banned."></i>{{/unless}}
 
-                            {{#if isAdmin}}<i class="icon-user-md" rel="tooltip" data-placement="bottom"
+                            {{#if selectedUserIsAdmin}}<i class="icon-user-md" rel="tooltip" data-placement="bottom"
                                               title="This user is an admin."></i>{{/if}}
                         </td>
                         <td>{{user._id}}</td>
@@ -81,7 +81,7 @@
                                     <li><a class="openActiveModal"><i class="icon-fixed-width icon-ban-circle"></i>
                                         {{#if isActive}}Ban{{else}}Unban{{/if}}</a></li>
                                     <li><a class="openRoleModal"><i class="icon-fixed-width icon-user-md"></i> {{#if
-                                        isAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
+                                        selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
                                 </ul>
                             </div>
                         </td>
