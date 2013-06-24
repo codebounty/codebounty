@@ -1,19 +1,13 @@
 {
   "dependencies": {
-    "github": {
-      "version": "0.1.8",
-      "from": "https://github.com/piascikj/node-github-1/tarball/b80e6e290e0c9b977272368fd47233155e5b1c8d",
-      "resolved": "https://github.com/piascikj/node-github-1/tarball/b80e6e290e0c9b977272368fd47233155e5b1c8d"
-    },
     "async": {
-      "version": "0.2.7",
-      "from": "https://registry.npmjs.org/async/-/async-0.2.7.tgz",
-      "resolved": "https://registry.npmjs.org/async/-/async-0.2.7.tgz"
+      "version": "0.2.7"
+    },
+    "github": {
+      "from": "https://github.com/piascikj/node-github-1/tarball/b80e6e290e0c9b977272368fd47233155e5b1c8d"
     },
     "signals": {
-      "version": "1.0.0",
-      "from": "https://registry.npmjs.org/signals/-/signals-1.0.0.tgz",
-      "resolved": "https://registry.npmjs.org/signals/-/signals-1.0.0.tgz"
+      "version": "1.0.0"
     }
   }
 }
