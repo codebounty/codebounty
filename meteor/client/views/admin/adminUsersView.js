@@ -4,7 +4,7 @@ Template.adminUsersView.isActive = Template.activeModal.isActive = function () {
     return AuthUtils.isActive(selectedUser());
 };
 
-Template.adminUsersView.isAdmin = Template.roleModal.isAdmin = function () {
+Template.adminUsersView.selectedUserIsAdmin = Template.roleModal.selectedUserIsAdmin = function () {
     return AuthUtils.isAdmin(selectedUser());
 };
 

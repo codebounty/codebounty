@@ -5,7 +5,11 @@
       "bootstrap-3": {},
       "router": {},
       "session-extras": {},
-      "font-awesome": {}
+      "font-awesome": {},
+      "observatory": {
+        "git": "https://github.com/jperl/observatory.git",
+        "branch": "master"
+      }
     },
     "packages": {
       "bootstrap-3": {
@@ -28,10 +32,20 @@
         "tag": "v3.2.0",
         "commit": "2cba6f907a2579cae2d399b522f9544c13d5e091"
       },
+      "observatory": {
+        "git": "https://github.com/jperl/observatory.git",
+        "branch": "master",
+        "commit": "e6d28f10ffd47f8adc23d93eacdc554ff6f65f2c"
+      },
       "page-js-ie-support": {
         "git": "https://github.com/tmeasday/meteor-page-js-ie-support.git",
         "tag": "v1.3.5",
         "commit": "b99ed8380aefd10b2afc8f18d9eed4dd0d8ea9cb"
+      },
+      "observatory-apollo": {
+        "git": "https://github.com/jperl/observatory-apollo.git",
+        "branch": "master",
+        "commit": "55eac463fd2b46434819590c00a091f1a953617c"
       }
     }
   }

@@ -2,7 +2,7 @@
 
 //for all users
 Meteor.publish(null, function () {
-    return Meteor.users.find(this.userId, {fields: { active: 1, profile: 1}});
+    return Meteor.users.find(this.userId, {fields: { active: 1, profile: 1, role: 1}});
 });
 
 //for admin users
