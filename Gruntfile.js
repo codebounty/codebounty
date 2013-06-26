@@ -54,6 +54,15 @@ module.exports = function (grunt) {
                 bg: false,
                 stdout: true,
                 stderr: true
+            },
+            debugmeteor: {
+                cmd: [
+                    "cd meteor",
+                    "NODE_OPTIONS='--debug-brk' meteor --settings settings.json"
+                ].join("&&"),
+                bg: false,
+                stdout: true,
+                stderr: true
             }
         },
         encode: {
@@ -101,11 +110,12 @@ module.exports = function (grunt) {
         "encode"
     ]);
 
-    // runs all the servers
-    grunt.registerTask("server", [
-        "bgShell:bitcoind",
-        "bgShell:meteor"
-    ]);
+    grunt.registerTask("server", "Run the servers", function (target) {
+        grunt.task.run([
+            "bgShell:bitcoind",
+            target === "debug" ? "bgShell:debugmeteor" : "bgShell:meteor"
+        ]);
+    });
 
     // the testing tasks
     grunt.registerTask("test", "intern:client");

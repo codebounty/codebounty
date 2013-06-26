@@ -51,6 +51,13 @@ Run `grunt server`.
 
 If you are trying to test out the images, or the paypal callback, use some form of tunnel like [forward](https://forwardhq.com/) or [localtunnel (free)](https://github.com/progrium/localtunnel#localtunnel-v2-beta) then update the ROOT_URL in settings.json.
 
+If you want to debug the server:
+
+- Install [node-inspector](https://github.com/dannycoates/node-inspector): `npm install -g node-inspector`
+- Run `grunt server:debug` in one terminal.
+- Run `node-inspector` in another terminal.
+- Open the inspector url.
+
 ###Run Tests
 
 Run `java -jar tools/selenium-server.jar` in one terminal to start the selenium server, `grunt server` in another, then `grunt test` in another.
