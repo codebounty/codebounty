@@ -4,4 +4,4 @@ node_modules/
 build/
 meteor/settings.deployment.json
 meteor/settings.development.json
-
+tests/settings.local.js
