@@ -67,6 +67,16 @@ Template.adminRewardsView.created = function () {
     });
 };
 
+Template.adminRewardsView.rendered = function () {
+    var tooltips = $("[rel=tooltip]");
+    if (tooltips.length > 0)
+        tooltips.tooltip();
+
+    var dropdowns = $("[data-toggle=dropdown]");
+    if (dropdowns.length > 0)
+        dropdowns.dropdown();
+};
+
 Template.adminRewardsView.events({
     "click .searchFilters .btn": function () {
         Session.set("rewardIdFilter", $(".rewardId").val());
