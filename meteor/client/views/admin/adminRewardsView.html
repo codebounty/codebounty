@@ -115,7 +115,7 @@
                                     {{#unless statusIs "refunded"}}
                                     <li><a class="openRefundModal">Refund</a></li>
                                     {{/unless}}
-                                    {{#if statusIs "open" "reopened"}}
+                                    {{#if statusIs "open" "reopened" "held"}}
                                     <li><a class="openRewardModal">Reward</a></li>
                                     {{/if}}
                                 </ul>

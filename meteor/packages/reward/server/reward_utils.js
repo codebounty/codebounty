@@ -15,7 +15,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
     };
     var gitHub = new GitHub(user);
 
-    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
+    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, false, gitHub, function (rewards, contributorsEmails) {
         var reward;
 
         //add to the existing reward
@@ -135,13 +135,14 @@ RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
  * Make sure to update the diagram here https://codebounty.hackpad.com/Reward-yN7ydM3LIjy whenever you use this method
  * ----------------------------------------------
  * Find rewards that are open, reopened, or initiated by the system (not by a user)
- * @param [selector] If passed, use this selector as a base
- * @param [options] If passed, use these options for the Collection.find
- * @param [contributorsIssueUrl] If passed, only load rewards for this issueUrl and load the contributors
+ * @param selector If passed, use this selector as a base
+ * @param options If passed, use these options for the Collection.find
+ * @param contributorsIssueUrl If passed, only load rewards for this issueUrl and load the contributors
+ * @param includeHeld If true, include the held rewards (ex. the admin is manually rewarding)
  * @param gitHub The gitHub api instance to use for loading the contributors commits
  * @param {function(Array.<Reward>, Array.<string>)} callback (rewards, contributorsEmails)
  */
-RewardUtils.eligibleForManualReward = function (selector, options, contributorsIssueUrl, gitHub, callback) {
+RewardUtils.eligibleForManualReward = function (selector, options, contributorsIssueUrl, includeHeld, gitHub, callback) {
     selector = selector || {};
     selector.$or = [
         { status: { $in: [ "open", "reopened" ] }},
@@ -150,6 +151,9 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
             { "payout.by": "system" }
         ]}
     ];
+
+    if (includeHeld)
+        selector.$or[0].status.$in.push("held");
 
     if (contributorsIssueUrl)
         selector.issueUrl = contributorsIssueUrl;
