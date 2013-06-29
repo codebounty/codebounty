@@ -45,7 +45,7 @@
       "observatory-apollo": {
         "git": "https://github.com/jperl/observatory-apollo.git",
         "branch": "master",
-        "commit": "55eac463fd2b46434819590c00a091f1a953617c"
+        "commit": "660bfeb577fb81776507e7750f4dc03438d43744"
       }
     }
   }
