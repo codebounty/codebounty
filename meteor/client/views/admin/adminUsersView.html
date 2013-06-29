@@ -63,10 +63,10 @@
                     <tbody>
                     <tr>
                         <td>
-                            {{#unless isActive}}<i class="icon-ban-circle" rel="tooltip" data-placement="bottom"
+                            {{#unless isActive}}<i class="glyphicon glyphicon-ban-circle" rel="tooltip" data-placement="bottom"
                                                    title="The user is banned."></i>{{/unless}}
 
-                            {{#if selectedUserIsAdmin}}<i class="icon-user-md" rel="tooltip" data-placement="bottom"
+                            {{#if selectedUserIsAdmin}}<i class="glyphicon glyphicon-star" rel="tooltip" data-placement="bottom"
                                               title="This user is an admin."></i>{{/if}}
                         </td>
                         <td>{{user._id}}</td>
@@ -75,12 +75,12 @@
                         <td>
                             <div class="btn-group">
                                 <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                    <i class="icon-user"></i> User <span class="caret"></span>
+                                    <i class="glyphicon glyphicon-user"></i> User <span class="caret"></span>
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="openActiveModal"><i class="icon-fixed-width icon-ban-circle"></i>
+                                    <li><a class="openActiveModal"><i class="glyphicon glyphicon-ban-circle"></i>
                                         {{#if isActive}}Ban{{else}}Unban{{/if}}</a></li>
-                                    <li><a class="openRoleModal"><i class="icon-fixed-width icon-user-md"></i> {{#if
+                                    <li><a class="openRoleModal"><i class="glyphicon glyphicon-star"></i> {{#if
                                         selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
                                 </ul>
                             </div>
