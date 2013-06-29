@@ -67,8 +67,8 @@ module.exports = function (grunt) {
         },
         encode: {
             client: {
-                src: ["build/codebounty.crx"],
-                dest: "build"
+                src: ["<%= config.dist %>/codebounty.crx"],
+                dest: "<%= config.dist %>"
             }
         }
     });
