@@ -9,20 +9,20 @@ var Responses = new Meteor.Collection("responses");
 var pageSize = 100;
 
 var remainingRequests = 5000;
+
 /**
- * Log the # requests remaining
+ * Log the # requests remaining when < 1000 are remaining
  * @param res
  * @param name
  */
 var logRemainingRequests = function (res, name) {
     var before = remainingRequests;
-    var after = remainingRequests = res.meta["x-ratelimit-remaining"];
-    if (before - after > 0) //{
-//          console.log("counted", name, res.meta.etag, res.meta.status);
-        console.log("remaining", remainingRequests);
-//        } else {
-//            console.log("not counted", name, res.meta.etag, res.meta.status);
-//        }
+    remainingRequests = res.meta["x-ratelimit-remaining"];
+    
+    if (before - remainingRequests > 0 && remainingRequests < 1000)
+        Fiber(function () {
+            TL.verbose("Remaining requests: " + remainingRequests, Modules.Github);
+        }).run();
 };
 
 GitHubEvents = {

@@ -253,7 +253,6 @@ Meteor.methods({
      * @param {string} reason
      */
     "refundReward": function (id, reason) {
-        console.log("made it here");
         var user = Meteor.user();
         AuthUtils.requireAuthorization(user, "admin");
 
