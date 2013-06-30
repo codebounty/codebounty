@@ -127,7 +127,7 @@ Meteor.methods({
         // is not supported by the Bitcoin flow
         if (currency == "usd") {
             amount = new Big(amount);
-            if (amount.cmp(ReceiverUtils.minimum("usd")) < 0)
+            if (amount.lt(ReceiverUtils.minimum("usd")))
                 throw "Cannot add less than the minimum funds";
         } else if (currency == "btc") {
             amount = new Big(0);

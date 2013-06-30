@@ -234,10 +234,10 @@ Reward.prototype.fee = function () {
 
         //bump the fee up to the minimum codebounty fee
         //USD: $1 minimum fee
-        if (that.currency === "usd" && fee.cmp(1) < 0)
+        if (that.currency === "usd" && fee.lt(1))
             fee = new Big(1);
         //BTC: .005 minimum fee, approx $0.5-$1 USD
-        else if (that.currency === "btc" && fee.cmp(new Big("0.005")) < 0)
+        else if (that.currency === "btc" && fee.lt(new Big("0.005")))
             fee = new Big("0.005");
 
         totalFee = totalFee.plus(fee);
@@ -301,7 +301,7 @@ Reward.prototype.validationErrors = function () {
     //the reward amount needs to equal codebounty fee + the total receiver amounts
     var totalReceiverRewards = that.receiverTotal();
 
-    if (total.cmp(totalReceiverRewards) !== 0)
+    if (!total.eq(totalReceiverRewards))
         validationErrors.push("The reward (" + total +
             ") must be equal to the total receiver rewards (" + totalReceiverRewards + ")");
 
