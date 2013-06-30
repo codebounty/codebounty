@@ -5,6 +5,7 @@ Modules = {
     Bitcoin: "Bitcoin",
     Bounty: "Bounty",
     Client: "Client",
+    Github: "Github",
     Paypal: "Paypal",
     Reward: "Reward"
 };

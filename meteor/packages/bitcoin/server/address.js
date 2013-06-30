@@ -40,7 +40,6 @@ Meteor.setInterval(function () {
                         // Make sure the call was successful and save the generated
                         // address if it was.
                         if (response.data != null) {
-
                             // Insert the generated address.
                             Bitcoin.IssueAddresses.insert({
                                 address: address,

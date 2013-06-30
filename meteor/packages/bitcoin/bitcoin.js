@@ -120,9 +120,9 @@ Bitcoin.pay = function (address, receiverList, callback) {
         } else {
             // Only logging the error. It's a good idea to give out less
             // information rather than more in cases like this.
-            console.log("ALERT: Payout greater than bitcoin received " +
+            TL.error("Payout greater than bitcoin received " +
                 "attempted from Bitcoin address " + address + ". Payout was " +
-                totalPayout.amount + " and total received was " + received);
+                totalPayout.amount + " and total received was " + received, Modules.Bitcoin);
         }
     });
 };
