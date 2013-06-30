@@ -45,7 +45,7 @@ Template.rewardView.receiverTotal = function () {
 };
 Template.rewardView.receiverHasReward = function () {
     var receiver = this;
-    return receiver.getReward().cmp(0) > 0;
+    return receiver.getReward().gt(0);
 };
 Template.rewardView.receiverReward = function (percent) {
     var receiver = this;
@@ -74,11 +74,11 @@ var setRowAmount = _.debounce(function (row, amount) {
     var minimum = rewardMinimum();
 
     //if the new amount is > the max, set the amount to the max
-    if (amount.cmp(total) > 0)
+    if (amount.gt(total))
         amount = total;
 
     //if the new amount is < than the minimum and not 0, set the amount to the minimum
-    if (amount.cmp(minimum) < 0 && amount.cmp(0) !== 0)
+    if (amount.lt(minimum) && !amount.eq(0))
         amount = minimum;
 
     var numberAmount = parseFloat(amount.toString());
@@ -122,7 +122,7 @@ Template.rewardView.rendered = function () {
             range: [minimumNumber, totalNumber],
             slide: function () {
                 var amount = new Big($(this).val());
-                if (amount.cmp(minimum) < 0)
+                if (amount.lt(minimum))
                     return false;
 
                 setRowAmount(row, amount);
@@ -131,7 +131,7 @@ Template.rewardView.rendered = function () {
         });
 
         //enable the row if the reward > 0
-        var enabled = receiver.getReward().cmp(0) > 0;
+        var enabled = receiver.getReward().gt(0);
         row.find(".rewardSlider").noUiSlider("disabled", !enabled);
     });
 
@@ -179,7 +179,7 @@ Template.rewardView.events({
         var receiver = rowReceiver(myReward, row);
 
         //if there is no reward set it to the minimum
-        if (receiver._reward.cmp(0) === 0)
+        if (receiver._reward.eq(0))
             receiver.setReward(new Big(rewardMinimum()));
         //otherwise set the reward at the minimum
         else

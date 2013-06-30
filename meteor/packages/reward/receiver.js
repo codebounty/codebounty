@@ -69,7 +69,7 @@ Receiver.prototype = {
         if (!(other instanceof Receiver))
             return false;
 
-        return this.email === other.email && this._reward.cmp(other._reward) === 0
+        return this.email === other.email && this._reward.eq(other._reward)
             && this.currency === other.currency;
     },
 
@@ -118,7 +118,7 @@ Receiver.prototype.validationErrors = function () {
     var reward = this.getReward();
     var min = ReceiverUtils.minimum(this.currency);
 
-    if (!(reward.cmp(new Big(0)) === 0 || reward.cmp(min) >= 0))
+    if (!(reward.eq(new Big(0)) || reward.gte(min)))
         errors.push("Receiver reward (" + reward + ") must be 0 or >= the minimum ("
             + min + " " + this.currency + ")");
 

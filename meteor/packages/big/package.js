@@ -3,7 +3,7 @@ Package.describe({
 });
 
 Npm.depends({
-    "big.js": "https://github.com/MikeMcl/big.js/tarball/6b9ba43e6cf296a9dfd82bbe7a34855d35634e4c"
+    "big.js": "2.1.0"
 });
 
 Package.on_use(function (api) {

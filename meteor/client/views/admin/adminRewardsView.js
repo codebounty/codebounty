@@ -33,7 +33,7 @@ Template.adminRewardsView.rewards = function () {
 //Reward template functions
 Template.adminRewardsView.canPayout = function () {
     return (this.status === "open" || this.status === "reopened" || this.status === "held")
-        && this.total().cmp(0) > 0;
+        && this.total().gt(0);
 };
 Template.adminRewardsView.total = function () {
     return this.total();

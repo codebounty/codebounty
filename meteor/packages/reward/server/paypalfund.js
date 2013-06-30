@@ -126,8 +126,7 @@ PayPalFund.prototype.cancel = function (reward) {
  */
 PayPalFund.prototype.confirm = function (reward, params) {
     var that = this;
-    if (params.approved !== "true" ||
-        new Big(params.max_total_amount_of_all_payments).cmp(that.amount) !== 0) {
+    if (params.approved !== "true" || !new Big(params.max_total_amount_of_all_payments).eq(that.amount)) {
         that.cancel(reward);
     } else {
         that.approved = new Date();

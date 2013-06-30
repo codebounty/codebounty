@@ -32,7 +32,7 @@ Reward.prototype.distributeEqually = function () {
     var minimumReward = ReceiverUtils.minimum(that.currency);
 
     //nothing to distribute
-    if (receivers.length <= 0 || amountToDistribute.cmp(minimumReward) < 0)
+    if (receivers.length <= 0 || amountToDistribute.lt(minimumReward))
         return;
 
     var equallyDistributed = amountToDistribute.div(receivers.length);
@@ -44,7 +44,7 @@ Reward.prototype.distributeEqually = function () {
     equallyDistributed = BigUtils.truncate(equallyDistributed, truncateAfterDecimals);
 
     //equally distribute the reward
-    if (equallyDistributed.cmp(minimumReward) >= 0) {
+    if (equallyDistributed.gte(minimumReward)) {
         _.each(receivers, function (receiver) {
             //add fraction to the first receiver, then clear it
             receiver.setReward(equallyDistributed.plus(fraction));
@@ -199,7 +199,7 @@ Reward.prototype.fundDistributions = function () {
     //remove any fractional payments, and put them into the fee
     _.each(receiverPayments, function (receiverPayment) {
         var fraction = BigUtils.remainder(receiverPayment.amount, truncateAfterDecimals);
-        if (fraction.cmp(0) > 0) {
+        if (fraction.gt(0)) {
             receiverPayment.amount = BigUtils.truncate(receiverPayment.amount, truncateAfterDecimals);
             feeFractions = feeFractions.plus(fraction);
         }
@@ -207,7 +207,7 @@ Reward.prototype.fundDistributions = function () {
 
     var fee = that.fee();
     //add fractional payments to the fee
-    if (feeFractions.cmp(0) > 0) {
+    if (feeFractions.gt(0)) {
         fee = fee.plus(feeFractions);
         TL.info("Fractional fee for " + that._id.toString() + ": " + feeFractions.toString(), Modules.Reward);
     }
@@ -234,13 +234,13 @@ Reward.prototype.fundDistributions = function () {
 
         //while there is money on the fund and more payouts to distribute
         //keep adding payments to this fund
-        while (remainingFundAmount.cmp(0) > 0 && receiverPaymentIndex < receiverPayments.length) {
+        while (remainingFundAmount.gt(0) && receiverPaymentIndex < receiverPayments.length) {
             var fundPayment = {
                 email: currentReceiverPayment.email
             };
 
             //if there is enough fund left, pay the entire remaining payout
-            if (remainingFundAmount.cmp(remainingReceiverPayment) >= 0) {
+            if (remainingFundAmount.gte(remainingReceiverPayment)) {
                 //distribute the entire payout
                 fundPayment.amount = remainingReceiverPayment;
 
@@ -262,7 +262,7 @@ Reward.prototype.fundDistributions = function () {
             //reduce the amount left on this fund
             remainingFundAmount = remainingFundAmount.minus(fundPayment.amount);
 
-            if (remainingFundAmount.cmp(0) < 0)
+            if (remainingFundAmount.lt(0))
                 throw "Problem with distributing the fund, it is below 0";
 
             fundDistribution.payments.push(fundPayment);
