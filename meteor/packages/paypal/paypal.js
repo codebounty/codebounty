@@ -157,11 +157,13 @@ PayPal.verify = function (request, response, callback) {
     var params = request.body;
 
     ipn.verify(params, function (error, message) {
-        if (error || message !== "VERIFIED")
-            console.log("Error verifying IPN", message, params);
-
-        if (callback) {
-            callback(error, params, message);
+        if (error || message !== "VERIFIED") {
+            Fiber(function () {
+                TL.error(error + " " + message + " " + EJSON.stringify(params), Modules.Paypal);
+            }).run();
         }
+
+        if (callback)
+            callback(error, params, message);
     });
 };

@@ -209,7 +209,7 @@ Meteor.methods({
 
         var gitHub = new GitHub(user);
 
-        RewardUtils.eligibleForManualReward(selector, {}, issueUrl, gitHub, function (rewards, contributorsEmails) {
+        RewardUtils.eligibleForManualReward(selector, {}, issueUrl, true, gitHub, function (rewards, contributorsEmails) {
             if (contributorsEmails && contributorsEmails.length > 0) {
                 var clientRewards = _.map(rewards, RewardUtils.clientReward);
 
@@ -253,7 +253,6 @@ Meteor.methods({
      * @param {string} reason
      */
     "refundReward": function (id, reason) {
-        console.log("made it here");
         var user = Meteor.user();
         AuthUtils.requireAuthorization(user, "admin");
 

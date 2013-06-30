@@ -3,3 +3,5 @@ router
 session-extras
 font-awesome
 page-js-ie-support
+observatory
+observatory-apollo

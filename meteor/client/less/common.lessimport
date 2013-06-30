@@ -66,3 +66,7 @@ button:hover.disabled, button:active.disabled {
     background: #dddddd;
     cursor: default;
 }
+
+.glyphicon {
+    vertical-align: middle;
+}
