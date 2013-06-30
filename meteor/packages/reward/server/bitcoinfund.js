@@ -80,7 +80,8 @@ EJSON.addType("BitcoinFund", BitcoinFundUtils.fromJSONValue);
  */
 BitcoinFund.prototype.refund = function (adminId) {
     var that = this;
-    console.log("Refund", that.toString());
+
+    TL.info("Refund " + that.toString(), Modules.Bitcoin);
 
     // And then make sure they have a refund address set
     var refundAddress = Bitcoin.ReceiverAddresses.find({ userId: that.userId });
@@ -98,7 +99,8 @@ BitcoinFund.prototype.refund = function (adminId) {
     });
 
     Rewards.update({ "funds._id": that._id }, { $set: { "funds.$.refunded": new Date() } });
-    console.log("Bitcoin fund refunded", that._id.toString());
+
+    TL.info("Bitcoin fund refunded " + that.toString(), Modules.Bitcoin);
 };
 
 /**
@@ -162,20 +164,23 @@ BitcoinFund.prototype.pay = function (fundDistribution) {
         return { amount: payment.amount.toString(), email: payment.email};
     });
 
-    console.log("Pay fund (Bitcoin)", that.toString(), receiverList);
+
+    Fiber(function () {
+        TL.info("Pay fund " + that.toString() + " " + EJSON.toJSONValue(receiverList), Modules.Bitcoin);
+    }).run();
 
     Bitcoin.pay(that.address, receiverList, function (error, data) {
         var update = { $set: { "funds.$.details": { receiverList: receiverList } } };
 
-        if (error) {
-            update.$set["funds.$.paymentError"] = error;
-            console.log("ERROR: Bitcoin Payment", error);
-        } else {
-            update.$set["funds.$.paid"] = new Date();
-            console.log("Bitcoin paid", that._id.toString());
-        }
-
         Fiber(function () {
+            if (error) {
+                update.$set["funds.$.paymentError"] = error;
+                TL.error("Payment " + error, Modules.Bitcoin);
+            } else {
+                update.$set["funds.$.paid"] = new Date();
+                TL.info("Paid " + that._id.toString(), Modules.Bitcoin);
+            }
+
             Rewards.update({ "funds._id": that._id }, update);
         }).run();
     });

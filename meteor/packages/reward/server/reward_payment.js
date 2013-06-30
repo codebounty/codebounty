@@ -10,7 +10,7 @@ var payoutWindow = 0.5; //.5 minutes
  * @param status The status to change the reward to Ex. "reopened"
  */
 Reward.prototype.cancelPayout = function (status) {
-    console.log("Cancelled payout for", this._id);
+    TL.info("Cancelled payout for " + this._id, Modules.Reward);
 
     //deleting the payout will cancel it
     Rewards.update(this._id, {
@@ -95,15 +95,15 @@ Reward.prototype.initiatePayout = function (by, callback) {
         return;
     }
 
-    console.log("Initiated payout by", by, "for", that._id.toString());
-
-    that.payout = {
-        by: by,
-        on: Tools.addMinutes(payoutWindow)
-    };
-    that.status = "initiated";
-
     Fiber(function () {
+        TL.info("Initiated payout by " + by + " for " + that._id.toString(), Modules.Reward);
+
+        that.payout = {
+            by: by,
+            on: Tools.addMinutes(payoutWindow)
+        };
+        that.status = "initiated";
+
         var jsonReceivers = _.map(that.receivers, function (receiver) {
             return receiver.toJSONValue();
         });
@@ -140,7 +140,7 @@ Reward.prototype.pay = function () {
 
     Rewards.update(that._id, {$set: {status: "paying"}});
 
-    console.log("Pay reward", that._id.toString());
+    TL.info("Pay reward " + that._id.toString(), Modules.Reward);
 
     var funds = that.funds;
     var fundIndex = 0;
@@ -209,7 +209,7 @@ Reward.prototype.fundDistributions = function () {
     //add fractional payments to the fee
     if (feeFractions.cmp(0) > 0) {
         fee = fee.plus(feeFractions);
-        console.log("Fractional fee for reward", that._id.toString(), feeFractions.toString());
+        TL.info("Fractional fee for " + that._id.toString() + ": " + feeFractions.toString(), Modules.Reward);
     }
 
     //pay codebounty the fee
