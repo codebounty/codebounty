@@ -20,7 +20,7 @@
     <div class="roleModal modal fade" tabindex="-1" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{#if isAdmin}}Remove{{else}}Make{{/if}} admin: {{username}}</h4>
+                <h4 class="modal-title">{{#if selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin: {{username}}</h4>
             </div>
             <div class="modal-body">
                 <p>Reason</p>
@@ -28,7 +28,7 @@
             </div>
             <div class="modal-footer">
                 <a class="btn btn-default" data-dismiss="modal">Cancel</a>
-                <a class="btn btn-primary action">{{#if isAdmin}}Remove{{else}}Make{{/if}} admin</a>
+                <a class="btn btn-primary action">{{#if selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a>
             </div>
         </div>
     </div>
@@ -41,14 +41,14 @@
     <div class="adminUserView">
         {{> adminTopNav}}
         <div class="row">
-            <div class="searchFilters col col-lg-2 panel">
+            <div class="searchFilters col col-lg-3 panel">
                 <div class="panel-heading">User
                 </div>
                 <input type="text" class="userId" placeholder="id">
                 <input type="text" class="userGithub" placeholder="github name">
                 <button class="btn btn-default pull-right">Search</button>
             </div>
-            <div class="col col-lg-10">
+            <div class="col col-lg-9">
                 {{#if user}}
                 <table class="table">
                     <thead>
@@ -63,10 +63,10 @@
                     <tbody>
                     <tr>
                         <td>
-                            {{#unless isActive}}<i class="icon-ban-circle" rel="tooltip" data-placement="bottom"
+                            {{#unless isActive}}<i class="glyphicon glyphicon-ban-circle" rel="tooltip" data-placement="bottom"
                                                    title="The user is banned."></i>{{/unless}}
 
-                            {{#if isAdmin}}<i class="icon-user-md" rel="tooltip" data-placement="bottom"
+                            {{#if selectedUserIsAdmin}}<i class="glyphicon glyphicon-star" rel="tooltip" data-placement="bottom"
                                               title="This user is an admin."></i>{{/if}}
                         </td>
                         <td>{{user._id}}</td>
@@ -75,13 +75,13 @@
                         <td>
                             <div class="btn-group">
                                 <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                    <i class="icon-user"></i> User <span class="caret"></span>
+                                    <i class="glyphicon glyphicon-user"></i> User <span class="caret"></span>
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="openActiveModal"><i class="icon-fixed-width icon-ban-circle"></i>
+                                    <li><a class="openActiveModal"><i class="glyphicon glyphicon-ban-circle"></i>
                                         {{#if isActive}}Ban{{else}}Unban{{/if}}</a></li>
-                                    <li><a class="openRoleModal"><i class="icon-fixed-width icon-user-md"></i> {{#if
-                                        isAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
+                                    <li><a class="openRoleModal"><i class="glyphicon glyphicon-star"></i> {{#if
+                                        selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
                                 </ul>
                             </div>
                         </td>

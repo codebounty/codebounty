@@ -1,8 +1,11 @@
 {
-    "packages": {
-        "bootstrap-3": {},
-        "router": {},
-        "session-extras": {},
-        "font-awesome": {}
+  "packages": {
+    "bootstrap-3": {},
+    "router": {},
+    "session-extras": {},
+    "font-awesome": {},
+    "observatory": {
+        "git": "https://github.com/jperl/observatory.git"
     }
+  }
 }
