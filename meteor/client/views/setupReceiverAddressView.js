@@ -3,8 +3,10 @@ Template.setupReceiverAddressView.events({
         var receiverAddress = $("[name=receiverAddress]").val();
 
         Meteor.call("setupReceiverAddress", receiverAddress, function (error, result) {
-            if (!ErrorUtils.handle(error))
+            if (error) {
+                TL.error(error, Modules.Bitcoin);
                 return;
+            }
 
             window.location.href = Session.get("redirect");
         });

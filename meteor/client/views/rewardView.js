@@ -161,7 +161,8 @@ Template.rewardView.events({
         Meteor.call("reward", reward(), admin, reason, function (error, success) {
             $.unblockUI();
             Messenger.send({event: "closeOverlay"});
-            if (!ErrorUtils.handle(error)) {
+            if (error) {
+                TL.error(error, Modules.Reward);
                 return;
             }
 

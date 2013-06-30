@@ -115,7 +115,7 @@ PayPalFund.prototype.cancel = function (reward) {
     else
         Rewards.update(reward._id, {$pull: {"funds": {"_id": that._id}}});
 
-    console.log("PayPal fund cancelled", that._id.toString());
+    TL.info("Fund cancelled " + that._id.toString(), Modules.Paypal);
 };
 
 /**
@@ -131,7 +131,8 @@ PayPalFund.prototype.confirm = function (reward, params) {
         that.cancel(reward);
     } else {
         that.approved = new Date();
-        console.log("PayPal confirmed", that._id.toString());
+
+        TL.info("Fund confirmed " + that._id.toString(), Modules.Paypal);
 
         //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
         //after new funds are approved distribute the reward equally among all the contributors
@@ -172,20 +173,22 @@ PayPalFund.prototype.pay = function (fundDistribution) {
         return { amount: payment.amount.toString(), email: payment.email};
     });
 
-    console.log("Pay fund", that.toString(), receiverList);
+    Fiber(function () {
+        TL.info("Pay fund " + that.toString() + " " + EJSON.stringify(receiverList), Modules.Paypal);
+    }).run();
 
     PayPal.pay(that.preapprovalKey, receiverList, function (error, data) {
         var update = { $set: { "funds.$.details": { receiverList: receiverList } } };
 
-        if (error) {
-            update.$set["funds.$.paymentError"] = error;
-            console.log("ERROR: PayPal payment", error);
-        } else {
-            update.$set["funds.$.paid"] = new Date();
-            console.log("PayPal paid", that._id.toString());
-        }
-
         Fiber(function () {
+            if (error) {
+                update.$set["funds.$.paymentError"] = error;
+                TL.error("Payment " + error, Modules.Paypal);
+            } else {
+                update.$set["funds.$.paid"] = new Date();
+                TL.info("Paid " + that._id.toString(), Modules.Paypal);
+            }
+
             Rewards.update({ "funds._id": that._id }, update);
         }).run();
     });
@@ -196,20 +199,21 @@ PayPalFund.prototype.pay = function (fundDistribution) {
  */
 PayPalFund.prototype.refund = function () {
     var that = this;
-    console.log("Refund", that.toString());
+
+    TL.info("Refund " + that.toString(), Modules.Paypal);
 
     PayPal.cancelPreapproval(that.preapprovalKey, function (error, data) {
         var update = { $set: { } };
 
-        if (error) {
-            update.$set["funds.$.refundError"] = error;
-            console.log("ERROR: PayPal refund", error);
-        } else {
-            update.$set["funds.$.refunded"] = new Date();
-            console.log("PayPal refunded", that._id.toString());
-        }
-
         Fiber(function () {
+            if (error) {
+                update.$set["funds.$.refundError"] = error;
+                TL.error("Refund " + error, Modules.Paypal);
+            } else {
+                update.$set["funds.$.refunded"] = new Date();
+                TL.info("Refunded " + that._id.toString(), Modules.Paypal);
+            }
+
             Rewards.update({ "funds._id": that._id }, update);
         }).run();
     });

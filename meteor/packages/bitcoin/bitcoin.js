@@ -45,8 +45,8 @@ Bitcoin.verify = function (request, response, callback) {
     var params = request.query;
 
     if (params.secret != Bitcoin.IPNSecret) {
-        error = "Error verifying Bitcoin IPN. Secret was " + params.secret;
-        console.log(error);
+        error = "Incorrect secret for Bitcoin IPN: " + params.secret;
+        TL.error(error, Modules.Bitcoin);
     }
 
     if (callback)

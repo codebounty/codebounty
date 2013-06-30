@@ -22,8 +22,10 @@ Meteor.Router.add({
         var currency = window.url("?currency");
 
         Meteor.call("addFunds", amount, currency, url, function (error, result) {
-            if (!ErrorUtils.handle(error))
+            if (error) {
+                TL.error(error, Modules.Bounty);
                 return;
+            }
 
             window.location.href = result;
         });
@@ -37,8 +39,8 @@ Meteor.Router.add({
         var id = window.url("?id");
 
         Meteor.call("cancelFunds", id, function (error) {
-            if (!ErrorUtils.handle(error))
-                return;
+            if (error)
+                TL.error(error, Modules.Bounty);
 
             window.close();
         });
@@ -85,8 +87,10 @@ Meteor.Router.add({
 
         var admin = window.url("?admin");
         Meteor.call("getReward", url, admin, function (error, result) {
-            if (!ErrorUtils.handle(error))
+            if (error) {
+                TL.error(error, Modules.Reward);
                 return;
+            }
 
             Session.set("reward", result);
         });

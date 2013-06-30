@@ -85,7 +85,7 @@ Meteor.Router.add("/badge/:user/:repo", function (user, repo) {
 Meteor.Router.add("/ipn", function () {
     PayPal.verify(this.request, this.response, function (error, params) {
         if (error)
-            throw error;
+            return;
 
         if (params.transaction_type === "Adaptive Payment PREAPPROVAL") {
             if (params.status === "ACTIVE") {
@@ -95,8 +95,8 @@ Meteor.Router.add("/ipn", function () {
                     });
 
                     if (!reward) {
-                        error = "PayPalFund approved but not found " + EJSON.stringify(params);
-                        throw error;
+                        TL.error("PayPalFund approved but not found " + EJSON.stringify(params), Modules.Paypal);
+                        return;
                     }
 
                     var paypalFund = _.find(reward.funds, function (fund) {
@@ -123,15 +123,14 @@ Meteor.Router.add("/bitcoin-ipn", function () {
 
     Bitcoin.verify(this.request, this.response, function (error, params) {
         if (error)
-            throw error;
+            return;
 
         Bitcoin.getTransaction(params.transaction_hash, function (error, transaction) {
-            
+
             // Exit the function if the transaction specified isn't in our wallet,
             // or if the transaction hasn't received enough confirmations.
             if (params.confirmations < Bitcoin.Settings.minimumConfirmations
-            || !transaction || transaction.confirmations < Bitcoin.Settings.minimumConfirmations)
-            {
+                || !transaction || transaction.confirmations < Bitcoin.Settings.minimumConfirmations) {
                 // No *ok* token means Blockchain.info will resend this notification
                 // every time more confirmations are added to the transactions.
                 fut.ret([200]);
@@ -191,7 +190,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
 
                 var destinationAddress = params.destination_address;
                 var insertNewFund = false;
-                
+
                 // add a new fund for this transaction if one doesn't exist already.
                 if (!bitcoinFund) {
                     var expires = Tools.addDays(FundUtils.expiresAfterDays);
@@ -207,11 +206,11 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                 }
 
                 bitcoinFund.confirm(reward, params, insertNewFund);
-                
+
                 // If the reward amount is less than the minimum required
                 // amount, send the user an alert.
                 var totalReward = BigUtils.sum(reward.availableFundAmounts());
-                
+
                 if (totalReward < Bitcoin.Settings.minimumFundAmount) {
                     Email.send({
                         to: AuthUtils.email(
