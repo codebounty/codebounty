@@ -2,7 +2,8 @@
     <div class="activeModal modal fade" tabindex="-1" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{#if isActive}}Ban{{else}}Unban{{/if}} {{username}}</h4>
+                <h4 class="modal-title">{{#if isActive selectedUser}}Ban{{else}}Unban{{/if}} {{username
+                    selectedUser}}</h4>
             </div>
             <div class="modal-body">
                 <p>Reason</p>
@@ -10,7 +11,7 @@
             </div>
             <div class="modal-footer">
                 <a class="btn btn-default" data-dismiss="modal">Cancel</a>
-                <a class="btn btn-primary action">{{#if isActive}}Ban!{{else}}Unban{{/if}}</a>
+                <a class="btn btn-primary action">{{#if isActive selectedUser}}Ban!{{else}}Unban{{/if}}</a>
             </div>
         </div>
     </div>
@@ -20,7 +21,8 @@
     <div class="roleModal modal fade" tabindex="-1" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{#if selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin: {{username}}</h4>
+                <h4 class="modal-title">{{#if isAdmin selectedUser}}Remove{{else}}Make{{/if}} admin: {{username
+                    selectedUser}}</h4>
             </div>
             <div class="modal-body">
                 <p>Reason</p>
@@ -28,7 +30,7 @@
             </div>
             <div class="modal-footer">
                 <a class="btn btn-default" data-dismiss="modal">Cancel</a>
-                <a class="btn btn-primary action">{{#if selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a>
+                <a class="btn btn-primary action">{{#if isAdmin selectedUser}}Remove{{else}}Make{{/if}} admin</a>
             </div>
         </div>
     </div>
@@ -49,7 +51,6 @@
                 <button class="btn btn-default pull-right">Search</button>
             </div>
             <div class="col col-lg-9">
-                {{#if user}}
                 <table class="table">
                     <thead>
                     <tr>
@@ -61,15 +62,17 @@
                     </tr>
                     </thead>
                     <tbody>
+                    {{#each users}}
                     <tr>
                         <td>
-                            {{#unless isActive}}<i class="glyphicon glyphicon-ban-circle" rel="tooltip" data-placement="bottom"
+                            {{#unless isActive}}<i class="glyphicon glyphicon-ban-circle" rel="tooltip"
+                                                   data-placement="bottom"
                                                    title="The user is banned."></i>{{/unless}}
 
-                            {{#if selectedUserIsAdmin}}<i class="glyphicon glyphicon-star" rel="tooltip" data-placement="bottom"
+                            {{#if isAdmin}}<i class="glyphicon glyphicon-star" rel="tooltip" data-placement="bottom"
                                               title="This user is an admin."></i>{{/if}}
                         </td>
-                        <td>{{user._id}}</td>
+                        <td>{{_id}}</td>
                         <td>{{username}}</td>
                         <td>{{userEmail}}</td>
                         <td>
@@ -81,14 +84,14 @@
                                     <li><a class="openActiveModal"><i class="glyphicon glyphicon-ban-circle"></i>
                                         {{#if isActive}}Ban{{else}}Unban{{/if}}</a></li>
                                     <li><a class="openRoleModal"><i class="glyphicon glyphicon-star"></i> {{#if
-                                        selectedUserIsAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
+                                        isAdmin}}Remove{{else}}Make{{/if}} admin</a></li>
                                 </ul>
                             </div>
                         </td>
                     </tr>
+                    {{/each}}
                     </tbody>
                 </table>
-                {{/if}}
             </div>
         </div>
     </div>

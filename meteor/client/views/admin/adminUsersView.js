@@ -1,28 +1,52 @@
-var selectedUser = Template.adminUsersView.user = Session.getter("adminSelectedUser");
+var selectedUser = Template.adminUsersView.selectedUser = Session.getter("adminSelectedUser");
 
-Template.adminUsersView.isActive = Template.activeModal.isActive = function () {
+Template.adminUsersView.users = function () {
+    var userId = Session.get("userIdFilter");
+    var userGithub = Session.get("userGithubFilter");
+
+    var selector = {};
+    if (userId !== "")
+        selector._id = userId;
+
+    if (userGithub !== "") //starts with
+        selector["services.github.username"] = new RegExp("^" + userGithub, "i");
+
+    return Meteor.users.find(selector);
+};
+
+Template.adminUsersView.isActive = function () {
+    return AuthUtils.isActive(this);
+};
+
+Template.activeModal.isActive = function () {
     return AuthUtils.isActive(selectedUser());
 };
 
-Template.adminUsersView.selectedUserIsAdmin = Template.roleModal.selectedUserIsAdmin = function () {
+Template.adminUsersView.isAdmin = function () {
+    return AuthUtils.isAdmin(this);
+};
+
+Template.roleModal.isAdmin = function () {
     return AuthUtils.isAdmin(selectedUser());
 };
 
 Template.adminUsersView.userEmail = function () {
-    return AuthUtils.email(selectedUser());
+    return AuthUtils.email(this);
 };
 
-Template.adminUsersView.username = Template.activeModal.username = Template.roleModal.username = function () {
+Template.adminUsersView.username = function () {
+    return AuthUtils.username(this);
+};
+
+Template.activeModal.username = Template.roleModal.username = function () {
     return AuthUtils.username(selectedUser());
 };
 
 Template.adminUsersView.created = function () {
     Meteor.subscribe("userData");
 
-    //TODO remove, just for testing
     _.delay(function () {
-        var selectedUser = Meteor.users.findOne();
-        Session.set("adminSelectedUser", selectedUser);
+        $(".searchFilters .btn").click();
     }, 500);
 };
 
@@ -38,18 +62,15 @@ Template.adminUsersView.rendered = function () {
 
 Template.adminUsersView.events({
     "click .searchFilters .btn": function () {
-        var userId = $(".userId").val();
-        var userGithub = $(".userGithub").val();
+        Session.set("userIdFilter", $(".userId").val());
+        Session.set("userGithubFilter", $(".userGithub").val());
+    },
 
-        var selector = {};
-        if (userId !== "")
-            selector._id = userId;
-
-        if (userGithub !== "") //starts with
-            selector["services.github.username"] = new RegExp("^" + userGithub, "i");
-
-        var selectedUser = Meteor.users.findOne(selector);
-        Session.set("adminSelectedUser", selectedUser);
+    "click .dropdown-toggle": function (event) {
+        var target = event.target;
+        var userId = $(target).parents("tr").children("td").eq(1).text();
+        var user = Meteor.users.findOne(userId);
+        Session.set("adminSelectedUser", user);
     },
 
     "click .openActiveModal": function () {
@@ -59,7 +80,6 @@ Template.adminUsersView.events({
     "click .activeModal .action": function () {
         var user = selectedUser();
         user.active = !user.active;
-        Session.set("adminSelectedUser", user);
 
         var reason = $(".activeModal .reason").val();
         Meteor.call("setIsActive", user, user.active, reason, function (err, result) {
@@ -84,15 +104,13 @@ Template.adminUsersView.events({
         else
             throw "Something has gone amiss";
 
-        Session.set("adminSelectedUser", user);
-
         var reason = $(".activeModal .reason").val();
         Meteor.call("setRole", user, user.role, reason, function (err, result) {
             if (result)
                 user.log.push(result);
         });
 
-        $(".activeModal").modal("hide");
+        $(".roleModal").modal("hide");
     }
 });
 

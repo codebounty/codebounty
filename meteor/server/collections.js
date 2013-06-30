@@ -10,7 +10,7 @@ Meteor.publish("userData", function () {
     var user = Meteor.users.findOne(this.userId);
     AuthUtils.requireAuthorization(user, "admin");
 
-    return Meteor.users.find({_id: this.userId}, {fields: {active: 1, log: 1, role: 1, services: 1}});
+    return Meteor.users.find({}, {fields: {active: 1, log: 1, role: 1, services: 1}});
 });
 
 //for admin users
