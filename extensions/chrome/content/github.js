@@ -1,10 +1,6 @@
 //the injected github UI
 (function (undefined) {
-    //TODO DEPLOYMENT: switch root url
-//    var rootUrl = "https://app.codebounty.co",
-    var rootUrl = "http://localhost:3000",
-    //TODO DEPLOYMENT: update id
-        contentUrl = "chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/",
+    var rootUrl = "/* @echo ROOTURL */",
         thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
@@ -320,33 +316,26 @@
                 else
                     return 4;
             };
-            var getStatusIconUrl = function (cashLevel) {
-                if (cashLevel === 0)
-                    return contentUrl + "status-coins.png";
-                else if (cashLevel === 1)
-                    return contentUrl + "status-moneybag.png";
-                else if (cashLevel === 2)
-                    return contentUrl + "status-moneybags.png";
-                else if (cashLevel === 3)
-                    return contentUrl + "status-bars.png";
-                else if (cashLevel === 4)
-                    return contentUrl + "status-jackpot.png";
-                else
-                    throw "Unknown cash level.";
+            var statusClasses = {
+                "0": "statusCoins",
+                "1": "statusMoneybag",
+                "2": "statusMoneybags",
+                "3": "statusBars",
+                "4": "statusJackpot"
             };
             return function (amount) {
                 var cashLevel = getCashLevel(amount);
-                var statusIconUrl = getStatusIconUrl(cashLevel);
+                var statusClass = statusClasses[cashLevel];
                 var statusIcon = $("#statusIcon");
 
                 if (statusIcon.length) {
                     if (statusIcon.attr("cashLevel") !== cashLevel) {
-                        statusIcon.attr("src", statusIconUrl);
+                        statusIcon.attr("class", statusClass);
                         statusIcon.attr("cashLevel", cashLevel);
                     }
                 } else {
                     var statusIconSrc = "" +
-                        "<img id='statusIcon' src='" + statusIconUrl + "' " +
+                        "<img id='statusIcon' class='" + statusClass + "' " +
                         "width=100 height=100 cashLevel=" + cashLevel +
                         ">";
                     $(statusIconSrc).insertBefore($("#postBounty"));
