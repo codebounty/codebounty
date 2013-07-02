@@ -1,44 +1,10 @@
 var fs = require("fs"), util = require("util");
 
 module.exports = function (grunt) {
-    var gruntConfig = {
-        dist: "build"
-    };
-
     grunt.loadNpmTasks("intern");
 
     grunt.initConfig({
-        config: gruntConfig,
-        clean: {
-            dist: {
-                files: [
-                    {
-                        dot: true,
-                        src: [
-                            "<%= config.dist %>/*",
-                            "!<%= config.dist %>/.git*"
-                        ]
-                    }
-                ]
-            }
-        },
-        crx: {
-            dist: {
-                src: "extensions/chrome/",
-                dest: "<%= config.dist %>/codebounty.crx",
-                exclude: [".git", "*.pem"],
-                privateKey: "extensions/chrome.pem"
-            }
-        },
-        intern: {
-            client: {
-                options: {
-                    config: "tests/intern",
-                    suites: ["tests/lib/bounty"],
-                    runType: "runner"
-                }
-            }
-        },
+        config: grunt.file.readJSON("config.json"),
         bgShell: {
             bitcoind: {
                 cmd: "bitcoind",
@@ -65,10 +31,77 @@ module.exports = function (grunt) {
                 stderr: true
             }
         },
+        clean: {
+            dist: {
+                files: [
+                    {
+                        dot: true,
+                        src: [
+                            "<%= config.dist %>/*",
+                            "!<%= config.dist %>/.git*"
+                        ]
+                    }
+                ]
+            }
+        },
+        copy: {
+            dist: {
+                expand: true,
+                cwd: "extensions/chrome",
+                src: "**",
+                dest: "<%= config.dist %>/chrome/"
+            }
+        },
+        crx: {
+            dist: {
+                src: "<%= config.dist %>/chrome/",
+                dest: "<%= config.dist %>/codebounty.crx",
+                exclude: [".git", "*.pem"],
+                privateKey: "extensions/chrome.pem"
+            }
+        },
         encode: {
             client: {
                 src: ["<%= config.dist %>/codebounty.crx"],
                 dest: "<%= config.dist %>"
+            }
+        },
+        intern: {
+            client: {
+                options: {
+                    config: "<%= config.test %>/intern",
+                    suites: ["<%= config.test %>/lib/bounty"],
+                    runType: "runner"
+                }
+            }
+        },
+        preprocess: {
+            dist: {
+                options: {
+                    context: {
+                        ROOTURL: "<%= config.rootUrl.dist %>"
+                    }
+                },
+                src: "<%= config.dist %>/chrome/content/github.js",
+                dest: "<%= config.dist %>/chrome/content/github.js"
+            },
+            qa: {
+                options: {
+                    context: {
+                        ROOTURL: "<%= config.rootUrl.qa %>"
+                    }
+                },
+                src: "<%= config.dist %>/chrome/content/github.js",
+                dest: "<%= config.dist %>/chrome/content/github.js"
+            },
+            local: {
+                options: {
+                    context: {
+                        ROOTURL: "<%= config.rootUrl.local %>"
+                    }
+                },
+                src: "<%= config.dist %>/chrome/content/github.js",
+                dest: "<%= config.dist %>/chrome/content/github.js"
             }
         }
     });
@@ -103,14 +136,23 @@ module.exports = function (grunt) {
     });
 
     // builds the chrome extension
-    grunt.registerTask("build", [
-        "clean:dist",
-        "crx:dist",
-        //encode the extension for the tests
-        "encode"
-    ]);
+    grunt.registerTask("build", "Build chrome extension", function (target) {
+        var tasks = [
+            "clean:dist",
+            "copy:dist"
+        ];
+        if (target === "local") {
+            tasks.push("preprocess:local");
+        } else if (target === "qa") {
+            tasks.push("preprocess:qa");
+        } else {
+            tasks.push("preprocess:dist");
+        }
+        tasks = tasks.concat(["crx:dist", "encode"]);
+        grunt.task.run(tasks);
+    });
 
-    grunt.registerTask("server", "Run the servers", function (target) {
+    grunt.registerTask("server", "Run servers", function (target) {
         grunt.task.run([
             "bgShell:bitcoind",
             target === "debug" ? "bgShell:debugmeteor" : "bgShell:meteor"
