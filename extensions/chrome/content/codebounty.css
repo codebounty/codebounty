@@ -1,7 +1,8 @@
 .bountyButton {
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
     width: 100%;
     margin-bottom: 8px;
     overflow: hidden;
@@ -11,7 +12,7 @@
     position: relative;
 }
 
-.btc.inputWrapper {
+/*.btc.inputWrapper {
     display: none;
     text-align: center;
     word-wrap: break-word;
@@ -29,7 +30,7 @@
 
 .btc.currencySymbol {
     display: none;
-}
+}*/
 
 .bountyCurrency {
     position: absolute;
@@ -43,8 +44,9 @@
 }
 
 #bountyInput {
-    -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
     box-sizing: border-box;
     width: 100%;
     margin-bottom: 8px;
@@ -85,8 +87,7 @@
     width: 250px;
     height: 250px;
     margin: auto;
-    /*TODO DEPLOYMENT: update id */
-    background: url("chrome-extension://fdbiklfnpaggochdmlncamphhpflilde/content/ajax-loader.gif");
+    background: url("chrome-extension://__MSG_@@extension_id__/content/ajax-loader.gif");
     background-repeat: no-repeat;
 }
 
@@ -101,4 +102,24 @@
     background: #000;
     opacity: 0.6;
     z-index: 100;
+}
+
+.statusCoins {
+    content: url("chrome-extension://__MSG_@@extension_id__/content/status-coins.png");
+}
+
+.statusMoneybag {
+    content: url("chrome-extension://__MSG_@@extension_id__/content/status-moneybag.png");
+}
+
+.statusMoneybags {
+    content: url("chrome-extension://__MSG_@@extension_id__/content/status-moneybags.png");
+}
+
+.statusBars {
+    content: url("chrome-extension://__MSG_@@extension_id__/content/status-bars.png");
+}
+
+.statusJackpot {
+    content: url("chrome-extension://__MSG_@@extension_id__/content/status-jackpot.png");
 }
