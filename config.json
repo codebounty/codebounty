@@ -1,0 +1,9 @@
+{
+    "dist": "build",
+    "test": "tests",
+    "rootUrl": {
+        "local": "http://localhost:3000",
+        "qa": "https://x.codebounty.co",
+        "dist": "https://app.codebounty.co"
+    }
+}
