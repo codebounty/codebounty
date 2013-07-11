@@ -8,6 +8,7 @@ define([
         capabilities: {
             "selenium-version": "2.30.0",
             "chromeOptions": {
+                "args": ["user-data-dir=tests/chromeprofile"],
                 "extensions": [extension.base64]
             }
         },

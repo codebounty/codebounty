@@ -13,12 +13,12 @@ try {
     // should never end up in the repo for all to see. This file
     // *is* in the repo, so putting your Github login details in
     // this file may expose those details.
-    
+
     // define({
     //    "GITHUB_USERNAME": "login",
     //    "GITHUB_PASSWORD": "password"
     // });
-    
+
     // Throwing an exception to make sure everyone trying to run the
     // tests knows to create a "settings.local.js" file.
     throw new Error("You need to create a tests/settings.local.js file with "
