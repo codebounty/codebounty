@@ -1,4 +1,4 @@
-function LoginPage (browser, username, password) {
+function LoginPage(browser, username, password) {
     this.rootUrl = "https://github.com/login";
     this.browser = browser;
     this.username = username;
@@ -15,16 +15,20 @@ LoginPage.prototype.login = function () {
         .elementByName("commit").clickElement()
         .end()
         .wait(1000);
-        
     return this;
 };
 
 function IssuePage(browser, issue) {
-    this.rootUrl = "https://github.com/codebounty/codebounty/issues/";
-    this.browser = browser;
-    this.issueUrl = this.rootUrl + issue;
-    this.mainWindow = browser.windowHandle();
-    return this;
+    var that = this;
+
+    that.rootUrl = "https://github.com/codebounty/codebounty/issues/";
+    that.browser = browser.windowHandle().then(function (handle) {
+        that.mainWindow = handle;
+    });
+
+    that.issueUrl = this.rootUrl + issue;
+
+    return that;
 }
 
 IssuePage.prototype.load = function () {
@@ -33,31 +37,39 @@ IssuePage.prototype.load = function () {
 };
 
 IssuePage.prototype.placeBounty = function (currency, amount) {
-    var activeCurrency = this.browser.safeEval("$('#currencyInput').val()");
-    if (activeCurrency != currency.toLowerCase()) {
-        this.browser
-            .waitForVisibleById("currencyToggle")
-            .elementByCssSelector("#currencyToggle .toggle-off")
-            .clickElement();
-    }
-    this.browser
-        .waitForVisibleById("postBounty")
+//    var activeCurrency = this.browser.safeEval("$('#currencyInput').val()");
+//    if (activeCurrency != currency.toLowerCase()) {
+//        this.browser
+//            .waitForVisibleById("currencyToggle", function (one, two, three) {
+//                console.log(one, two, three);
+//            })
+//            .end()
+//            .elementByCssSelector("#currencyToggle .toggle-off")
+//            .end()
+//            .clickElement()
+//            .end();
+//    }
+
+    var that = this;
+
+    that.browser.waitForElementById("postBounty", 5000)
         .elementById("postBounty")
         .clickElement()
-        .wait(1000);
+        .end()
+        .wait(1000)
+        .end()
+        .windowHandles()
+        .then(function (windows) {
+            for (var i = 0; i < windows.length; i++) {
+                if (windows[i] !== that.mainWindow) {
+                    that.bountyWindow = windows[i];
 
-    var bountyWindow;
-    var windows = this.browser.windowHandles();
-    
-    for (var i = 0; i < windows.length; i++) {
-        if (windows[i] != this.mainWindow) {
-            bountyWindow = windows[i];
-        }
-    }
-
-    if (currency == "btc") {
-       // bountyWindow.
-    }
+                    that.browser.window(that.bountyWindow).then(function (one, two) {
+                        debugger;
+                    });
+                }
+            }
+        });
 
     return this;
 };
@@ -73,17 +85,11 @@ define([
         name: "bounty",
 
         "post bounty": function () {
-            var browser = this.remote;
-            
-            // Log in as our test user.
-            (new LoginPage(
-                browser, settings.GITHUB_USERNAME, settings.GITHUB_PASSWORD))
-            .login();
-            
+            // Log in as our test user
+            var browser = (new LoginPage(this.remote, settings.GITHUB_USERNAME, settings.GITHUB_PASSWORD)).login().browser;
+
             // Load the issue page and place a bounty.
-            return (new IssuePage(browser, testIssue))
-                .load()
-                .placeBounty("btc", 0.5);
+            return (new IssuePage(browser, testIssue)).load().placeBounty("btc", 0.5);
         }
     });
 });

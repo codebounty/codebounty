@@ -29,6 +29,12 @@ module.exports = function (grunt) {
                 bg: false,
                 stdout: true,
                 stderr: true
+            },
+            debugintern: {
+                cmd: "node --debug node_modules/intern/runner.js config=tests/intern",
+                bg: false,
+                stdout: true,
+                stderr: true
             }
         },
         clean: {
@@ -67,10 +73,12 @@ module.exports = function (grunt) {
             }
         },
         intern: {
-            client: {
+            options: {
+                config: "<%= config.test %>/intern",
+                suites: ["<%= config.test %>/lib/bounty"]
+            },
+            runner: {
                 options: {
-                    config: "<%= config.test %>/intern",
-                    suites: ["<%= config.test %>/lib/bounty"],
                     runType: "runner"
                 }
             }
@@ -141,13 +149,14 @@ module.exports = function (grunt) {
             "clean:dist",
             "copy:dist"
         ];
-        if (target === "local") {
+
+        if (target === "local")
             tasks.push("preprocess:local");
-        } else if (target === "qa") {
+        else if (target === "qa")
             tasks.push("preprocess:qa");
-        } else {
+        else
             tasks.push("preprocess:dist");
-        }
+
         tasks = tasks.concat(["crx:dist", "encode"]);
         grunt.task.run(tasks);
     });
@@ -159,8 +168,11 @@ module.exports = function (grunt) {
         ]);
     });
 
-    // the testing tasks
-    grunt.registerTask("test", "intern:client");
+    grunt.registerTask("test", "Run the testing tasks", function (target) {
+        grunt.task.run([
+            target === "debug" ? "bgShell:debugintern" : "intern:runner"
+        ]);
+    });
 
     grunt.registerTask("default", "server");
 };
