@@ -62,6 +62,8 @@ If you want to debug the server:
 
 Run `java -jar tools/selenium-server.jar` in one terminal to start the selenium server, `grunt server` in another, then `grunt test` in another.
 
+To debug tests run `grunt test:debug` instead, and `node-inspector`.
+
 ###Write Tests
 
 [Here](https://github.com/admc/wd#supported-methods) are the supported wd methods**
