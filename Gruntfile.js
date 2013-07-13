@@ -31,7 +31,7 @@ module.exports = function (grunt) {
                 stderr: true
             },
             debugintern: {
-                cmd: "node --debug node_modules/intern/runner.js config=tests/intern",
+                cmd: "node --debug-brk node_modules/intern/runner.js config=tests/intern",
                 bg: false,
                 stdout: true,
                 stderr: true
