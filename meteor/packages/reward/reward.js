@@ -230,15 +230,15 @@ Reward.prototype.fee = function () {
 
     //add up the fee per funding
     _.each(myAvailableFundAmounts, function (amount) {
-        var fee = amount.times("0.05");
+        var fee = amount.times(Reward.Fee.Rate);
 
         //bump the fee up to the minimum codebounty fee
         //USD: $1 minimum fee
-        if (that.currency === "usd" && fee.lt(1))
-            fee = new Big(1);
+        if (that.currency === "usd" && fee.lt(Reward.Fee.Minimum.USD))
+            fee = Reward.Fee.Minimum.USD;
         //BTC: .005 minimum fee, approx $0.5-$1 USD
-        else if (that.currency === "btc" && fee.lt(new Big("0.005")))
-            fee = new Big("0.005");
+        else if (that.currency === "btc" && fee.lt(Reward.Fee.Minimum.BTC))
+            fee = Reward.Fee.Minimum.BTC;
 
         totalFee = totalFee.plus(fee);
     });
