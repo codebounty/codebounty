@@ -113,6 +113,7 @@ BitcoinFund.prototype.refund = function (adminId) {
 BitcoinFund.prototype.confirm = function (reward, params, insert) {
     var that = this;
 
+    // TODO: Should we be removing the fee when we set "that.amount"?
     that.amount = new Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN)); //value is passed as number of satoshi
     that.approved = new Date();
     that.transactionHash = params.transaction_hash;
