@@ -21,7 +21,8 @@ var World = function (callback) {
         throw new Error("You need to create a features/support/settings.local.js file with "
             + "your Github information in it! See features/support/world.js for details.");
 
-    var webdriver = require("selenium-webdriver");
+    var webdriver = require("selenium-webdriver"),
+        extension = require("../../build/codebounty.crx.json");
 
     var browser = new webdriver.Builder()
         .usingServer("http://localhost:4444/wd/hub")
@@ -29,7 +30,8 @@ var World = function (callback) {
             "browserName": "chrome",
             "selenium-version": "2.30.0",
             "chromeOptions": {
-                "args": ["user-data-dir=chromeprofile"]
+                "args": ["user-data-dir=chromeprofile"],
+                "extensions": [extension.base64]
             }
         })
         .build();
