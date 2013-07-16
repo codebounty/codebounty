@@ -122,15 +122,15 @@ module.exports = function (grunt) {
                 // convert binary data to base64 encoded string
                 var encoded = new Buffer(binaryData).toString("base64");
 
-                // setup as a requirejs module
-                var moduleTemplate = "define({\n" +
-                    "   base64:'%s'\n" +
-                    "});\n";
+                // setup as json
+                var moduleTemplate = '{\n' +
+                    '   "base64":"%s"\n' +
+                    '}';
 
                 var output = util.format(moduleTemplate, encoded);
 
                 var fileName = file.substr(file.lastIndexOf("/"));
-                file = dest + fileName + ".js";
+                file = dest + fileName + ".json";
 
                 grunt.file.write(file, output);
             });

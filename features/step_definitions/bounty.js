@@ -21,16 +21,19 @@ module.exports = function () {
                 .sendKeys(self.settings.GITHUB_PASSWORD);
 
             self.browser.findElement({name: "commit"}).click();
-            
+
             self.browser.sleep(1000).then(callback);
         });
     });
 
     this.When(/I post a (\d+) (.*) bounty/, function (amount, currency, callback) {
-//        this.browser.findElement(this.webdriver.By.name(inputName))
-//            .sendKeys(text).then(function () {
-//                callback();
-//            });
+        var self = this;
+
+        self.browser.manage().timeouts().implicitlyWait(5000);
+        self.browser.findElement({id: "postBounty"}).click();
+        self.browser.sleep(5000).then(callback);
+
+        //TODO store current window handle, switch windows, login with paypal, approve payment
 
         callback();
     });

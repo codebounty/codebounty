@@ -3,5 +3,5 @@ Feature: Developer posts a bounty
   I want to post a bounty
 
   Scenario: Developer posts a USD bounty
-    Given I visit issue 21 in codebounty/codebounty
+    Given I visit issue 25 in codebounty/codebounty
     When I post a 5 USD bounty
