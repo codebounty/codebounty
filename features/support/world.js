@@ -1,4 +1,4 @@
-module.exports = function (callback) {
+var World = function (callback) {
     if (!callback)
         return;
 
@@ -24,7 +24,7 @@ module.exports = function (callback) {
     var webdriver = require("selenium-webdriver");
 
     var browser = new webdriver.Builder()
-        .usingServer('http://localhost:4444/wd/hub')
+        .usingServer("http://localhost:4444/wd/hub")
         .withCapabilities({
             "browserName": "chrome",
             "selenium-version": "2.30.0",
@@ -36,3 +36,5 @@ module.exports = function (callback) {
 
     callback({browser: browser, settings: settings, webdriver: webdriver});
 };
+
+module.exports.World = World;
