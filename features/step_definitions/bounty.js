@@ -26,15 +26,49 @@ module.exports = function () {
         });
     });
 
+    var allHandles, githubHandle, paymentHandle;
+
     this.When(/I post a (\d+) (.*) bounty/, function (amount, currency, callback) {
         var self = this;
 
         self.browser.manage().timeouts().implicitlyWait(5000);
         self.browser.findElement({id: "postBounty"}).click();
-        self.browser.sleep(5000).then(callback);
 
-        //TODO store current window handle, switch windows, login with paypal, approve payment
+        //store current window handle, switch windows, login with paypal, approve payment
 
-        callback();
+        self.browser.getAllWindowHandles().then(function (handles) {
+            allHandles = handles;
+        });
+
+        self.browser.getWindowHandle().then(function (handle) {
+            githubHandle = handle;
+
+            for (var i = 0; i < allHandles.length; i++) {
+                if (allHandles[i] !== githubHandle) {
+                    paymentHandle = allHandles[i];
+                }
+            }
+        }).then(function () {
+                self.browser.switchTo().window(paymentHandle);
+
+                self.browser.isElementPresent({id: "login_button"}).then(function (loginButton) {
+                    if (loginButton)
+                        return self.browser.findElement({id: "login_button"}).click();
+                });
+
+                var loginEmail = self.browser.findElement({id: "login_email"});
+                loginEmail.clear();
+                loginEmail.sendKeys(self.settings.PAYPAL_USERNAME);
+
+                self.browser.findElement({id: "login_password"})
+                    .sendKeys(self.settings.PAYPAL_PASSWORD);
+
+                self.browser.findElement({id: "submitLogin"}).click();
+
+                self.browser.sleep(4000).then(function () {
+                    self.browser.findElement({id: "submit.x"}).click();
+                    self.browser.sleep(3000).then(callback);
+                });
+            });
     });
 };
