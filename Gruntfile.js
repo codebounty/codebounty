@@ -1,7 +1,6 @@
 var fs = require("fs"), util = require("util");
 
 module.exports = function (grunt) {
-    grunt.loadNpmTasks("intern");
 
     grunt.initConfig({
         config: grunt.file.readJSON("config.json"),
@@ -21,7 +20,7 @@ module.exports = function (grunt) {
                 stdout: true,
                 stderr: true
             },
-            debugmeteor: {
+            meteordebug: {
                 cmd: [
                     "cd meteor",
                     "NODE_OPTIONS='--debug-brk' meteor --settings settings.json"
@@ -30,8 +29,14 @@ module.exports = function (grunt) {
                 stdout: true,
                 stderr: true
             },
-            debugintern: {
-                cmd: "node --debug-brk node_modules/intern/runner.js config=tests/intern",
+            tests: {
+                cmd: "node node_modules/cucumber/bin/cucumber.js",
+                bg: false,
+                stdout: true,
+                stderr: true
+            },
+            testsdebug: {
+                cmd: "node --debug-brk node_modules/cucumber/bin/cucumber.js",
                 bg: false,
                 stdout: true,
                 stderr: true
@@ -72,17 +77,6 @@ module.exports = function (grunt) {
                 dest: "<%= config.dist %>"
             }
         },
-        intern: {
-            options: {
-                config: "<%= config.test %>/intern",
-                suites: ["<%= config.test %>/lib/bounty"]
-            },
-            runner: {
-                options: {
-                    runType: "runner"
-                }
-            }
-        },
         preprocess: {
             dist: {
                 options: {
@@ -117,7 +111,7 @@ module.exports = function (grunt) {
     // Load all grunt tasks
     require("matchdep").filterDev("grunt-*").forEach(grunt.loadNpmTasks);
 
-    //the intern chromeOptions needs the extension to be a Base64 encoded string
+    //chromeOptions needs the extension to be a Base64 encoded string
     //so encode it, then build a requirejs module for it
     grunt.registerMultiTask("encode", "Convert the .crx to a Base64 encoded string", function () {
         this.files.forEach(function (filePair) {
@@ -128,15 +122,15 @@ module.exports = function (grunt) {
                 // convert binary data to base64 encoded string
                 var encoded = new Buffer(binaryData).toString("base64");
 
-                // setup as a requirejs module
-                var moduleTemplate = "define({\n" +
-                    "   base64:'%s'\n" +
-                    "});\n";
+                // setup as json
+                var moduleTemplate = '{\n' +
+                    '   "base64":"%s"\n' +
+                    '}';
 
                 var output = util.format(moduleTemplate, encoded);
 
                 var fileName = file.substr(file.lastIndexOf("/"));
-                file = dest + fileName + ".js";
+                file = dest + fileName + ".json";
 
                 grunt.file.write(file, output);
             });
@@ -162,16 +156,20 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask("server", "Run servers", function (target) {
+        if (target !== "debug")
+            target = "";
+
         grunt.task.run([
             "bgShell:bitcoind",
-            target === "debug" ? "bgShell:debugmeteor" : "bgShell:meteor"
+            "bgShell:meteor" + target
         ]);
     });
 
     grunt.registerTask("test", "Run the testing tasks", function (target) {
-        grunt.task.run([
-            target === "debug" ? "bgShell:debugintern" : "intern:runner"
-        ]);
+        if (target !== "debug")
+            target = "";
+
+        grunt.task.run("bgShell:tests" + target);
     });
 
     grunt.registerTask("default", "server");
