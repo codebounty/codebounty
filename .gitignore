@@ -1,9 +1,9 @@
 .DS_Store
 .idea/
 *.log
-node_modules/
 build/
+chromeprofile/
+features/support/settings.local.json
 meteor/settings.deployment.json
 meteor/settings.development.json
-tests/settings.local.js
-tests/chromeprofile/
+node_modules/
