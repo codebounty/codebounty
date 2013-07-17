@@ -161,8 +161,9 @@ Reward.prototype.fundApproved = function () {
         return;
 
     //post the reward comment using codebounty charlie
-    var imageUrl = rootUrl + "reward/" + that._id;
-    var commentBody = "[![Code Bounty](" + imageUrl + ")](" + rootUrl + ")";
+    var imageUrl = rootUrl + "reward/image/" + that._id;
+    var commentLink = rootUrl + "reward/link/" + that._id;
+    var commentBody = "[![Code Bounty](" + imageUrl + ")](" + commentLink + ")";
 
     //post as charlie
     var gitHub = new GitHub();

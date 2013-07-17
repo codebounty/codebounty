@@ -1,7 +1,7 @@
 var fs = Npm.require("fs");
 
 //the generated bounty image route
-Meteor.Router.add("/reward/:id", function (id) {
+Meteor.Router.add("/reward/image/:id", function (id) {
     var reward = Rewards.findOne(id);
 
     //todo better error image
@@ -48,6 +48,10 @@ Meteor.Router.add("/reward/:id", function (id) {
     response.writeHead(200, {"Content-Type": "image/png" });
     response.write(imageBuffer);
     response.end();
+});
+
+Meteor.Router.add("/reward/link/:id", function () {
+    return [302, { "Location": Meteor.settings["ROOT_URL"] }, null];
 });
 
 //the generated repo badge route
