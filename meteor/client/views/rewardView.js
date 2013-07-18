@@ -61,7 +61,7 @@ Template.rewardView.receiverReward = function (percent) {
 
 var rowReceiver = function (reward, row) {
     var index = row.index();
-    var receivers = reward.getReceivers();
+    var receivers = reward.receivers;
     return receivers[index];
 };
 
@@ -69,6 +69,9 @@ var setRowAmount = _.debounce(function (row, amount) {
     var myReward = reward();
 
     var receiver = rowReceiver(myReward, row);
+
+    if (receiver._reward.eq(amount))
+        return;
 
     var total = rewardTotal();
     var minimum = rewardMinimum();
@@ -189,3 +192,5 @@ Template.rewardView.events({
         updateReward(myReward);
     }
 });
+
+Template.rewardView.preserve([".noUiSlider"]);
