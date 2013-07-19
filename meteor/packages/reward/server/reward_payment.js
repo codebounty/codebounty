@@ -180,7 +180,7 @@ Reward.prototype.refund = function (adminId, reason) {
 };
 
 /**
- * Distributes receiver rewards and the fee payments across each fund
+ * Distributes receiver rewards across each fund
  * @returns {Array.<{fundId, payments: Array.<{email, amount: Big}>}>}
  */
 Reward.prototype.fundDistributions = function () {
@@ -188,34 +188,14 @@ Reward.prototype.fundDistributions = function () {
 
     var that = this;
 
-    //setup the receiver payments to distribute
+    // Grab the email address of every person we're supposed to pay out to,
+    // along with the amount we're supposed to pay out.
     var receiverPayments = _.map(that.receivers, function (receiver) {
         return { email: receiver.email, amount: receiver.getReward() };
     });
 
-    var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
-    var feeFractions = new Big(0);
-
-    //remove any fractional payments, and put them into the fee
-    _.each(receiverPayments, function (receiverPayment) {
-        var fraction = BigUtils.remainder(receiverPayment.amount, truncateAfterDecimals);
-        if (fraction.gt(0)) {
-            receiverPayment.amount = BigUtils.truncate(receiverPayment.amount, truncateAfterDecimals);
-            feeFractions = feeFractions.plus(fraction);
-        }
-    });
-
-    var fee = that.fee();
-    //add fractional payments to the fee
-    if (feeFractions.gt(0)) {
-        fee = fee.plus(feeFractions);
-        TL.info("Fractional fee for " + that._id.toString() + ": " + feeFractions.toString(), Modules.Reward);
-    }
-
-    //pay codebounty the fee
-    receiverPayments.push({ email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"], amount: fee });
-
-    //keep track of the current receiver payment to distribute
+    // Initialize some variables we'll use later for looping through
+    // all the Fund objects and payees.
     var receiverPaymentIndex = 0;
     var currentReceiverPayment = receiverPayments[receiverPaymentIndex];
     var remainingReceiverPayment = currentReceiverPayment.amount;
@@ -225,12 +205,18 @@ Reward.prototype.fundDistributions = function () {
     //move through each fund to distribute, one by one
     for (var fundIndex = 0; fundIndex < availableFunds.length; fundIndex++) {
         //track how much the current fund has remaining
-        var remainingFundAmount = availableFunds[fundIndex].amount;
+        var remainingFundAmount = availableFunds[fundIndex].payoutAmount;
 
         var fundDistribution = {
             fundId: availableFunds[fundIndex]._id,
             payments: []
         };
+        
+        // Add a record of the fee we're taking from this fund.
+        fundDistribution.payments.push({
+            email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"],
+            amount: availableFunds[fundIndex].fee()
+        });
 
         //while there is money on the fund and more payouts to distribute
         //keep adding payments to this fund
