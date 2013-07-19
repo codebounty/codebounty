@@ -222,30 +222,6 @@ Reward.prototype.expires = function () {
     return null;
 };
 
-Reward.prototype.fee = function () {
-    var that = this;
-    var totalFee = new Big(0);
-
-    var myAvailableFundAmounts = that.availableFundAmounts();
-
-    //add up the fee per funding
-    _.each(myAvailableFundAmounts, function (amount) {
-        var fee = amount.times(Reward.Fee.Rate);
-
-        //bump the fee up to the minimum codebounty fee
-        //USD: $1 minimum fee
-        if (that.currency === "usd" && fee.lt(Reward.Fee.Minimum.USD))
-            fee = Reward.Fee.Minimum.USD;
-        //BTC: .005 minimum fee, approx $0.5-$1 USD
-        else if (that.currency === "btc" && fee.lt(Reward.Fee.Minimum.BTC))
-            fee = Reward.Fee.Minimum.BTC;
-
-        totalFee = totalFee.plus(fee);
-    });
-
-    return totalFee;
-};
-
 Reward.prototype.getReceivers = function () {
     this._receiversDep.depend();
     return this.receivers;
@@ -269,14 +245,7 @@ Reward.prototype.receiverTotal = function () {
  * @returns {Big}
  */
 Reward.prototype.total = function (withFee) {
-    var that = this;
-
-    var total = BigUtils.sum(that.availableFundAmounts());
-    if (withFee)
-        return total;
-
-    var fee = that.fee();
-    return total.minus(fee);
+    return BigUtils.sum(this.availableFundAmounts());
 };
 
 /**

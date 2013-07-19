@@ -61,6 +61,7 @@ PayPalFund.prototype.toJSONValue = function () {
         refunded: that.refunded,
         paid: that.paid,
         paymentError: that.paymentError,
+        payoutAmount: that.payoutAmount.toString(),
         processor: that.processor,
         preapprovalKey: that.preapprovalKey
     };
@@ -87,7 +88,7 @@ PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
     var confirm = rootUrl + "confirmFunds?id=" + that._id;
 
     var issue = GitHubUtils.issue(reward.issueUrl);
-    var description = "$" + that.amount.toString() + " bounty for Issue #" + issue.number + " in " + issue.repo.name;
+    var description = "$" + that.payoutAmount.toString() + " bounty for Issue #" + issue.number + " in " + issue.repo.name;
 
     PayPal.getApproval(that.amount.toString(), description, that.expires, cancel, confirm, function (error, data, approvalUrl) {
         if (error)

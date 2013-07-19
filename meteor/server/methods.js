@@ -123,13 +123,22 @@ Meteor.methods({
         if (currency !== "usd" && currency !== "btc")
             throw currency + " is an invalid currency";
 
-        // Specifying fund amount before funds are actually received
-        // is not supported by the Bitcoin flow
+        
         if (currency == "usd") {
             amount = new Big(amount);
+            
             if (amount.lt(ReceiverUtils.minimum("usd")))
                 throw "Cannot add less than the minimum funds";
+                
+            // Calculate how much we should charge the bounty poster
+            // in order to leave the bounty amount they specified
+            // after we take our fee.
+            amount = amount.div((new Big(1)).sub(Reward.Fee.Rate));
+                
         } else if (currency == "btc") {
+            // Specifying fund amount before funds are actually received
+            // is not supported by the Bitcoin flow, so we just set it to
+            // zero for now.
             amount = new Big(0);
         }
 

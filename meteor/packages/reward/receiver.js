@@ -25,7 +25,8 @@ ReceiverUtils.fromJSONValue = function (value) {
 };
 
 /**
- * Receiver of a reward
+ * Keeps track of how much money from a given Reward should be
+ * paid out to a particular user. Each Reward has many Receivers.
  * @param options {{currency: string,
  *                  email: string,
  *                  reward: Big}}
