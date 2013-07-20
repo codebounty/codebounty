@@ -1,0 +1,7 @@
+Feature: Backer rewards a bounty
+  After I posted a bounty and a commit has been referenced
+  that solves my issue I want to reward the bounty
+
+  Scenario: Developer rewards a bounty
+    Given I posted a bounty on issue 25 in codebounty/codebounty
+    Given I reward the bounty equally among the contributors

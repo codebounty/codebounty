@@ -2,7 +2,8 @@ var World = function (callback) {
     if (!callback)
         return;
 
-    var settings = require("./settings.local.json");
+    var appSettings = require("../../meteor/settings.development.json"),
+        testSettings = require("./settings.local.json");
 
     // Your settings.local.js file should contain the code below,
     // with your Github login information substituted.
@@ -17,9 +18,11 @@ var World = function (callback) {
     //    "GITHUB_PASSWORD": "password"
     // });
 
-    if (!settings)
+    if (!testSettings)
         throw new Error("You need to create a features/support/settings.local.js file with "
             + "your Github information in it! See features/support/world.js for details.");
+
+    testSettings.ROOT_URL = appSettings.ROOT_URL;
 
     var webdriver = require("selenium-webdriver"),
         extension = require("../../build/codebounty.crx.json");
@@ -36,7 +39,14 @@ var World = function (callback) {
         })
         .build();
 
-    callback({browser: browser, settings: settings, webdriver: webdriver});
+    //wait up to 2.5 seconds for an element to appear
+    browser.manage().timeouts().implicitlyWait(2500);
+
+    callback({
+        browser: browser,
+        settings: testSettings,
+        webdriver: webdriver
+    });
 };
 
 module.exports.World = World;
