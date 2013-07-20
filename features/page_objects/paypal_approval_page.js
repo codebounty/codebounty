@@ -37,6 +37,6 @@ PaypalApprovalPage.prototype.approve = function () {
     return this.browser.sleep(3000);
 };
 
-module.exports = function () {
-    return PaypalApprovalPage;
+module.exports = {
+    PaypalApprovalPage: PaypalApprovalPage
 };

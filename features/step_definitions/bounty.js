@@ -1,8 +1,8 @@
 module.exports = function () {
     this.World = require("../support/world.js").World;
 
-    var IssuePage = require("../page_objects/issue_page.js")(),
-        PaypalApprovalPage = require("../page_objects/paypal_approval_page.js")();
+    var IssuePage = require("../page_objects/issue_page.js").IssuePage,
+        PaypalApprovalPage = require("../page_objects/paypal_approval_page.js").PaypalApprovalPage;
 
     var currentIssuePage;
 
