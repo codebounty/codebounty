@@ -70,6 +70,6 @@ IssuePage.prototype.postBounty = function () {
     });
 };
 
-module.exports = function () {
-    return IssuePage;
+module.exports = {
+    IssuePage: IssuePage
 };
