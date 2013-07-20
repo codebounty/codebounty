@@ -36,7 +36,7 @@ var World = function (callback) {
         })
         .build();
 
-    callback({browser: browser, settings: settings, webdriver: webdriver});
+    callback({browser: browser, webdriver: webdriver, settings: settings});
 };
 
 module.exports.World = World;
