@@ -31,7 +31,7 @@ BitcoinFund.prototype.clone = function () {
     return new BitcoinFund({
         _id: EJSON.clone(that._id),
         address: that.address,
-        amount: that.amount.toString(),
+        amount: that.amount,
         approved: that.approved,
         details: that.details,
         expires: that.expires,
