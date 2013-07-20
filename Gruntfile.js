@@ -14,7 +14,7 @@ module.exports = function (grunt) {
             meteor: {
                 cmd: [
                     "cd meteor",
-                    "meteor --settings settings.json"
+                    "meteor --settings settings.development.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,
@@ -23,14 +23,14 @@ module.exports = function (grunt) {
             meteordebug: {
                 cmd: [
                     "cd meteor",
-                    "NODE_OPTIONS='--debug-brk' meteor --settings settings.json"
+                    "NODE_OPTIONS='--debug-brk' meteor --settings settings.development.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,
                 stderr: true
             },
             tests: {
-                cmd: "node node_modules/cucumber/bin/cucumber.js",
+                cmd: "node node_modules/cucumber/bin/cucumber.js post_bounty",
                 bg: false,
                 stdout: true,
                 stderr: true

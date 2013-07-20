@@ -1,74 +1,44 @@
 module.exports = function () {
     this.World = require("../support/world.js").World;
 
-    this.Given(/^I visit issue (\d+) in (.*)\/(.*)$/, function (number, org, repo, callback) {
-        var self = this;
+    var IssuePage = require("../page_objects/issue_page.js").IssuePage,
+        PaypalApprovalPage = require("../page_objects/paypal_approval_page.js").PaypalApprovalPage;
 
-        self.browser.get("https://github.com/" + org + "/" + repo + "/issues/" + number, callback);
+    var currentIssuePage;
 
-        self.browser.sleep(1000);
-
-        self.browser.isElementPresent({name: "login"}).then(function (shouldLogin) {
-            if (!shouldLogin) {
-                callback();
-                return;
-            }
-
-            self.browser.findElement({name: "login"})
-                .sendKeys(self.settings.GITHUB_USERNAME);
-
-            self.browser.findElement({name: "password"})
-                .sendKeys(self.settings.GITHUB_PASSWORD);
-
-            self.browser.findElement({name: "commit"}).click();
-
-            self.browser.sleep(1000).then(callback);
-        });
+    this.Given(/^I visit issue (\d+) in (.*)\/(.*)$/, function (number, organization, repo, callback) {
+        currentIssuePage = new IssuePage(this, number, organization, repo, callback);
     });
-
-    var allHandles, githubHandle, paymentHandle;
 
     this.When(/I post a (\d+) (.*) bounty/, function (amount, currency, callback) {
         var self = this;
 
-        self.browser.manage().timeouts().implicitlyWait(5000);
-        self.browser.findElement({id: "postBounty"}).click();
+        if (currency === "BTC") {
+            currentIssuePage.toggleCurrency();
+            throw "Not implemented yet";
+        }
 
-        //store current window handle, switch windows, login with paypal, approve payment
+        currentIssuePage.postBounty().then(function (approvalHandle) {
+            if (currency === "USD") {
+                self.browser.switchTo().window(approvalHandle);
 
-        self.browser.getAllWindowHandles().then(function (handles) {
-            allHandles = handles;
-        });
+                var paypalApprovalPage = new PaypalApprovalPage(self, approvalHandle);
 
-        self.browser.getWindowHandle().then(function (handle) {
-            githubHandle = handle;
-
-            for (var i = 0; i < allHandles.length; i++) {
-                if (allHandles[i] !== githubHandle) {
-                    paymentHandle = allHandles[i];
-                }
+                paypalApprovalPage
+                    .approve()
+                    .then(callback);
             }
-        }).then(function () {
-                self.browser.switchTo().window(paymentHandle);
+        });
+    });
 
-                self.browser.isElementPresent({id: "login_button"}).then(function (loginButton) {
-                    if (loginButton)
-                        return self.browser.findElement({id: "login_button"}).click();
-                });
+    this.Then(/a bounty comment should be posted on the issue/, function (callback) {
+        this.browser.switchTo().window(currentIssuePage.handle);
 
-                var loginEmail = self.browser.findElement({id: "login_email"});
-                loginEmail.clear();
-                loginEmail.sendKeys(self.settings.PAYPAL_USERNAME);
-
-                self.browser.findElement({id: "login_password"})
-                    .sendKeys(self.settings.PAYPAL_PASSWORD);
-
-                self.browser.findElement({id: "submitLogin"}).click();
-
-                self.browser.sleep(4000).then(function () {
-                    self.browser.findElement({id: "submit.x"}).click();
-                    self.browser.sleep(3000).then(callback);
-                });
-            });
+        currentIssuePage.isBountyCommentPresent().then(function (isPresent) {
+            if (isPresent)
+                callback();
+            else
+                callback.fail();
+        });
     });
 };
