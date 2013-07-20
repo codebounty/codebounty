@@ -5,5 +5,5 @@ build/
 chromeprofile/
 features/support/settings.local.json
 meteor/settings.deployment.json
-meteor/settings.development.json
+meteor/settings.testing.json
 node_modules/
