@@ -46,6 +46,7 @@ Fund.prototype.toString = function () {
 Fund.prototype.fee = function () {
     var that = this;
     var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
+    
     var fee = that.amount.times(Reward.Fee.Rate);
 
     // Bump the fee up to the minimum codebounty fee if necessary.
@@ -59,11 +60,11 @@ Fund.prototype.fee = function () {
     // After subtracting the fee from the total amount, figure out the value
     // of any amount beyond the maximum allowed decimal precision.
     var feeFractions = new Big(0);
-    console.log(that.amount);
-    var fraction = BigUtils.remainder(that.amount.sub(fee), truncateAfterDecimals);    
+    
+    var fraction = BigUtils.remainder(that.amount.minus(fee), truncateAfterDecimals);    
 
     if (fraction.gt(0)) {
-        receiverPayment.amount = BigUtils.truncate(receiverPayment.amount, truncateAfterDecimals);
+        that.amount = BigUtils.truncate(that.amount, truncateAfterDecimals);
         feeFractions = feeFractions.plus(fraction);
     }
 
@@ -83,5 +84,5 @@ Fund.prototype.fee = function () {
  */
 Fund.prototype.setAmount = function (amount) {
     this.amount = amount;
-    this.payoutAmount = this.amount.sub(this.fee());
+    this.payoutAmount = this.amount.minus(this.fee());
 }

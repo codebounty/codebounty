@@ -133,7 +133,14 @@ Meteor.methods({
             // Calculate how much we should charge the bounty poster
             // in order to leave the bounty amount they specified
             // after we take our fee.
-            amount = amount.div((new Big(1)).sub(Reward.Fee.Rate));
+            amount = amount.div((new Big(1)).minus(Reward.Fee.Rate));
+            
+            if (BigUtils.remainder(amount, 2).gt(0)) {
+                // Equivalent to amount.times(10).ceil().div(10).
+                // If there's a fractional amount, we want to round it up.
+                amount = BigUtils.truncate(amount, 2).plus(0.01);
+            }
+            
                 
         } else if (currency == "btc") {
             // Specifying fund amount before funds are actually received
