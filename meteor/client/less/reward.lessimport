@@ -1,5 +1,10 @@
 /* region utility classes */
 
+.disabled {
+    color: #777777;
+    background: #dddddd;
+}
+
 .invalid {
     color: red;
 }
@@ -8,9 +13,12 @@
     fill: red;
 }
 
-.disabled {
-    color: #777777;
-    background: #dddddd;
+.clearLeftPadding {
+    padding-left: 0px;
+}
+
+.smallRightPadding {
+    padding-right: 5px;
 }
 
 /* endregion */
@@ -32,68 +40,84 @@
 
 /* endregion */
 
-.payoutTotalAmount {
+.payoutTotal, .payoutTotalAmount {
     text-align: right;
+}
+
+.rewardView {
+    min-width: 900px;
 }
 
 /* region contributor row */
 
-.contributorRow .receiverEmail {
-    padding-top: 2px;
-}
-
-.contributorRow .rewardSliderContainer {
-    padding-top: 8px;
-}
-
-.contributorRow input, .rewardPercent {
-    font-size: 1em;
-    width: 90px;
-    border: 1px solid #cccccc;
-    -webkit-border-radius: 3px;
-    -ms-border-radius: 3px;
-    -o-border-radius: 3px;
-    border-radius: 3px;
-    text-align: right;
-}
-
-.contributorRow .rewardPercent {
-    width: 70px;
-    height: 36px;
-    border: 1px solid #ccc;
-    background: #e6e6e6;
-    padding-right: 20px;
-    padding-top: 7px;
-}
-
-/* endregion */
-
-/* region input formatting */
-
-.inputWrapper {
-    display: inline-block;
-    position: relative;
-    margin-top: -5px;
-
-    .currencySymbol {
-        position: absolute;
+.contributorRow {
+    .receiverEmail {
+        padding-top: 2px;
     }
 
-    .currencySymbol.btc {
-        top: 11px;
-        left: 12px;
+    .rewardSliderContainer {
+        padding-top: 8px;
+
+        .noUiSlider.horizontal {
+            width: 100%;
+        }
     }
 
-    .currencySymbol.usd {
-        top: 8px;
-        left: 12px;
+    input, .rewardPercent {
+        border: 1px solid #cccccc;
+        border-radius: 3px;
+        -webkit-border-radius: 3px;
+        -ms-border-radius: 3px;
+        -o-border-radius: 3px;
+        font-size: 1em;
+        text-align: right;
     }
 
-    .percentSign {
-        position: absolute;
-        top: 8px;
-        right: 6px;
+    .rewardPercent {
+        height: 36px;
+        border: 1px solid #ccc;
+        background: #e6e6e6;
+        padding-right: 20px;
+        padding-top: 7px;
     }
+
+    .rewardPercentInput {
+        display: inline-block;
+        width: 100%;
+    }
+
+    /* region input formatting */
+
+    .inputWrapper {
+        margin-top: -5px;
+        position: relative;
+
+        .currencySymbol {
+            position: absolute;
+        }
+
+        .currencySymbol.btc {
+            left: 12px;
+            top: 11px;
+        }
+
+        .currencySymbol.usd {
+            left: 12px;
+            top: 8px;
+        }
+
+        .percentSign {
+            position: absolute;
+            right: 6px;
+            top: 8px;
+        }
+
+        .rewardInput {
+            width: 100%;
+        }
+    }
+
+    /* endregion */
 }
 
 /* endregion */
@@ -101,13 +125,13 @@
 /* region payout amount */
 
 .calculatedTotal {
-    text-align: right;
-    //    padding-bottom: 10px;
     font-weight: bold;
+    padding-right: 15px;
+    text-align: right;
 
     .currencySymbol.btc {
-        margin-top: -2px;
         margin-right: -2px;
+        margin-top: -2px;
     }
 }
 
