@@ -60,7 +60,7 @@ Template.rewardView.receiverReward = function (percent) {
 };
 
 var rowReceiver = function (reward, row) {
-    var index = row.index();
+    var index = row.index() - 1;
     var receivers = reward.receivers;
     return receivers[index];
 };
@@ -119,7 +119,9 @@ Template.rewardView.rendered = function () {
         var receiver = receivers[index];
         row = $(row);
 
-        var receiverRewardNumber = parseFloat(receiver.getReward().toString());
+        var receiverReward = receiver.getReward();
+
+        var receiverRewardNumber = parseFloat(receiverReward.toString());
         row.find(".rewardSlider").noUiSlider({
             handles: 1,
             range: [minimumNumber, totalNumber],
@@ -133,8 +135,8 @@ Template.rewardView.rendered = function () {
             start: receiverRewardNumber
         });
 
-        //enable the row if the reward > 0
-        var enabled = receiver.getReward().gt(0);
+        //enable the row if the reward > 0 & minimum !== total
+        var enabled = receiverReward.gt(0) && !minimum.eq(total);
         row.find(".rewardSlider").noUiSlider("disabled", !enabled);
     });
 
@@ -176,7 +178,7 @@ Template.rewardView.events({
 
     "click .shouldPay": function (event) {
         var checkBox = $(event.srcElement);
-        var row = checkBox.parent(".contributorRow");
+        var row = checkBox.parents(".contributorRow");
 
         var myReward = reward();
         var receiver = rowReceiver(myReward, row);
