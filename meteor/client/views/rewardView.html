@@ -1,37 +1,67 @@
 <template name="rewardView">
-    <div class="container">
-        <h3>Contributor Payout:
-            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount">
-                {{{currencySymbol}}}{{total}}</span>
-            </span>
-        </h3>
-        <ul>
-            {{#each reward.receivers}}
-            <li class="contributorRow">
-                <input type="checkbox" class="shouldPay" {{#if receiverHasReward}}checked="checked" {{/if}}/>
-
-                <label name="contributorName" class="contributorName">{{email}}</label>
-
-                <div class="rewardInputGroup">
-                    <div class="rewardSlider noUiSlider"></div>
-                    <div class="inputWrapper">
-                        {{{currencySymbol}}}
-                        <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}" step="{{step}}"
-                               value="{{receiverReward}}" {{#unless receiverHasReward}}disabled {{/unless}}/>
-                    </div>
-                    <div class="inputWrapper">
-                        <label class="rewardPercent">{{receiverReward true}}</label>
-                        <span class="percentSign">%</span>
-                    </div>
-                </div>
-            </li>
-            {{/each}}
-        </ul>
-        <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">
-            Payout Amount: {{{currencySymbol}}} <span class="calculatedTotalAmount">{{receiverTotal}}</span>
+    <div class="row">
+        <div class="col-4 col-offset-1">
+            <h3>Contributor Payout: </h3>
         </div>
-        <div class="bottomBar">
+
+        <div class="col-1 col-offset-3">
+            <h3>Total: </h3>
+        </div>
+
+        <div class="col-1">
+            <h3 class="payoutTotalAmount">{{{currencySymbol}}}{{total}}</h3>
+        </div>
+    </div>
+
+    {{#each reward.receivers}}
+    <div class="row contributorRow">
+        <div class="col-2 col-offset-1">
+            <div class="col-1">
+                <input type="checkbox" class="shouldPay" {{#if receiverHasReward}}checked="checked"{{/if}}/>
+            </div>
+
+            <div class="col-1 receiverEmail">
+                {{email}}
+            </div>
+        </div>
+
+        <div class="col-4 col-offset-1 rewardSliderContainer">
+            <div class="noUiSlider rewardSlider"></div>
+        </div>
+
+        <div class="col-lg-1">
+            <div class="inputWrapper">
+                {{{currencySymbol}}}
+                <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}" step="{{step}}"
+                       value="{{receiverReward}}" {{#unless receiverHasReward}}disabled {{/unless}}/>
+            </div>
+        </div>
+
+        <div class="col-lg-1">
+            <div class="inputWrapper">
+                <label class="rewardPercent">{{receiverReward true}}</label>
+                <span class="percentSign">%</span>
+            </div>
+        </div>
+    </div>
+    {{/each}}
+
+    <div class="row">
+        <div class="col-2 col-offset-8">
+            <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">
+                Payout Amount: {{{currencySymbol}}} <span class="calculatedTotalAmount">{{receiverTotal}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="bottomBar"></div>
+
+        <div class="col-8">
             <div class="validationError">Please make sure the payout amount is equal to the total.</div>
+        </div>
+
+        <div class="col-4">
             <div class="rewardButtonGroup">
                 <button class="rewardButton{{#unless isValid}} disabled{{/unless}}"
                 {{#unless isValid}} disabled{{/unless}}>Reward the coders

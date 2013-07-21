@@ -1,4 +1,5 @@
 /* region utility classes */
+
 .invalid {
     color: red;
 }
@@ -7,8 +8,16 @@
     fill: red;
 }
 
-.payoutTotalLabel .btc.currencySymbol, .calculatedTotal .btc.currencySymbol {
-    position: relative;
+.disabled {
+    color: #777777;
+    background: #dddddd;
+}
+
+/* endregion */
+
+/* region currency symbols */
+
+.btc.currencySymbol, .calculatedTotal .btc.currencySymbol {
     top: .12em;
 }
 
@@ -21,41 +30,25 @@
     padding-right: 2px;
 }
 
-.disabled {
-    color: #777777;
-    background: #dddddd;
-}
-
 /* endregion */
 
-.container {
-    padding: 0 60px;
-    position: relative;
-    margin: 0 auto;
-    width: 100%;
-    min-width: 900px;
+.payoutTotalAmount {
+    text-align: right;
 }
-
-/* region Total label */
-
-.payoutTotalLabel {
-    float: right;
-}
-
-/* endregion */
 
 /* region contributor row */
-.contributorRow {
-    display: block;
-    position: relative;
-    height: 40px;
+
+.contributorRow .receiverEmail {
+    padding-top: 2px;
+}
+
+.contributorRow .rewardSliderContainer {
+    padding-top: 8px;
 }
 
 .contributorRow input, .rewardPercent {
     font-size: 1em;
     width: 90px;
-    margin-left: 5px;
-    padding: 3px;
     border: 1px solid #cccccc;
     -webkit-border-radius: 3px;
     -ms-border-radius: 3px;
@@ -64,25 +57,7 @@
     text-align: right;
 }
 
-.contributorRow .rewardInputGroup {
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-
-.contributorRow .rewardSlider {
-    margin: 0 20px;
-    display: inline-block;
-    width: 200px;
-}
-
-.contributorRow .rewardInput {
-    padding-left: 20px;
-}
-
 .contributorRow .rewardPercent {
-    display: inline-block;
-    vertical-align: middle;
     width: 70px;
     height: 36px;
     border: 1px solid #ccc;
@@ -94,9 +69,11 @@
 /* endregion */
 
 /* region input formatting */
+
 .inputWrapper {
-    position: relative;
     display: inline-block;
+    position: relative;
+    margin-top: -5px;
 
     .currencySymbol {
         position: absolute;
@@ -122,9 +99,10 @@
 /* endregion */
 
 /* region payout amount */
+
 .calculatedTotal {
     text-align: right;
-    padding-bottom: 10px;
+    //    padding-bottom: 10px;
     font-weight: bold;
 
     .currencySymbol.btc {
@@ -139,27 +117,20 @@
 
 /* endregion */
 
-/* region Bottom Bar */
+/* region bottom bar */
+
 .bottomBar {
-    position: relative;
-    padding: 10px 0;
     border-top: 1px dashed #ccc;
 }
 
-.validationError, .rewardButtonGroup {
-    padding: 10px 0;
+.rewardButtonGroup {
+    padding-top: 10px;
 }
 
 .validationError {
     display: none;
-    padding-right: 250px;
+    padding-top: 20px;
     text-align: center;
-}
-
-.rewardButtonGroup {
-    position: absolute;
-    top: 0;
-    right: 0;
 }
 
 /* endregion */
