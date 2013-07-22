@@ -22,6 +22,9 @@ module.exports = function () {
             if (currency === "USD") {
                 self.browser.switchTo().window(approvalHandle);
 
+                //give some time for the page to redirect to the paypal preapproval url
+                self.browser.sleep(2000);
+
                 var paypalApprovalPage = new PaypalApprovalPage(self, approvalHandle);
 
                 paypalApprovalPage
