@@ -36,12 +36,6 @@ IssuePage.prototype._navigate = function () {
     });
 };
 
-IssuePage.prototype.toggleCurrency = function () {
-    return this.browser.findElement({id: "currencyToggle"})
-        .findElement({className: "toggle-select"})
-        .click();
-};
-
 IssuePage.prototype.isBountyCommentPresent = function () {
     var self = this;
 
@@ -68,6 +62,16 @@ IssuePage.prototype.postBounty = function () {
             if (handles[i] !== self.handle)
                 return handles[i];
     });
+};
+
+IssuePage.prototype.rewardBounty = function () {
+    return this.browser.findElement({id: "rewardBounty"}).click();
+};
+
+IssuePage.prototype.toggleCurrency = function () {
+    return this.browser.findElement({id: "currencyToggle"})
+        .findElement({className: "toggle-select"})
+        .click();
 };
 
 module.exports = {
