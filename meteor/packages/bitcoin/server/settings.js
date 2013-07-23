@@ -8,7 +8,7 @@ Bitcoin.Settings = {
     "maximumErrors": 10,
     "client": Meteor.settings["BITCOIN_CLIENT"],
     "minimumConfirmations": 6,
-    "minimumFundAmount": 0.04
+    "minimumFundAmount": 0.043 // Roughly 0.04 / 0.95. The actual figure is awkwardly long.
 };
 
 Bitcoin.Emails = {
