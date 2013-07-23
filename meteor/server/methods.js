@@ -133,7 +133,11 @@ Meteor.methods({
             // Calculate how much we should charge the bounty poster
             // in order to leave the bounty amount they specified
             // after we take our fee.
-            amount = amount.div((new Big(1)).minus(Reward.Fee.Rate));
+            if (amount.times(Reward.Fee.Rate) < Reward.Fee.Minimum.USD) {
+                amount = amount.plus(Reward.Fee.Minimum.USD);
+            } else {
+                amount = amount.div((new Big(1)).minus(Reward.Fee.Rate));
+            }
             
             if (BigUtils.remainder(amount, 2).gt(0)) {
                 // Equivalent to amount.times(10).ceil().div(10).
