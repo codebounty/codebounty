@@ -1,42 +1,79 @@
 <template name="rewardView">
-    <div class="container">
-        <h3>Contributor Payout:
-            <span class="payoutTotalLabel">Total:<span class="payoutTotalAmount">
-                {{{currencySymbol}}}{{total}}</span>
-            </span>
-        </h3>
-        <ul>
-            {{#each reward.receivers}}
-            <li class="contributorRow">
-                <input type="checkbox" class="shouldPay" {{#if receiverHasReward}}checked="checked" {{/if}}/>
+    <div class="rewardView">
+        <div class="row">
+            <div class="col-5 col-offset-1">
+                <h3>Contributor Payout: </h3>
+            </div>
 
-                <label name="contributorName" class="contributorName">{{email}}</label>
+            <div class="col-4 col-offset-1">
+                <div class="col-6 col-offset-2">
+                    <h3 class="payoutTotal">Total: </h3>
+                </div>
 
-                <div class="rewardInputGroup">
-                    <div class="rewardSlider noUiSlider"></div>
+                <div class="col-4 clearLeftPadding">
+                    <h3 class="payoutTotalAmount">{{{currencySymbol}}}{{total}}</h3>
+                </div>
+            </div>
+        </div>
+
+        {{#each reward.receivers}}
+        <div class="row contributorRow">
+            <div class="col-3 col-offset-1">
+                <div class="col-2">
+                    <input type="checkbox" class="shouldPay" {{#if receiverHasReward}}checked="checked"{{/if}}/>
+                </div>
+
+                <div class="col-10 receiverEmail">
+                    {{email}}
+                </div>
+            </div>
+
+            <div class="col-3 col-offset-1 rewardSliderContainer">
+                <div class="noUiSlider rewardSlider"></div>
+            </div>
+
+            <div class="col-3">
+                <div class="col-6 col-offset-2 smallRightPadding">
                     <div class="inputWrapper">
                         {{{currencySymbol}}}
                         <input class="rewardInput" type="number" min="{{minimum}}" max="{{total}}" step="{{step}}"
                                value="{{receiverReward}}" {{#unless receiverHasReward}}disabled {{/unless}}/>
                     </div>
-                    <div class="inputWrapper">
+                </div>
+
+                <div class="col-4 clearLeftPadding">
+                    <div class="inputWrapper rewardPercentInput">
                         <label class="rewardPercent">{{receiverReward true}}</label>
                         <span class="percentSign">%</span>
                     </div>
                 </div>
-            </li>
-            {{/each}}
-        </ul>
-        <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">
-            Payout Amount: {{{currencySymbol}}} <span class="calculatedTotalAmount">{{receiverTotal}}</span>
+            </div>
         </div>
-        <div class="bottomBar">
-            <div class="validationError">Please make sure the payout amount is equal to the total.</div>
-            <div class="rewardButtonGroup">
-                <button class="rewardButton{{#unless isValid}} disabled{{/unless}}"
-                {{#unless isValid}} disabled{{/unless}}>Reward the coders
-                </button>
-                <button class="closeButton">Cancel</button>
+        {{/each}}
+
+        <div class="row">
+            <div class="col-6 col-offset-2"></div>
+            <div class="col-3">
+                <div class="calculatedTotal{{#unless isValid}} invalid{{/unless}}">
+                    Payout Amount: {{{currencySymbol}}} <span class="calculatedTotalAmount">{{receiverTotal}}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="bottomBar"></div>
+
+            <div class="col-8">
+                <div class="validationError">Please make sure the payout amount is equal to the total.</div>
+            </div>
+
+            <div class="col-4">
+                <div class="rewardButtonGroup">
+                    <button class="rewardButton{{#unless isValid}} disabled{{/unless}}"
+                    {{#unless isValid}} disabled{{/unless}}>Reward the coders
+                    </button>
+                    <button class="closeButton">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
