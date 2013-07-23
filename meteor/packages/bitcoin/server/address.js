@@ -34,28 +34,34 @@ Meteor.setInterval(function () {
             Bitcoin.Client.getNewAddress(function (err, address) {
                 if (!err) {
                     Fiber(function () {
-                        // Contact Blockchain.info for a proxy address.
-                        response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI);
+                        
+                        try {
+                            // Contact Blockchain.info for a proxy address.
+                            response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI);
 
-                        // Make sure the call was successful and save the generated
-                        // address if it was.
-                        if (response.data != null) {
-                            // Insert the generated address.
-                            Bitcoin.IssueAddresses.insert({
-                                address: address,
-                                proxyAddress: response.data.input_address,
-                                used: false
-                            });
+                            // Make sure the call was successful and save the generated
+                            // address if it was.
+                            if (response.data != null) {
+                                // Insert the generated address.
+                                Bitcoin.IssueAddresses.insert({
+                                    address: address,
+                                    proxyAddress: response.data.input_address,
+                                    used: false
+                                });
 
-                            errCountFut.ret(errors);
-                            addrCountFut.ret(availableAddresses + 1);
+                                errCountFut.ret(errors);
+                                addrCountFut.ret(availableAddresses + 1);
 
-                            // If the call wasn't successful, log the response and
-                            // increment our error counter.
-                        } else {
-                            console.log(response.content);
-                            errCountFut.ret(errors + 1);
-                            addrCountFut.ret(availableAddresses);
+                                // If the call wasn't successful, log the response and
+                                // increment our error counter.
+                            } else {
+                                console.log(response.content);
+                                errCountFut.ret(errors + 1);
+                                addrCountFut.ret(availableAddresses);
+                            }
+                            
+                        } catch (err) {
+                            
                         }
                     }).run();
                 } else {

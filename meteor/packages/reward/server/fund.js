@@ -22,7 +22,6 @@ Fund = function (options) {
     else
         this._id = options._id;
         
-    this.setAmount(options.amount); // Using setAmount so fee & payoutAmount get calculated.
     this.approved = options.approved;
     this.currency = options.currency;
     this.details = options.details;
@@ -31,6 +30,7 @@ Fund = function (options) {
     this.paid = options.paid;
     this.paymentError = options.paymentError;
     this.processor = options.processor;
+    this.setAmount(options.amount); // Using setAmount so fee & payoutAmount get calculated.
 };
 
 Fund.prototype.isAvailable = function () {
@@ -61,7 +61,7 @@ Fund.prototype.fee = function () {
     // of any amount beyond the maximum allowed decimal precision.
     var feeFractions = new Big(0);
     
-    var fraction = BigUtils.remainder(that.amount.minus(fee), truncateAfterDecimals);    
+    var fraction = BigUtils.remainder(that.amount.minus(fee), truncateAfterDecimals);
 
     if (fraction.gt(0)) {
         that.amount = BigUtils.truncate(that.amount, truncateAfterDecimals);
@@ -73,7 +73,6 @@ Fund.prototype.fee = function () {
         fee = fee.plus(feeFractions);
         TL.info("Fractional fee for " + that._id.toString() + ": " + feeFractions.toString(), Modules.Reward);
     }
-
     return fee;
 };
 
