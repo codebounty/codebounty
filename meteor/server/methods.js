@@ -235,7 +235,7 @@ Meteor.methods({
 
                 //order by size
                 clientRewards = _.sortBy(clientRewards, function (reward) {
-                    return parseFloat(BigUtils.sum(reward.availableFundAmounts()).toString());
+                    return parseFloat(BigUtils.sum(reward.availableFundPayoutAmounts()).toString());
                 });
 
                 //return the largest one

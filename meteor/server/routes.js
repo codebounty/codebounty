@@ -199,9 +199,9 @@ Meteor.Router.add("/bitcoin-ipn", function () {
 
                 // If the reward amount is less than the minimum required
                 // amount, send the user an alert.
-                var totalReward = BigUtils.sum(reward.availableFundAmounts());
+                var totalPaid = BigUtils.sum(reward.availableFundAmounts());
 
-                if (totalReward < Bitcoin.Settings.minimumFundAmount) {
+                if (totalPaid < Bitcoin.Settings.minimumFundAmount) {
                     Email.send({
                         to: AuthUtils.email(
                             Meteor.users.find({_id: reward.userId})),

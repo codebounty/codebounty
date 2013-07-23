@@ -16,7 +16,7 @@ Meteor.publish("totalReward", function (issueUrl) {
         funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
     }).observe({
             added: function (reward) {
-                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                var totalBounties = BigUtils.sum(reward.availableFundPayoutAmounts());
                 totalReward[reward.currency] = totalReward[reward.currency].plus(totalBounties);
 
                 if (!initializing) //need to wait until it is added
@@ -26,7 +26,7 @@ Meteor.publish("totalReward", function (issueUrl) {
                     });
             },
             removed: function (reward) {
-                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                var totalBounties = BigUtils.sum(reward.availableFundPayoutAmounts());
                 totalReward[reward.currency] = totalReward[reward.currency].minus(totalBounties);
 
                 subscription.changed("totalReward", docId, {
