@@ -129,6 +129,10 @@ BitcoinFund.prototype.confirm = function (reward, params, insert) {
             _availableFundAmounts: _.map(reward.availableFundAmounts(), function (amount) {
                 return amount.toString()
             }),
+            //for the client
+            _availableFundPayoutAmounts: _.map(reward.availableFundPayoutAmounts(), function (amount) {
+                return amount.toString()
+            }),
             _expires: reward.expires()
         }};
 

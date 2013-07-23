@@ -40,6 +40,11 @@ RewardUtils.fromJSONValue = function (value) {
         options._availableFundAmounts = _.map(value._availableFundAmounts, function (amount) {
             return new Big(amount);
         });
+        
+    if (value._availableFundPayoutAmounts)
+        options._availableFundPayoutAmounts = _.map(value._availableFundPayoutAmounts, function (amount) {
+            return new Big(amount);
+        });
 
     return new Reward(options);
 };
@@ -71,6 +76,10 @@ Reward = function (options) {
     //for the client
     if (options._availableFundAmounts)
         this._availableFundAmounts = options._availableFundAmounts;
+        
+    //for the client
+    if (options._availableFundPayoutAmounts)
+        this._availableFundAmounts = options._availableFundPayoutAmounts;
 
     //for the client
     if (options._expires)
@@ -207,6 +216,20 @@ Reward.prototype.availableFundAmounts = function () {
     });
 };
 
+/**
+ * @returns {Array.<Big>}
+ */
+Reward.prototype.availableFundPayoutAmounts = function () {
+    if (Meteor.isClient) //fund details are not exposed to the client
+        return this._availableFundPayoutAmounts;
+
+    var myAvailableFunds = this.availableFunds();
+    return _.map(myAvailableFunds, function (fund) {
+        return fund.payoutAmount;
+    });
+};
+
+
 Reward.prototype.expires = function () {
     var lastExpiration = _.last(_.sortBy(this.funds, function (fund) {
         return fund.expires;
@@ -245,7 +268,11 @@ Reward.prototype.receiverTotal = function () {
  * @returns {Big}
  */
 Reward.prototype.total = function (withFee) {
-    return BigUtils.sum(this.availableFundAmounts());
+    if (withFee) {
+        return BigUtils.sum(this.availableFundAmounts());
+    } else {
+        return BigUtils.sum(this.availableFundPayoutAmounts());
+    }
 };
 
 /**
