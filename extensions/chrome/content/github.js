@@ -108,7 +108,7 @@
                 "<div id='block'></div>" +
                 "<div id='iframecontainer'>" +
                 "<div id='loader'></div>" +
-                "<iframe></iframe>" +
+                "<iframe id='overlayIframe'></iframe>" +
                 "</div>";
 
             $(overlayDiv).insertBefore(document.body);
