@@ -29,7 +29,7 @@ var execute = function (operation, fields, callback) {
     };
 
     if (!Meteor.settings["PRODUCTION"])
-        headers["X-PAYPAL-SANDBOX-EMAIL-ADDRESS"] = Meteor.settings["SUPPORT_EMAIL"];
+        headers["X-PAYPAL-SANDBOX-EMAIL-ADDRESS"] = Meteor.settings["PAYPAL_SANDBOX_EMAIL"];
 
     request.post({
         headers: headers,
