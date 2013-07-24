@@ -39,8 +39,7 @@ IssuePage.prototype._navigate = function () {
 IssuePage.prototype.isBountyCommentPresent = function () {
     var self = this;
 
-    var xpath = "//a[contains(@href, '" + self.settings.ROOT_URL + "reward/link/')]" +
-        "/img[contains(@src, '" + self.settings.ROOT_URL + "reward/image/')]";
+    var xpath = "//a[contains(@href, 'reward/link/')]/img[contains(@src, 'reward/image/')]";
 
     return self.browser.isElementPresent({
         xpath: xpath
