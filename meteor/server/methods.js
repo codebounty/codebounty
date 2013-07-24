@@ -240,8 +240,9 @@ Meteor.methods({
 
                 //return the largest one
                 fut.ret(clientRewards.length > 0 ? _.last(clientRewards) : null);
-            } else
+            } else {
                 fut.ret(null);
+            }
         });
 
         return fut.wait();
