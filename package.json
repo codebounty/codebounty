@@ -4,6 +4,8 @@
     "version": "0.0.1",
     "private": true,
     "devDependencies": {
+        "big.js": "~2.2.0",
+        "cucumber": "~0.3.0",
         "grunt": "~0.4.1",
         "grunt-bg-shell": "~2.0.2",
         "grunt-contrib-clean": "~0.4.1",
@@ -12,7 +14,6 @@
         "grunt-preprocess": "~2.3.0",
         "matchdep": "~0.1.2",
         "selenium-webdriver": "~2.33.0",
-        "underscore": "~1.5.1",
-        "cucumber": "~0.3.0"
+        "underscore": "~1.5.1"
     }
 }
