@@ -20,6 +20,7 @@ BitcoinFund = function (options) {
     this.userId = options.userId;
     this.proxyAddress = options.proxyAddress;
     this.transactionHash = options.transactionHash;
+    this.userNotified = options.userNotified;
 };
 
 BitcoinFund.prototype = Object.create(Fund.prototype);
@@ -39,6 +40,7 @@ BitcoinFund.prototype.clone = function () {
         proxyAddress: that.proxyAddress,
         refunded: that.refunded,
         transactionHash: that.transactionHash,
+        userNotified: that.userNotified,
         userId: EJSON.clone(that.userId)
     });
 };
@@ -69,6 +71,7 @@ BitcoinFund.prototype.toJSONValue = function () {
         proxyAddress: that.proxyAddress,
         refunded: that.refunded,
         transactionHash: that.transactionHash,
+        userNotified: that.userNotified,
         userId: that.userId
     };
 };
