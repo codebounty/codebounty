@@ -79,7 +79,7 @@ Reward = function (options) {
         
     //for the client
     if (options._availableFundPayoutAmounts)
-        this._availableFundAmounts = options._availableFundPayoutAmounts;
+        this._availableFundPayoutAmounts = options._availableFundPayoutAmounts;
 
     //for the client
     if (options._expires)
@@ -132,6 +132,9 @@ Reward.prototype = {
 
         if (that._availableFundAmounts)
             options._availableFundAmounts = that._availableFundAmounts;
+            
+        if (that._availableFundPayoutAmounts)
+            options._availableFundPayoutAmounts = that._availableFundPayoutAmounts;
 
         if (that._expires)
             options.expires = that.expires;
@@ -180,6 +183,12 @@ Reward.prototype = {
         //for the client
         if (that._availableFundAmounts)
             json._availableFundAmounts = _.map(that._availableFundAmounts, function (amount) {
+                return amount.toString()
+            });
+            
+        //for the client
+        if (that._availableFundPayoutAmounts)
+            json._availableFundPayoutAmounts = _.map(that._availableFundPayoutAmounts, function (amount) {
                 return amount.toString()
             });
 
