@@ -30,7 +30,7 @@ module.exports = function (grunt) {
                 stderr: true
             },
             tests: {
-                cmd: "node node_modules/cucumber/bin/cucumber.js features/post_bounty.feature",
+                cmd: "node node_modules/cucumber/bin/cucumber.js",
                 bg: false,
                 stdout: true,
                 stderr: true

@@ -18,7 +18,7 @@ module.exports = function () {
             throw "Not implemented yet";
         }
 
-        currentIssuePage.postBounty().then(function (approvalHandle) {
+        currentIssuePage.postBounty(amount).then(function (approvalHandle) {
             if (currency === "USD") {
                 self.browser.switchTo().window(approvalHandle);
 
@@ -35,7 +35,7 @@ module.exports = function () {
     });
 
     this.Then(/a bounty comment should be posted on the issue/, function (callback) {
-        this.browser.switchTo().window(currentIssuePage.handle);
+        currentIssuePage.switchTo();
 
         currentIssuePage.isBountyCommentPresent().then(function (isPresent) {
             if (isPresent)
