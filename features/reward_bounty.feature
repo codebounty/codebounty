@@ -5,3 +5,4 @@ Feature: Backer rewards a bounty
   Scenario: Developer rewards a bounty
     Given I posted a bounty on issue 25 in codebounty/codebounty
     Given I reward the bounty equally among the contributors
+    Then there should be no remaining money on the issue

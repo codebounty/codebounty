@@ -47,11 +47,27 @@ IssuePage.prototype.isBountyCommentPresent = function () {
     });
 };
 
+IssuePage.prototype.openBountyAmount = function () {
+    var self = this,
+        element = self.browser.findElement({
+            xpath: "//span[contains(@class, 'state-indicator open')]"
+        });
+
+    return element.getText().then(function (openText) {
+        //strip out the number
+        return openText.replace(/^\D+/g, "");
+    });
+};
+
 /**
  * Returns the approval page handle
  */
-IssuePage.prototype.postBounty = function () {
+IssuePage.prototype.postBounty = function (amount) {
     var self = this;
+
+    var bountyInput = self.browser.findElement({id: "bountyInput"});
+    bountyInput.clear();
+    bountyInput.sendKeys(amount);
 
     self.browser.findElement({id: "postBounty"}).click();
 
@@ -66,6 +82,10 @@ IssuePage.prototype.postBounty = function () {
 
 IssuePage.prototype.rewardBounty = function () {
     return this.browser.findElement({id: "rewardBounty"}).click();
+};
+
+IssuePage.prototype.switchTo = function () {
+    return this.browser.switchTo().window(this.handle);
 };
 
 IssuePage.prototype.toggleCurrency = function () {

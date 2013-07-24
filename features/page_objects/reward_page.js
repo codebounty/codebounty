@@ -7,8 +7,6 @@ RewardPage.prototype.amount = function () {
         className: "payoutTotalAmount"
     }).getText()
         .then(function (amount) {
-            console.log(amount);
-
             //get rid of the currency symbol
             amount = amount.substring(1);
 
@@ -29,7 +27,13 @@ RewardPage.prototype.setContributorAmount = function (index, amount) {
         xpath: "(//input[@type='number' and @class='rewardInput'])[" + (index + 1) + "]"
     });
     contributorInput.clear();
-    return contributorInput.sendKeys(amount);
+    contributorInput.sendKeys(amount);
+
+    //lose focus by clicking on a span
+    contributorInput.findElement({xpath: "//span"}).click();
+
+    //allow the page to re-render
+    return this.browser.sleep(500);
 };
 
 RewardPage.prototype.contributorRows = function () {
