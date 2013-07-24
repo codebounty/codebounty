@@ -1,5 +1,5 @@
 {
-    "ALERTS_EMAIL": "perl.jonathan@gmail.com",
+    "ALERTS_EMAIL": "support@codebounty.co",
     "AWS_ACCESS_KEY_ID": null,
     "AWS_SECRET_ACCESS_KEY": null,
     "AWS_IMAGE_BUCKET" : "codebountydev-images",
@@ -16,11 +16,12 @@
     "PAYPAL_APPLICATIONID": "APP-80W284485P519543T",
     "PAYPAL_REQURL": "https://svcs.sandbox.paypal.com/",
     "PAYPAL_REDURL": "https://www.sandbox.paypal.com/",
-    "PAYPAL_USERID": "bmerch_1360785614_biz_api1.facebook.com",
-    "PAYPAL_PAYMENTS_EMAIL": "payments@codebounty.co",
-    "PAYPAL_PASSWORD": "1360785637",
-    "PAYPAL_SIGNATURE": "AFLo3RwkMoqnUrSwAke80UjuJb.pA-5bJWD1xBV-NXH-IU0yavWsT3eg",
+    "PAYPAL_USERID": "support-facilitator_api1.codebounty.co",
+    "PAYPAL_PAYMENTS_EMAIL": "support@codebounty.co",
+    "PAYPAL_PASSWORD": "1374109237",
+    "PAYPAL_SIGNATURE": "AFcWxV21C7fd0v3bYYYRCpSSRl31AufEs8YYkM94LhPSHtAcp0xClZNu",
+    "PAYPAL_SANDBOX_EMAIL": "support-facilitator@codebounty.co",
     "PRODUCTION": false,
     "ROOT_URL": "https://cbounty.fwd.wf/",
-    "SUPPORT_EMAIL": "perl.jonathan@gmail.com"
+    "SUPPORT_EMAIL": "support@codebounty.co"
 }
