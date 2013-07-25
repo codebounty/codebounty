@@ -263,7 +263,7 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
         //then store the result and return it
         function (err, cachedResponse) {
             if (err) {
-                console.log("ERROR: ConditionalCrawlAndCache", err, request, data);
+                TL.error("ERROR: ConditionalCrawlAndCache", err, request, data);
                 if (callback)
                     callback(err);
                 return;
@@ -429,7 +429,7 @@ GitHub.prototype.postComment = function (issueUrl, comment) {
             body: comment
         }, function (err, res) {
             if (err)
-                console.log("ERROR: Posting GitHub comment", err);
+                TL.error("ERROR: Posting GitHub comment", err);
         }
     );
 };
