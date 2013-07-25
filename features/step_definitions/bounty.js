@@ -23,7 +23,7 @@ module.exports = function () {
                 self.browser.switchTo().window(approvalHandle);
 
                 //give some time for the page to redirect to the paypal preapproval url
-                self.browser.sleep(2000);
+                self.browser.sleep(8000);
 
                 var paypalApprovalPage = new PaypalApprovalPage(self, approvalHandle);
 
