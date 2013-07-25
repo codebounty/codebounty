@@ -49,13 +49,13 @@ Bitcoin.requestProxyAddress = function (address) {
             } else {
                 // If the call wasn't successful, log the response and
                 // increment our error counter.
-                console.log(response.content());
+                TL.error(response.content());
             }
             
         // If there was an error, log it and then save state so we can
         // resume where we left off later.
         } catch (err) {
-            console.log("Blockchain.info API error: " + err.toString());
+            TL.error("Blockchain.info API error: " + err.toString());
             
             // Go ahead and insert the new address if it's new.
             // We'll just leave out the proxyAddress field and
@@ -114,7 +114,7 @@ Meteor.setInterval(function () {
                     if (!err) {
                         addrFuture.ret(address);
                     } else {
-                        console.log(err);
+                        TL.error(err);
                         addrFuture.ret(undefined);
                     }
                 });
