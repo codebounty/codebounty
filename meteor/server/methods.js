@@ -123,13 +123,33 @@ Meteor.methods({
         if (currency !== "usd" && currency !== "btc")
             throw currency + " is an invalid currency";
 
-        // Specifying fund amount before funds are actually received
-        // is not supported by the Bitcoin flow
+        
         if (currency == "usd") {
             amount = new Big(amount);
+            
             if (amount.lt(ReceiverUtils.minimum("usd")))
                 throw "Cannot add less than the minimum funds";
+                
+            // Calculate how much we should charge the bounty poster
+            // in order to leave the bounty amount they specified
+            // after we take our fee.
+            if (amount.times(Reward.Fee.Rate) < Reward.Fee.Minimum.USD) {
+                amount = amount.plus(Reward.Fee.Minimum.USD);
+            } else {
+                amount = amount.div((new Big(1)).minus(Reward.Fee.Rate));
+            }
+            
+            if (BigUtils.remainder(amount, 2).gt(0)) {
+                // Equivalent to amount.times(10).ceil().div(10).
+                // If there's a fractional amount, we want to round it up.
+                amount = BigUtils.truncate(amount, 2).plus(0.01);
+            }
+            
+                
         } else if (currency == "btc") {
+            // Specifying fund amount before funds are actually received
+            // is not supported by the Bitcoin flow, so we just set it to
+            // zero for now.
             amount = new Big(0);
         }
 
@@ -215,13 +235,14 @@ Meteor.methods({
 
                 //order by size
                 clientRewards = _.sortBy(clientRewards, function (reward) {
-                    return parseFloat(BigUtils.sum(reward.availableFundAmounts()).toString());
+                    return parseFloat(BigUtils.sum(reward.availableFundPayoutAmounts()).toString());
                 });
 
                 //return the largest one
                 fut.ret(clientRewards.length > 0 ? _.last(clientRewards) : null);
-            } else
+            } else {
                 fut.ret(null);
+            }
         });
 
         return fut.wait();

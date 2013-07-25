@@ -3,7 +3,7 @@ var getIssueAddress = Template.addBitcoinFundsView.issueAddress = function () {
 };
 
 Template.addBitcoinFundsView.minimumPayment = function () {
-    return 0.04;
+    return 0.043; // TODO: Get this figure from bitcoin/server/settings.js
 };
 
 Template.addBitcoinFundsView.rendered = function () {

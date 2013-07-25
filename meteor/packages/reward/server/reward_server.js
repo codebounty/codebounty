@@ -16,7 +16,7 @@ Meteor.publish("totalReward", function (issueUrl) {
         funds: { $elemMatch: { approved: { $ne: null }, expires: { $gt: new Date() } }}
     }).observe({
             added: function (reward) {
-                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                var totalBounties = BigUtils.sum(reward.availableFundPayoutAmounts());
                 totalReward[reward.currency] = totalReward[reward.currency].plus(totalBounties);
 
                 if (!initializing) //need to wait until it is added
@@ -26,7 +26,7 @@ Meteor.publish("totalReward", function (issueUrl) {
                     });
             },
             removed: function (reward) {
-                var totalBounties = BigUtils.sum(reward.availableFundAmounts());
+                var totalBounties = BigUtils.sum(reward.availableFundPayoutAmounts());
                 totalReward[reward.currency] = totalReward[reward.currency].minus(totalBounties);
 
                 subscription.changed("totalReward", docId, {
@@ -93,7 +93,8 @@ Reward.prototype.addFund = function (amount, funder, callback) {
                 amount: new Big(0), //will always start as 0
                 expires: expires,
                 proxyAddress: address.proxyAddress,
-                userId: funder._id
+                userId: funder._id,
+                userNotified: false
             });
             that.funds.push(fund);
         }
@@ -112,6 +113,43 @@ Reward.prototype.addFund = function (amount, funder, callback) {
 
     throw "Unhandled add funds scenario";
 };
+
+
+/**
+ * Save the Reward's funds list to the database.
+ * @param {Function} callback ()
+ */
+Reward.prototype.saveFunds = function (callback) {
+    var that = this;
+    
+    Fiber(function () {
+        // Just update the reward funds. Receivers are updated
+        // in the eligibleForManualReward for existing rewards
+        var funds = _.map(that.funds, function (fund) {
+            return fund.toJSONValue();
+        });
+        
+        Rewards.update(that._id, {
+            $set: {
+                funds: funds,
+                lastSync: new Date(),
+                //for the client
+                _availableFundAmounts: _.map(that.availableFundAmounts(), function (amount) {
+                    return amount.toString()
+                }),
+                //for the client
+                _availableFundPayoutAmounts: _.map(that.availableFundPayoutAmounts(), function (amount) {
+                    return amount.toString()
+                }),
+                _expires: that.expires()
+            }
+        });
+        
+        // Call whatever was passed in.
+        if (callback)
+            callback();
+    }).run();
+}
 
 /**
  * If the last issue event was

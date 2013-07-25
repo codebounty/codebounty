@@ -11,23 +11,27 @@ function PaypalApprovalPage(world, handle) {
 PaypalApprovalPage.prototype._login = function () {
     var self = this;
 
-    //sometime the login page vs credit card page shows up
-    //so click the login button to get to the login page
-    self.browser.isElementPresent({id: "login_button"}).then(function (loginButton) {
-        if (loginButton)
-            return self.browser.findElement({id: "login_button"}).click();
-    });
+    //sometime the load login page button shows up
+    //so click the load login button to get to the login page
+    return self.browser.isElementPresent({id: "loadLogin"}).then(function (loginButton) {
+        if (loginButton) {
+            self.browser.findElement({id: "loadLogin"}).click();
 
-    var loginEmail = self.browser.findElement({id: "login_email"});
-    loginEmail.clear();
-    loginEmail.sendKeys(self.settings.PAYPAL_USERNAME);
+            //wait for the login drop down to show up
+            return self.browser.sleep(4000);
+        }
+    }).then(function () {
+            var loginEmail = self.browser.findElement({id: "login_email"});
+            loginEmail.clear();
+            loginEmail.sendKeys(self.settings.PAYPAL_USERNAME);
 
-    self.browser.findElement({id: "login_password"})
-        .sendKeys(self.settings.PAYPAL_PASSWORD);
+            self.browser.findElement({id: "login_password"})
+                .sendKeys(self.settings.PAYPAL_PASSWORD);
 
-    self.browser.findElement({id: "submitLogin"}).click();
+            self.browser.findElement({id: "submitLogin"}).click();
 
-    return self.browser.sleep(4000);
+            return self.browser.sleep(4000);
+        });
 };
 
 PaypalApprovalPage.prototype.approve = function () {

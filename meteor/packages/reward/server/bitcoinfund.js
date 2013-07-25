@@ -20,6 +20,7 @@ BitcoinFund = function (options) {
     this.userId = options.userId;
     this.proxyAddress = options.proxyAddress;
     this.transactionHash = options.transactionHash;
+    this.userNotified = options.userNotified;
 };
 
 BitcoinFund.prototype = Object.create(Fund.prototype);
@@ -31,7 +32,7 @@ BitcoinFund.prototype.clone = function () {
     return new BitcoinFund({
         _id: EJSON.clone(that._id),
         address: that.address,
-        amount: that.amount.toString(),
+        amount: that.amount,
         approved: that.approved,
         details: that.details,
         expires: that.expires,
@@ -39,6 +40,7 @@ BitcoinFund.prototype.clone = function () {
         proxyAddress: that.proxyAddress,
         refunded: that.refunded,
         transactionHash: that.transactionHash,
+        userNotified: that.userNotified,
         userId: EJSON.clone(that.userId)
     });
 };
@@ -64,10 +66,12 @@ BitcoinFund.prototype.toJSONValue = function () {
         currency: that.currency,
         details: that.details,
         expires: that.expires,
+        payoutAmount: that.payoutAmount.toString(),
         processor: that.processor,
         proxyAddress: that.proxyAddress,
         refunded: that.refunded,
         transactionHash: that.transactionHash,
+        userNotified: that.userNotified,
         userId: that.userId
     };
 };
@@ -113,11 +117,10 @@ BitcoinFund.prototype.refund = function (adminId) {
 BitcoinFund.prototype.confirm = function (reward, params, insert) {
     var that = this;
 
-    // TODO: Should we be removing the fee when we set "that.amount"?
-    that.amount = new Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN)); //value is passed as number of satoshi
+    that.setAmount(new Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN))); // Value is passed as number of satoshi.
     that.approved = new Date();
     that.transactionHash = params.transaction_hash;
-
+        
     //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
     //after new funds are approved distribute the reward equally among all the contributors
     reward.distributeEqually();
@@ -127,6 +130,10 @@ BitcoinFund.prototype.confirm = function (reward, params, insert) {
             receivers: reward.receivers,
             //for the client
             _availableFundAmounts: _.map(reward.availableFundAmounts(), function (amount) {
+                return amount.toString()
+            }),
+            //for the client
+            _availableFundPayoutAmounts: _.map(reward.availableFundPayoutAmounts(), function (amount) {
                 return amount.toString()
             }),
             _expires: reward.expires()
