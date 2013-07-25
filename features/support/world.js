@@ -6,21 +6,20 @@ var World = function (callback) {
         testSettings = require("./settings.local.json");
 
     // Your settings.local.js file should contain the code below,
-    // with your Github login information substituted.
-    // DO NOT PUT YOUR GITHUB LOGIN INFORMATION IN THIS FILE!
-    // Settings.local.js is included in the .gitignore file and so
-    // should never end up in the repo for all to see. This file
-    // *is* in the repo, so putting your Github login details in
-    // this file may expose those details.
+    // with your Github and Paypal login information substituted.
+    // DO NOT CHECK THIS FILE IN unless you want to EXPOSE YOUR CREDENTIALS
 
-    // define({
+    //{
     //    "GITHUB_USERNAME": "login",
-    //    "GITHUB_PASSWORD": "password"
-    // });
+    //    "GITHUB_PASSWORD": "password",
+    //    "PAYPAL_USERNAME": "sandboxlogin",
+    //    "PAYPAL_PASSWORD": "sandboxpassword"
+    //}
 
-    if (!testSettings)
-        throw new Error("You need to create a features/support/settings.local.js file with "
-            + "your Github information in it! See features/support/world.js for details.");
+    if (!testSettings || !testSettings.GITHUB_USERNAME || !testSettings.GITHUB_PASSWORD
+        || !testSettings.PAYPAL_USERNAME || !testSettings.PAYPAL_PASSWORD)
+        throw new Error("You need to create a features/support/settings.local.js file."
+            + "See features/support/world.js for details.");
 
     testSettings.ROOT_URL = appSettings.ROOT_URL;
 

@@ -17,7 +17,11 @@ IssuePage.prototype._login = function () {
 
     self.browser.findElement({name: "login"}).sendKeys(self.settings.GITHUB_USERNAME);
     self.browser.findElement({name: "password"}).sendKeys(self.settings.GITHUB_PASSWORD);
-    return self.browser.findElement({name: "commit"}).click();
+    self.browser.findElement({name: "commit"}).click();
+
+    //allow some time for logging in
+    //this only needs to happen the first time run the tests so its not a big deal
+    return self.browser.sleep(5000);
 };
 
 IssuePage.prototype._navigate = function () {
@@ -39,8 +43,7 @@ IssuePage.prototype._navigate = function () {
 IssuePage.prototype.isBountyCommentPresent = function () {
     var self = this;
 
-    var xpath = "//a[contains(@href, '" + self.settings.ROOT_URL + "reward/link/')]" +
-        "/img[contains(@src, '" + self.settings.ROOT_URL + "reward/image/')]";
+    var xpath = "//a[contains(@href, 'reward/link/')]/img[contains(@src, 'reward/image/')]";
 
     return self.browser.isElementPresent({
         xpath: xpath

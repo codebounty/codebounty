@@ -8,7 +8,7 @@ Bitcoin.Settings = {
     "maximumErrors": 10,
     "client": Meteor.settings["BITCOIN_CLIENT"],
     "minimumConfirmations": 6,
-    "minimumFundAmount": 0.04
+    "minimumFundAmount": 0.043 // Roughly 0.04 / 0.95. The actual figure is awkwardly long.
 };
 
 Bitcoin.Emails = {
@@ -17,5 +17,12 @@ Bitcoin.Emails = {
         text: "Your bounty will not show up until you've sent at least "
             + Bitcoin.Settings.minimumFundAmount + " BTC. If you would "
             + "prefer a refund, please contact customer support."
-    }
+    },
+    
+    transaction_received: {
+        subject: "Bitcoin received.",
+        text: "We received the BTC you sent! It will show up on the "
+            + "issue page once the transaction has received "
+            + Bitcoin.Settings.minimumConfirmations + " confirmations."
+        }
 }

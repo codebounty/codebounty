@@ -40,6 +40,11 @@ RewardUtils.fromJSONValue = function (value) {
         options._availableFundAmounts = _.map(value._availableFundAmounts, function (amount) {
             return new Big(amount);
         });
+        
+    if (value._availableFundPayoutAmounts)
+        options._availableFundPayoutAmounts = _.map(value._availableFundPayoutAmounts, function (amount) {
+            return new Big(amount);
+        });
 
     return new Reward(options);
 };
@@ -71,6 +76,10 @@ Reward = function (options) {
     //for the client
     if (options._availableFundAmounts)
         this._availableFundAmounts = options._availableFundAmounts;
+        
+    //for the client
+    if (options._availableFundPayoutAmounts)
+        this._availableFundPayoutAmounts = options._availableFundPayoutAmounts;
 
     //for the client
     if (options._expires)
@@ -123,6 +132,9 @@ Reward.prototype = {
 
         if (that._availableFundAmounts)
             options._availableFundAmounts = that._availableFundAmounts;
+            
+        if (that._availableFundPayoutAmounts)
+            options._availableFundPayoutAmounts = that._availableFundPayoutAmounts;
 
         if (that._expires)
             options.expires = that.expires;
@@ -173,6 +185,12 @@ Reward.prototype = {
             json._availableFundAmounts = _.map(that._availableFundAmounts, function (amount) {
                 return amount.toString()
             });
+            
+        //for the client
+        if (that._availableFundPayoutAmounts)
+            json._availableFundPayoutAmounts = _.map(that._availableFundPayoutAmounts, function (amount) {
+                return amount.toString()
+            });
 
         //for the client
         json._expires = that.expires();
@@ -207,6 +225,20 @@ Reward.prototype.availableFundAmounts = function () {
     });
 };
 
+/**
+ * @returns {Array.<Big>}
+ */
+Reward.prototype.availableFundPayoutAmounts = function () {
+    if (Meteor.isClient) //fund details are not exposed to the client
+        return this._availableFundPayoutAmounts;
+
+    var myAvailableFunds = this.availableFunds();
+    return _.map(myAvailableFunds, function (fund) {
+        return fund.payoutAmount;
+    });
+};
+
+
 Reward.prototype.expires = function () {
     var lastExpiration = _.last(_.sortBy(this.funds, function (fund) {
         return fund.expires;
@@ -220,30 +252,6 @@ Reward.prototype.expires = function () {
         return this._expires;
 
     return null;
-};
-
-Reward.prototype.fee = function () {
-    var that = this;
-    var totalFee = new Big(0);
-
-    var myAvailableFundAmounts = that.availableFundAmounts();
-
-    //add up the fee per funding
-    _.each(myAvailableFundAmounts, function (amount) {
-        var fee = amount.times(Reward.Fee.Rate);
-
-        //bump the fee up to the minimum codebounty fee
-        //USD: $1 minimum fee
-        if (that.currency === "usd" && fee.lt(Reward.Fee.Minimum.USD))
-            fee = Reward.Fee.Minimum.USD;
-        //BTC: .005 minimum fee, approx $0.5-$1 USD
-        else if (that.currency === "btc" && fee.lt(Reward.Fee.Minimum.BTC))
-            fee = Reward.Fee.Minimum.BTC;
-
-        totalFee = totalFee.plus(fee);
-    });
-
-    return totalFee;
 };
 
 Reward.prototype.getReceivers = function () {
@@ -269,14 +277,11 @@ Reward.prototype.receiverTotal = function () {
  * @returns {Big}
  */
 Reward.prototype.total = function (withFee) {
-    var that = this;
-
-    var total = BigUtils.sum(that.availableFundAmounts());
-    if (withFee)
-        return total;
-
-    var fee = that.fee();
-    return total.minus(fee);
+    if (withFee) {
+        return BigUtils.sum(this.availableFundAmounts());
+    } else {
+        return BigUtils.sum(this.availableFundPayoutAmounts());
+    }
 };
 
 /**

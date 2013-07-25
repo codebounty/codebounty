@@ -24,27 +24,9 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             reward = rewards[0];
 
             reward.addFund(amount, user, function (fundingUrl) {
-                Fiber(function () {
-                    // Just update the reward funds. Receivers are updated
-                    // in the eligibleForManualReward for existing rewards
-                    var funds = _.map(reward.funds, function (fund) {
-                        return fund.toJSONValue();
-                    });
-                    Rewards.update(reward._id, {
-                        $set: {
-                            funds: funds,
-                            lastSync: new Date(),
-                            //for the client
-                            _availableFundAmounts: _.map(reward.availableFundAmounts(), function (amount) {
-                                return amount.toString()
-                            }),
-                            _expires: reward.expires()
-                        }
-                    });
-
-                    //then return the fundingUrl
+                reward.saveFunds(function () {
                     callback(fundingUrl);
-                }).run();
+                });
             });
         }
         //create a new reward
