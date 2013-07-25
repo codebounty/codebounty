@@ -17,7 +17,9 @@ Bitcoin.addressForIssue = function (userId, url) {
     if (address)
         return address;
 
-    address = Bitcoin.IssueAddresses.findOne({ used: false });
+    address = Bitcoin.IssueAddresses.findOne({
+        used: false, proxyAddress: { $exists: true }
+    });
     if (!address)
         throw "No bitcoin addresses loaded!";
 
