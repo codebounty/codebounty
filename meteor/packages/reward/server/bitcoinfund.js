@@ -20,7 +20,6 @@ BitcoinFund = function (options) {
     this.userId = options.userId;
     this.proxyAddress = options.proxyAddress;
     this.transactionHash = options.transactionHash;
-    this.userNotified = options.userNotified;
 };
 
 BitcoinFund.prototype = Object.create(Fund.prototype);
@@ -40,7 +39,6 @@ BitcoinFund.prototype.clone = function () {
         proxyAddress: that.proxyAddress,
         refunded: that.refunded,
         transactionHash: that.transactionHash,
-        userNotified: that.userNotified,
         userId: EJSON.clone(that.userId)
     });
 };
@@ -71,7 +69,6 @@ BitcoinFund.prototype.toJSONValue = function () {
         proxyAddress: that.proxyAddress,
         refunded: that.refunded,
         transactionHash: that.transactionHash,
-        userNotified: that.userNotified,
         userId: that.userId
     };
 };
@@ -117,7 +114,6 @@ BitcoinFund.prototype.refund = function (adminId) {
 BitcoinFund.prototype.confirm = function (reward, params, insert) {
     var that = this;
 
-    that.setAmount(new Big(params.value).div(new Big(Bitcoin.SATOSHI_PER_BITCOIN))); // Value is passed as number of satoshi.
     that.approved = new Date();
     that.transactionHash = params.transaction_hash;
         
