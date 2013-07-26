@@ -92,26 +92,28 @@ Bitcoin.pay = function (address, receiverList, callback) {
         if (totalPayout.amount < received) {
             _.each(receiverList, function (receiver) {
 
-                // Look for a Bitcoin address for this recipient.
-                // If they don't have one yet, grant them a temporary one
-                // on our server. When they join and set a Bitcoin address,
-                // we'll check for the temporary address and send its
-                // contents to the address they set.
-                var payoutAddress = Bitcoin.ReceiverAddresses.find(
-                    {"email": receiver.email}, {"reactive": false});
+                Fiber(function () {
+                    // Look for a Bitcoin address for this recipient.
+                    // If they don't have one yet, grant them a temporary one
+                    // on our server. When they join and set a Bitcoin address,
+                    // we'll check for the temporary address and send its
+                    // contents to the address they set.
+                    var payoutAddress = Bitcoin.ReceiverAddresses.findOne(
+                        {"email": receiver.email}, {"reactive": false});
 
-                if (payoutAddress) {
-                    // Send the amount owed the recipient.
-                    Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+                    if (payoutAddress) {
+                        // Send the amount owed the recipient.
+                        Bitcoin.Client.sendToAddress(payoutAddress.address, receiver.amount);
 
-                } else {
-                    // Grant the recipient an address in our hot wallet
-                    // and then send the amount owed to that address.
-                    Bitcoin.Client.getAccountAddress(receiver.email,
-                        function (err, payoutAddress) {
-                            Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
-                        });
-                }
+                    } else {
+                        // Grant the recipient an address in our hot wallet
+                        // and then send the amount owed to that address.
+                        Bitcoin.Client.getAccountAddress(receiver.email,
+                            function (err, payoutAddress) {
+                                Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+                            });
+                    }
+                }).run();
             });
 
             // Okay, if that's not the case, we need to raise an alarm.
