@@ -11,12 +11,11 @@ Bitcoin = {};
  **/
 Bitcoin.addressForIssue = function (userId, url) {
     var address = Bitcoin.IssueAddresses.findOne({ url: url, userId: userId });
-
-    // If there is no address associated with this user and issue,
-    // grab an unused one and associate it.
     if (address)
         return address;
 
+    // If there is no address associated with this user and issue,
+    // grab an unused one and associate it.
     address = Bitcoin.IssueAddresses.findOne({
         used: false, proxyAddress: { $exists: true }
     });
@@ -62,15 +61,8 @@ Bitcoin.verify = function (request, response, callback) {
  * @param callback (error, data)
  */
 Bitcoin.pay = function (address, receiverList, callback) {
-    // Only pay the people getting > 0 BTC
-    receiverList = _.filter(receiverList, function (receiver) {
-        return receiver.amount > 0;
-    });
-
     // Make sure that we're not paying more than our receiving address received.
-    var totalPayout = _.reduce(receiverList, function (receiverA, receiverB) {
-        return {"amount": receiverA.amount + receiverB.amount};
-    }, {"amount": 0});
+    var totalPayout = BigUtils.sum(_.pluck(receiverList, "amount"));
 
     // We're using getReceivedByAddress instead of getting the balance of the
     // address because the address could technically be empty. We're only
@@ -78,7 +70,7 @@ Bitcoin.pay = function (address, receiverList, callback) {
     Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
 
         // After fees, total payout should be less than what this address received.
-        if (totalPayout.amount < received) {
+        if (totalPayout.lte(received)) {
             _.each(receiverList, function (receiver) {
 
                 Fiber(function () {
@@ -116,7 +108,7 @@ Bitcoin.pay = function (address, receiverList, callback) {
                 // information rather than more in cases like this.
                 TL.error("Payout greater than bitcoin received " +
                     "attempted from Bitcoin address " + address + ". Payout was " +
-                    totalPayout.amount + " and total received was " + received, Modules.Bitcoin);
+                    totalPayout.toString() + " and total received was " + received, Modules.Bitcoin);
             }).run()
         }
     });
