@@ -56,7 +56,7 @@ Bitcoin.withUnlockedWallet = function (command) {
             command.apply(that, args);
         });
     };
-}
+};
 
 // Creating a copy of the bitcoin.Client class so we can
 // override functions without altering the original class.

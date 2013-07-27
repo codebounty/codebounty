@@ -168,7 +168,6 @@ BitcoinFund.prototype.pay = function (fundDistribution) {
         return { amount: payment.amount.toString(), email: payment.email};
     });
 
-
     Fiber(function () {
         TL.info("Pay fund " + that.toString() + " " + EJSON.toJSONValue(receiverList), Modules.Bitcoin);
     }).run();
