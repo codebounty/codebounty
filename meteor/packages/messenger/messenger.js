@@ -1,16 +1,14 @@
-//TODO DEPLOYMENT: switch root url
-//var rootUrl = Meteor.settings["ROOT_URL"];
-var rootUrl = "http://localhost:3000";
+//locally the messenger iframe is at localhost:3000, so that must be the targetUrl
+var targetUrl = Environment.isLocal ? "http://localhost:3000" : Meteor.settings["ROOT_URL"];
 
 Messenger = {
     target: {
-        application: rootUrl,
+        application: targetUrl,
         plugin: "https://github.com"
     }
 };
 
 /**
- *
  * @param message
  * @param [target] Defaults to all
  */

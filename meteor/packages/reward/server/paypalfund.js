@@ -88,7 +88,9 @@ PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
     var confirm = rootUrl + "confirmFunds?id=" + that._id;
 
     var issue = GitHubUtils.issue(reward.issueUrl);
-    var description = "$" + that.payoutAmount.toString() + " bounty for Issue #" + issue.number + " in " + issue.repo.name;
+    var description = "$" + that.payoutAmount.toString() + " bounty on issue "
+        + issue.repo.user + "/" + issue.repo.name + "#" + issue.number +
+        " and a $" + that.fee().toString() + " fee";
 
     PayPal.getApproval(that.amount.toString(), description, that.expires, cancel, confirm, function (error, data, approvalUrl) {
         if (error)

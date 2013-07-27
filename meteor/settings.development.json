@@ -2,7 +2,7 @@
     "ALERTS_EMAIL": "support@codebounty.co",
     "AWS_ACCESS_KEY_ID": null,
     "AWS_SECRET_ACCESS_KEY": null,
-    "AWS_IMAGE_BUCKET" : "codebountydev-images",
+    "AWS_IMAGE_BUCKET": "codebountydev-images",
     "BITCOIN_CLIENT": {
         "host": "localhost",
         "port": 8332,
@@ -12,7 +12,7 @@
     "BITCOIN_SECRET": "moEcxlV1bvVaXIqvAQ1NwF5ZtdMJeyrET5rRQtaWi32Qez3y82nEvEssDLw2Qq5",
     "GITHUB_CLIENTID": "8660a42d9a14177b2a45",
     "GITHUB_SECRET": "12c11974653e98a15dbcae1db772c4f7573ed2ad",
-    "GITHUB_CHARLIE": "eb6ad67166e99ee41c2f472f045c064640dec079",
+    "GITHUB_COMMENTER": "98778f5681b9f8c53409723be38161aa8e49b9a1",
     "PAYPAL_APPLICATIONID": "APP-80W284485P519543T",
     "PAYPAL_REQURL": "https://svcs.sandbox.paypal.com/",
     "PAYPAL_REDURL": "https://www.sandbox.paypal.com/",
@@ -21,7 +21,10 @@
     "PAYPAL_PASSWORD": "1374109237",
     "PAYPAL_SIGNATURE": "AFcWxV21C7fd0v3bYYYRCpSSRl31AufEs8YYkM94LhPSHtAcp0xClZNu",
     "PAYPAL_SANDBOX_EMAIL": "support-facilitator@codebounty.co",
-    "PRODUCTION": false,
+    "public": {
+        "environment": "local"
+    },
     "ROOT_URL": "https://cbounty.fwd.wf/",
+    "SMTP_URL": null,
     "SUPPORT_EMAIL": "support@codebounty.co"
 }

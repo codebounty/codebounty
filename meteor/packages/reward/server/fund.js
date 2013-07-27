@@ -21,7 +21,7 @@ Fund = function (options) {
         this._id = new Meteor.Collection.ObjectID().toJSONValue();
     else
         this._id = options._id;
-        
+
     this.approved = options.approved;
     this.currency = options.currency;
     this.details = options.details;
@@ -46,7 +46,7 @@ Fund.prototype.toString = function () {
 Fund.prototype.fee = function () {
     var that = this;
     var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
-    
+
     var fee = that.amount.times(Reward.Fee.Rate);
 
     // Bump the fee up to the minimum codebounty fee if necessary.
@@ -56,11 +56,11 @@ Fund.prototype.fee = function () {
     //BTC: .005 minimum fee, approx $0.5-$1 USD
     else if (that.currency === "btc" && fee.lt(Reward.Fee.Minimum.BTC))
         fee = Reward.Fee.Minimum.BTC;
-        
+
     // After subtracting the fee from the total amount, figure out the value
     // of any amount beyond the maximum allowed decimal precision.
     var feeFractions = new Big(0);
-    
+
     var fraction = BigUtils.remainder(that.amount.minus(fee), truncateAfterDecimals);
 
     if (fraction.gt(0)) {
@@ -84,4 +84,4 @@ Fund.prototype.fee = function () {
 Fund.prototype.setAmount = function (amount) {
     this.amount = amount;
     this.payoutAmount = this.amount.minus(this.fee());
-}
+};

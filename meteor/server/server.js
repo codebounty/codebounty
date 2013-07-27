@@ -8,4 +8,8 @@ Meteor.startup(function () {
         clientId: Meteor.settings["GITHUB_CLIENTID"],
         secret: Meteor.settings["GITHUB_SECRET"]
     });
+
+    var mailUrl = Meteor.settings["SMTP_URL"];
+    if (mailUrl)
+        process.env.MAIL_URL = mailUrl;
 });

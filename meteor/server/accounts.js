@@ -6,9 +6,7 @@ Accounts.onCreateUser(function (options, user) {
     user.active = true;
     user.log = [];
 
-    //TODO before publish: switch this
-    user.role = "admin";
-    //user.role = "user";
+    user.role = (Environment.isLocal || Environment.isQa) ? "admin" : "user";
 
     return user;
 });
