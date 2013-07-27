@@ -68,9 +68,7 @@ To debug tests run `grunt test:debug` instead, and `node-inspector`.
 
 ###Write Tests
 
-[Here](https://github.com/admc/wd#supported-methods) are the supported wd methods**
-
-** wd's methods are wrapped in Dojo promises [here](https://github.com/theintern/intern/blob/master/lib/wd.js) by intern in a class called PromisedWebDriver.
+Tests are written using [cucumber-js](https://github.com/cucumber/cucumber-js) and Selenium's [WebDriverJs](https://code.google.com/p/selenium/wiki/WebDriverJs).
 
 Discussion
 -----------
