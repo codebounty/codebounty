@@ -2,7 +2,7 @@
     "ALERTS_EMAIL": "support@codebounty.co",
     "AWS_ACCESS_KEY_ID": null,
     "AWS_SECRET_ACCESS_KEY": null,
-    "AWS_IMAGE_BUCKET" : "codebountydev-images",
+    "AWS_IMAGE_BUCKET": "codebountydev-images",
     "BITCOIN_CLIENT": {
         "host": "localhost",
         "port": 8332,
@@ -23,5 +23,6 @@
     "PAYPAL_SANDBOX_EMAIL": "support-facilitator@codebounty.co",
     "PRODUCTION": false,
     "ROOT_URL": "https://cbounty.fwd.wf/",
+    "SMTP_URL": null,
     "SUPPORT_EMAIL": "support@codebounty.co"
 }

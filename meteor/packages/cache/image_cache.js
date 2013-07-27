@@ -64,7 +64,9 @@ ImageCacheTools.set = function (path, pngBuffer, meta, publicRead, callback) {
         };
 
         Fiber(function () {
-            if (!error)
+            if (error)
+                TL.error(error, Modules.Bounty);
+            else
                 ImageCache.update({ path: path }, cacheItem, { upsert: true });
 
             if (callback)
