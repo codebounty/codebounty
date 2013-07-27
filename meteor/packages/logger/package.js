@@ -3,7 +3,7 @@ Package.describe({
 });
 
 Package.on_use(function (api) {
-    api.use("observatory");
+    api.use("observatory", ["client", "server"]);
 
     api.add_files("logger.js", ["client", "server"]);
 
