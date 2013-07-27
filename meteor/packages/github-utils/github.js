@@ -261,15 +261,18 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
         }],
 
         //then store the result and return it
-        function (err, cachedResponse) {
-            if (err) {
-                TL.error("ERROR: ConditionalCrawlAndCache", err, request, data);
-                if (callback)
-                    callback(err);
-                return;
-            }
-
+        function (error, cachedResponse) {
             Fiber(function () {
+                if (error) {
+                    TL.error("ConditionalCrawlAndCache: " + error + " for " + JSON.stringify(request) + " " +
+                        JSON.stringify(data), Modules.Github);
+
+                    if (callback)
+                        callback(error);
+
+                    return;
+                }
+
                 //update cached response if it already exists
                 if (cachedResponse._id) {
                     Responses.update(cachedResponse._id, {$set: {pages: cachedResponse.pages}});
@@ -279,6 +282,9 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
                     Responses.insert(cachedResponse);
                 }
             }).run();
+
+            if (error)
+                return;
 
             //merge the pages before returning them
             var pageData = _.map(cachedResponse.pages, function (page) {
