@@ -124,6 +124,8 @@ PayPal.pay = function (preapprovalKey, receiverList, callback) {
         actionType: "PAY",
         currencyCode: "USD",
         receiverList: receiverList,
+        //PayPal EACHRECEIVER fee calculation details can be found here:
+        //https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
         feesPayer: "EACHRECEIVER",
         preapprovalKey: preapprovalKey,
         requestEnvelope: {
