@@ -122,11 +122,13 @@ Bitcoin.pay = function (address, receiverList, callback) {
             // someone's trying to hack us, as this should be a fairly obvious
             // attack vector.
         } else {
-            // Only logging the error. It's a good idea to give out less
-            // information rather than more in cases like this.
-            TL.error("Payout greater than bitcoin received " +
-                "attempted from Bitcoin address " + address + ". Payout was " +
-                totalPayout.amount + " and total received was " + received, Modules.Bitcoin);
+            Fiber(function () {
+                // Only logging the error. It's a good idea to give out less
+                // information rather than more in cases like this.
+                TL.error("Payout greater than bitcoin received " +
+                    "attempted from Bitcoin address " + address + ". Payout was " +
+                    totalPayout.amount + " and total received was " + received, Modules.Bitcoin);
+            }).run()
         }
     });
 };
