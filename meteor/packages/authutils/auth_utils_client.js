@@ -42,7 +42,6 @@ AuthUtils.afterLogin = function (func) {
 AuthUtils.promptLogin = _.once(function () {
     //wait until the auth services info is loaded
     _.delay(function () {
-        //TODO DEPLOYMENT: switch to only public repo
-        Meteor.loginWithGithub({requestPermissions: ["user:email", "repo"]});
+        Meteor.loginWithGithub({requestPermissions: Environment.githubScopes});
     }, 2500);
 });
