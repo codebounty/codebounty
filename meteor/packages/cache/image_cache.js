@@ -65,7 +65,7 @@ ImageCacheTools.set = function (path, pngBuffer, meta, publicRead, callback) {
 
         Fiber(function () {
             if (error)
-                TL.error(error, Modules.Bounty);
+                TL.error("Error caching image: " + JSON.stringify(error), Modules.Amazon);
             else
                 ImageCache.update({ path: path }, cacheItem, { upsert: true });
 
