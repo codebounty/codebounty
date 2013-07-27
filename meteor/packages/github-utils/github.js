@@ -41,7 +41,7 @@ GitHubEvents = {
 
 /**
  * Creates an authenticated github client
- * @param [user] The user to authorize the API with. If not passed, it will use the codebountycharlie
+ * @param [user] The user to authorize the API with. If not passed, it will use the GITHUB_COMMENTER key
  * @constructor
  */
 GitHub = function (user) {
@@ -59,7 +59,7 @@ GitHub = function (user) {
         accessToken = user.services.github.accessToken;
     }
     else
-        accessToken = Meteor.settings["GITHUB_CHARLIE"];
+        accessToken = Meteor.settings["GITHUB_COMMENTER"];
 
     githubApi.authenticate({
         type: "oauth",
