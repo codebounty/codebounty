@@ -69,40 +69,10 @@ Bitcoin.pay = function (address, receiverList, callback) {
     // keeping a small portion of the total bounties in the hot wallet.
     Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
 
-        // After fees, total payout should be less than what this address received.
-        if (totalPayout.lte(received)) {
-            _.each(receiverList, function (receiver) {
-
-                Fiber(function () {
-                    // Look for a Bitcoin address for this recipient.
-                    // If they don't have one yet, grant them a temporary one
-                    // on our server. When they join and set a Bitcoin address,
-                    // we'll check for the temporary address and send its
-                    // contents to the address they set.
-                    var payoutAddress = Bitcoin.ReceiverAddresses.findOne(
-                        {"email": receiver.email}, {"reactive": false});
-
-                    if (payoutAddress) {
-                        // Send the amount owed the recipient.
-                        Bitcoin.Client.sendToAddress(payoutAddress.address, receiver.amount);
-
-                    } else {
-                        // Grant the recipient an address in our hot wallet
-                        // and then send the amount owed to that address.
-                        Bitcoin.Client.getAccountAddress(receiver.email,
-                            function (err, payoutAddress) {
-                                Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
-                            });
-                    }
-                }).run();
-            });
-
-            // Okay, if that's not the case, we need to raise an alarm.
-            // We're doing this check because the application should never enter
-            // this state under its normal operating parameters. It's possible
-            // someone's trying to hack us, as this should be a fairly obvious
-            // attack vector.
-        } else {
+        // After fees, total payout should be less than what this address received
+        // and if that's not the case, we need to raise an alarm.
+        // It's possible someone's trying to hack us.
+        if (totalPayout.gt(received)) {
             Fiber(function () {
                 // Only logging the error. It's a good idea to give out less
                 // information rather than more in cases like this.
@@ -110,6 +80,33 @@ Bitcoin.pay = function (address, receiverList, callback) {
                     "attempted from Bitcoin address " + address + ". Payout was " +
                     totalPayout.toString() + " and total received was " + received, Modules.Bitcoin);
             }).run()
+
+            return;
         }
+        _.each(receiverList, function (receiver) {
+
+            Fiber(function () {
+                // Look for a Bitcoin address for this recipient.
+                // If they don't have one yet, grant them a temporary one
+                // on our server. When they join and set a Bitcoin address,
+                // we'll check for the temporary address and send its
+                // contents to the address they set.
+                var payoutAddress = Bitcoin.ReceiverAddresses.findOne(
+                    {"email": receiver.email}, {"reactive": false});
+
+                if (payoutAddress) {
+                    // Send the amount owed the recipient.
+                    Bitcoin.Client.sendToAddress(payoutAddress.address, receiver.amount);
+
+                } else {
+                    // Grant the recipient an address in our hot wallet
+                    // and then send the amount owed to that address.
+                    Bitcoin.Client.getAccountAddress(receiver.email,
+                        function (err, payoutAddress) {
+                            Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+                        });
+                }
+            }).run();
+        });
     });
 };
