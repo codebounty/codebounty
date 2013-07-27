@@ -21,7 +21,9 @@
     "PAYPAL_PASSWORD": "1374109237",
     "PAYPAL_SIGNATURE": "AFcWxV21C7fd0v3bYYYRCpSSRl31AufEs8YYkM94LhPSHtAcp0xClZNu",
     "PAYPAL_SANDBOX_EMAIL": "support-facilitator@codebounty.co",
-    "PRODUCTION": false,
+    "public": {
+        "environment": "local"
+    },
     "ROOT_URL": "https://cbounty.fwd.wf/",
     "SMTP_URL": null,
     "SUPPORT_EMAIL": "support@codebounty.co"

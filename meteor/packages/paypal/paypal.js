@@ -19,16 +19,16 @@ var rootUrl = Meteor.settings["ROOT_URL"],
  */
 var execute = function (operation, fields, callback) {
     var headers = {
-        "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
+        "Content-Type": "application/json",
         "X-PAYPAL-APPLICATION-ID": Meteor.settings["PAYPAL_APPLICATIONID"],
+        "X-PAYPAL-REQUEST-DATA-FORMAT": "JSON",
+        "X-PAYPAL-RESPONSE-DATA-FORMAT": "JSON",
         "X-PAYPAL-SECURITY-USERID": Meteor.settings["PAYPAL_USERID"],
         "X-PAYPAL-SECURITY-PASSWORD": Meteor.settings["PAYPAL_PASSWORD"],
-        "X-PAYPAL-SECURITY-SIGNATURE": Meteor.settings["PAYPAL_SIGNATURE"],
-        "X-PAYPAL-RESPONSE-DATA-FORMAT": "JSON",
-        "Content-Type": "application/json"
+        "X-PAYPAL-SECURITY-SIGNATURE": Meteor.settings["PAYPAL_SIGNATURE"]
     };
 
-    if (!Meteor.settings["PRODUCTION"])
+    if (Environment.isLocal || Environment.isQa)
         headers["X-PAYPAL-SANDBOX-EMAIL-ADDRESS"] = Meteor.settings["PAYPAL_SANDBOX_EMAIL"];
 
     request.post({
