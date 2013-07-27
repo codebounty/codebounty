@@ -120,7 +120,7 @@ Reward.prototype.initiatePayout = function (by, callback) {
         // Email an alert to all recipients and the backer.
         _.each(that.receivers, function (receiver) {
             Email.send({
-                to: receiver,
+                to: receiver.email,
                 from: Meteor.settings["ALERTS_EMAIL"],
                 subject: Reward.Emails.rewarded.subject,
                 text: Reward.Emails.rewarded.text
@@ -211,7 +211,7 @@ Reward.prototype.fundDistributions = function () {
             fundId: availableFunds[fundIndex]._id,
             payments: []
         };
-        
+
         // Add a record of the fee we're taking from this fund.
         fundDistribution.payments.push({
             email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"],
@@ -257,8 +257,21 @@ Reward.prototype.fundDistributions = function () {
         allFundDistributions.push(fundDistribution);
     }
 
-    if (receiverPaymentIndex < receiverPayments.length)
-        throw "Problem with distributing the funds, not all the receivers were paid";
+    var payDeficit = new Big(0);
+
+    //add up the amount that could not be paid out
+    while (receiverPaymentIndex < receiverPayments.length) {
+        var notPaid = receiverPayments[receiverPaymentIndex].amount;
+        payDeficit = payDeficit.plus(notPaid);
+        receiverPaymentIndex++;
+    }
+
+    if (payDeficit.gt(0)) {
+        var error = "Problem with distributing the funds of reward " + that._id +
+            " due to deficit of " + payDeficit.toString();
+        TL.error(error, Modules.Reward);
+        throw error; //throw the error so the payment is not processed
+    }
 
     return allFundDistributions;
 };

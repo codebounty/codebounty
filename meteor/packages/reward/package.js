@@ -7,13 +7,14 @@ Npm.depends({
 });
 
 Package.on_use(function (api) {
-    api.use("fibers");
-    api.use("underscore");
-    api.use("canvas");
-    api.use("big");
-    api.use("tools");
-    api.use("paypal");
-    api.use("github");
+    api.use("canvas", "server");
+    api.use("fibers", "server");
+    api.use("github", "server");
+    api.use("paypal", "server");
+
+    api.use("big", ["client", "server"]);
+    api.use("tools", ["client", "server"]);
+    api.use("underscore", ["client", "server"]);
 
     api.add_files("receiver.js", ["client", "server"]);
     api.add_files("reward.js", ["client", "server"]);

@@ -18,7 +18,7 @@ var remainingRequests = 5000;
 var logRemainingRequests = function (res, name) {
     var before = remainingRequests;
     remainingRequests = res.meta["x-ratelimit-remaining"];
-    
+
     if (before - remainingRequests > 0 && remainingRequests < 1000)
         Fiber(function () {
             TL.verbose("Remaining requests: " + remainingRequests, Modules.Github);
@@ -41,7 +41,7 @@ GitHubEvents = {
 
 /**
  * Creates an authenticated github client
- * @param [user] The user to authorize the API with. If not passed, it will use the codebountycharlie
+ * @param [user] The user to authorize the API with. If not passed, it will use the GITHUB_COMMENTER key
  * @constructor
  */
 GitHub = function (user) {
@@ -59,7 +59,7 @@ GitHub = function (user) {
         accessToken = user.services.github.accessToken;
     }
     else
-        accessToken = Meteor.settings["GITHUB_CHARLIE"];
+        accessToken = Meteor.settings["GITHUB_COMMENTER"];
 
     githubApi.authenticate({
         type: "oauth",
@@ -312,9 +312,10 @@ GitHub.prototype.checkAccess = function (callback) {
         }
 
         var scopes = result.meta["x-oauth-scopes"].replace(" ", "").split(",");
+        var haveAccess = _.every(Environment.githubScopes, function (requiredScope) {
+            return _.contains(scopes, requiredScope);
+        });
 
-        //TODO DEPLOYMENT: switch to only public repo
-        var haveAccess = _.contains(scopes, "repo") && _.contains(scopes, "user:email");
         callback(haveAccess);
     });
 };
