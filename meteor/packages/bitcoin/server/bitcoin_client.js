@@ -28,8 +28,8 @@ Bitcoin.withUnlockedWallet = function (command) {
                 if (arguments[0] && arguments[0].code == ERR_CODE_WALLET_LOCKED) {
                     // Unlock the wallet and try again.
                     that.walletPassphrase(
-                        Bitcoin.Settings.walletPassphrase, 
-                        Bitcoin.Settings.walletLockInterval,
+                        Meteor.settings["BITCOIN_PASSPHRASE"], 
+                        Meteor.settings["BITCOIN_LOCK_INTERVAL"],
                         (function () { command(callback); }));
                 } else if (callback) {
                     // If the call succeeded, pass on the results to its callback.
