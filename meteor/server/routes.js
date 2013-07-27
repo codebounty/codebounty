@@ -131,7 +131,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
             return;
         }
             
-        Bitcoin.getTransaction(params.transaction_hash, function (error, transaction) {
+        Bitcoin.Client.getTransaction(params.transaction_hash, function (error, transaction) {
             if (error) {
                 fut.ret([404]);
                 return;
