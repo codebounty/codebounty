@@ -8,7 +8,9 @@ Bitcoin.Settings = {
     "maximumErrors": 10,
     "client": Meteor.settings["BITCOIN_CLIENT"],
     "minimumConfirmations": 6,
-    "minimumFundAmount": 0.043 // Roughly 0.04 / 0.95. The actual figure is awkwardly long.
+    "minimumFundAmount": 0.043, // Roughly 0.04 / 0.95. The actual figure is awkwardly long.
+    "walletPassphrase": "0GeaTJCJoVjP4XUSzpIKClG", // This cannot be the best way to store this...
+    "walletLockInterval": 10 // In seconds
 };
 
 Bitcoin.Emails = {
