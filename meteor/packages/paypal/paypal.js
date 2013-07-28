@@ -117,14 +117,6 @@ PayPal.confirmApproval = function (preapprovalKey, callback) {
  * @param callback (error, data)
  */
 PayPal.pay = function (preapprovalKey, receiverList, callback) {
-    //fee calculation here: https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
-
-    //only need to pay the people getting > $0
-    //remove any decimals past 0.01
-    receiverList = _.filter(receiverList, function (receiver) {
-        return receiver.amount > 0;
-    });
-
     receiverList = {"receiver": receiverList};
 
     //TODO pin? here and on preapproval store it
@@ -132,6 +124,8 @@ PayPal.pay = function (preapprovalKey, receiverList, callback) {
         actionType: "PAY",
         currencyCode: "USD",
         receiverList: receiverList,
+        //PayPal EACHRECEIVER fee calculation details can be found here:
+        //https://www.x.com/devzone/articles/adaptive-payment-fee-calculation-analysis
         feesPayer: "EACHRECEIVER",
         preapprovalKey: preapprovalKey,
         requestEnvelope: {

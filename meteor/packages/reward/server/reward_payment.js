@@ -251,7 +251,9 @@ Reward.prototype.fundDistributions = function () {
             if (remainingFundAmount.lt(0))
                 throw "Problem with distributing the fund, it is below 0";
 
-            fundDistribution.payments.push(fundPayment);
+            //only add fund payments that are > 0
+            if (fundPayment.amount.gt(0))
+                fundDistribution.payments.push(fundPayment);
         }
 
         allFundDistributions.push(fundDistribution);
