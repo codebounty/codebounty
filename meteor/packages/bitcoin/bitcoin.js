@@ -69,9 +69,9 @@ Bitcoin.pay = function (address, receiverList, callback) {
     // keeping a small portion of the total bounties in the hot wallet.
     Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
 
-        // After fees, total payout should be less than what this address received
-        // and if that's not the case, we need to raise an alarm.
-        // It's possible someone's trying to hack us.
+        // The total payout should not be greater than what was received.
+        // If that's not the case, we need to raise an alarm,
+        // it is possible someone is trying to hack us.
         if (totalPayout.gt(received)) {
             Fiber(function () {
                 // Only logging the error. It's a good idea to give out less
@@ -79,7 +79,7 @@ Bitcoin.pay = function (address, receiverList, callback) {
                 TL.error("Payout greater than bitcoin received " +
                     "attempted from Bitcoin address " + address + ". Payout was " +
                     totalPayout.toString() + " and total received was " + received, Modules.Bitcoin);
-            }).run()
+            }).run();
 
             return;
         }
