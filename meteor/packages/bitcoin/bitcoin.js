@@ -83,9 +83,8 @@ Bitcoin.pay = function (address, receiverList, callback) {
 
             return;
         }
-        _.each(receiverList, function (receiver) {
-
-            Fiber(function () {
+        Fiber(function () {
+            _.each(receiverList, function (receiver) {
                 // Look for a Bitcoin address for this recipient.
                 // If they don't have one yet, grant them a temporary one
                 // on our server. When they join and set a Bitcoin address,
@@ -106,7 +105,7 @@ Bitcoin.pay = function (address, receiverList, callback) {
                             Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
                         });
                 }
-            }).run();
-        });
+            });
+        }).run();
     });
 };
