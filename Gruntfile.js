@@ -14,7 +14,7 @@ module.exports = function (grunt) {
             meteor: {
                 cmd: [
                     "cd meteor",
-                    "meteor --settings settings.development.json"
+                    "meteor --settings settings.local.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,
@@ -23,7 +23,7 @@ module.exports = function (grunt) {
             meteordebug: {
                 cmd: [
                     "cd meteor",
-                    "NODE_OPTIONS='--debug-brk' meteor --settings settings.development.json"
+                    "NODE_OPTIONS='--debug-brk' meteor --settings settings.local.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,

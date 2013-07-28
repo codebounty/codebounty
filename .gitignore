@@ -4,6 +4,6 @@
 build/
 chromeprofile/
 features/support/settings.local.json
-meteor/settings.deployment.json
-meteor/settings.testing.json
+meteor/settings.local.json
+meteor/settings.qa.json
 node_modules/

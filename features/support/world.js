@@ -2,8 +2,8 @@ var World = function (callback) {
     if (!callback)
         return;
 
-    var appSettings = require("../../meteor/settings.development.json"),
-        testSettings = require("./settings.local.json");
+    var appSettings = require("../../meteor/settings.local.json"),
+        testSettings;
 
     // Your settings.local.js file should contain the code below,
     // with your Github and Paypal login information substituted.
@@ -16,9 +16,16 @@ var World = function (callback) {
     //    "PAYPAL_PASSWORD": "sandboxpassword"
     //}
 
+    try {
+        testSettings = require("./settings.local.json");
+    }
+        //error handled next
+    catch (error) {
+    }
+
     if (!testSettings || !testSettings.GITHUB_USERNAME || !testSettings.GITHUB_PASSWORD
         || !testSettings.PAYPAL_USERNAME || !testSettings.PAYPAL_PASSWORD)
-        throw new Error("You need to create a features/support/settings.local.js file."
+        throw new Error("You need to create a features/support/settings.local.js file. "
             + "See features/support/world.js for details.");
 
     testSettings.ROOT_URL = appSettings.ROOT_URL;

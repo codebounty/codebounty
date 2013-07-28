@@ -14,13 +14,13 @@
     "packages": {
       "bootstrap-3": {
         "git": "https://github.com/mangasocial/meteor-bootstrap-3.git",
-        "tag": "v0.2.5",
-        "commit": "739b15b41b6dc4bed2cdbe44f5fb2978b6f4a5d2"
+        "tag": "v0.2.8",
+        "commit": "8026f0beaa0274849adfcf8c53d919216b5e06ba"
       },
       "router": {
         "git": "https://github.com/tmeasday/meteor-router.git",
-        "tag": "v0.5.1",
-        "commit": "32e377c7703bb119acccc859fc7296882903cbe7"
+        "tag": "v0.5.3",
+        "commit": "7bd3a1bdd1099625bb8b49406d9b8f961d6f4a17"
       },
       "session-extras": {
         "git": "https://github.com/belisarius222/meteor-session-extras.git",

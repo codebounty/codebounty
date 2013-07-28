@@ -1,8 +1,7 @@
 {
   "dependencies": {
     "paypal-ipn": {
-      "version": "1.0.1",
-      "from": "paypal-ipn@1.0.1"
+      "version": "1.0.1"
     }
   }
 }
