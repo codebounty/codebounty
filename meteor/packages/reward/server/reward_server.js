@@ -93,8 +93,7 @@ Reward.prototype.addFund = function (amount, funder, callback) {
                 amount: new Big(0), //will always start as 0
                 expires: expires,
                 proxyAddress: address.proxyAddress,
-                userId: funder._id,
-                userNotified: false
+                userId: funder._id
             });
             that.funds.push(fund);
         }

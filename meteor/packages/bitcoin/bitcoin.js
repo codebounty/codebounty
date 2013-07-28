@@ -11,12 +11,11 @@ Bitcoin = {};
  **/
 Bitcoin.addressForIssue = function (userId, url) {
     var address = Bitcoin.IssueAddresses.findOne({ url: url, userId: userId });
-
-    // If there is no address associated with this user and issue,
-    // grab an unused one and associate it.
     if (address)
         return address;
 
+    // If there is no address associated with this user and issue,
+    // grab an unused one and associate it.
     address = Bitcoin.IssueAddresses.findOne({
         used: false, proxyAddress: { $exists: true }
     });
@@ -56,53 +55,47 @@ Bitcoin.verify = function (request, response, callback) {
 };
 
 /**
- * Returns a transaction object corresponding to the transaction hash passed in.
- * Can only retrieve transactions belonging to the server's wallet.
- * @param transactionHash The transaction we're checking.
- * @param minConfirmations The minimum number of confirmations we expect.
- * @param callback (error, data)
- */
-Bitcoin.getTransaction = function (transactionHash, callback) {
-    Bitcoin.Client.getTransaction(transactionHash, callback);
-};
-
-/**
  * Make a payment to a set of receivers
  * @param address The address we're paying from.
  * @param receiverList ex. [{email: "perl.jonathan@gmail.com", amount: 100.12}, ..]
  * @param callback (error, data)
  */
 Bitcoin.pay = function (address, receiverList, callback) {
-    // Only pay the people getting > 0 BTC
-    receiverList = _.filter(receiverList, function (receiver) {
-        return receiver.amount > 0;
-    });
-
     // Make sure that we're not paying more than our receiving address received.
-    var totalPayout = _.reduce(receiverList, function (receiverA, receiverB) {
-        return {"amount": receiverA.amount + receiverB.amount};
-    }, {"amount": 0});
+    var totalPayout = BigUtils.sum(_.pluck(receiverList, "amount"));
 
     // We're using getReceivedByAddress instead of getting the balance of the
     // address because the address could technically be empty. We're only
     // keeping a small portion of the total bounties in the hot wallet.
     Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
 
-        // After fees, total payout should be less than what this address received.
-        if (totalPayout.amount < received) {
-            _.each(receiverList, function (receiver) {
+        // The total payout should not be greater than what was received.
+        // If that's not the case, we need to raise an alarm,
+        // it is possible someone is trying to hack us.
+        if (totalPayout.gt(received)) {
+            Fiber(function () {
+                // Only logging the error. It's a good idea to give out less
+                // information rather than more in cases like this.
+                TL.error("Payout greater than bitcoin received " +
+                    "attempted from Bitcoin address " + address + ". Payout was " +
+                    totalPayout.toString() + " and total received was " + received, Modules.Bitcoin);
+            }).run();
 
+            return;
+        }
+        Fiber(function () {
+            _.each(receiverList, function (receiver) {
                 // Look for a Bitcoin address for this recipient.
                 // If they don't have one yet, grant them a temporary one
                 // on our server. When they join and set a Bitcoin address,
                 // we'll check for the temporary address and send its
                 // contents to the address they set.
-                var payoutAddress = Bitcoin.ReceiverAddresses.find(
+                var payoutAddress = Bitcoin.ReceiverAddresses.findOne(
                     {"email": receiver.email}, {"reactive": false});
 
                 if (payoutAddress) {
                     // Send the amount owed the recipient.
-                    Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+                    Bitcoin.Client.sendToAddress(payoutAddress.address, receiver.amount);
 
                 } else {
                     // Grant the recipient an address in our hot wallet
@@ -113,18 +106,6 @@ Bitcoin.pay = function (address, receiverList, callback) {
                         });
                 }
             });
-
-            // Okay, if that's not the case, we need to raise an alarm.
-            // We're doing this check because the application should never enter
-            // this state under its normal operating parameters. It's possible
-            // someone's trying to hack us, as this should be a fairly obvious
-            // attack vector.
-        } else {
-            // Only logging the error. It's a good idea to give out less
-            // information rather than more in cases like this.
-            TL.error("Payout greater than bitcoin received " +
-                "attempted from Bitcoin address " + address + ". Payout was " +
-                totalPayout.amount + " and total received was " + received, Modules.Bitcoin);
-        }
+        }).run();
     });
 };
