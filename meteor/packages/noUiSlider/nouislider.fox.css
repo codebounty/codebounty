@@ -68,9 +68,6 @@
 		background: #ccc;
 		box-shadow: none;
 	}
-    .noUiSlider.disabled a {
-        display: none;
-    }
 	.noUiSlider div {
 		height: 18px;
 		width: 18px;
