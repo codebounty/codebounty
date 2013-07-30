@@ -1,6 +1,6 @@
 //TODO separate this out into it's own repo / meteor package
 
-var GitHubApi = Npm.require("github"), async = Npm.require("async"), signals = Npm.require("signals");
+var GitHubApi = Npm.require("github"), async = Npm.require("async");
 
 //used to cache api responses
 var Responses = new Meteor.Collection("responses");
@@ -23,20 +23,6 @@ var logRemainingRequests = function (res, name) {
         Fiber(function () {
             TL.verbose("Remaining requests: " + remainingRequests, Modules.Github);
         }).run();
-};
-
-GitHubEvents = {
-    User: {
-        loaded: new signals.Signal()
-    },
-    Issues: {
-        loaded: new signals.Signal()
-    },
-    GitData: {
-        Commit: {
-            loaded: new signals.Signal()
-        }
-    }
 };
 
 /**
@@ -70,22 +56,19 @@ GitHub = function (user) {
 
     this._requestMapping = {
         "User.get": {
-            request: this._client.user.get,
-            signal: GitHubEvents.User.loaded
+            request: this._client.user.get
         },
         "Issues.getEvents": {
-            request: this._client.issues.getEvents,
-            signal: GitHubEvents.Issues.loaded
+            request: this._client.issues.getEvents
         },
         "GitData.getCommit": {
-            request: this._client.gitdata.getCommit,
-            signal: GitHubEvents.GitData.Commit.loaded
+            request: this._client.gitdata.getCommit
         }
     };
 };
 
 /**
- * Run a request then trigger the callback & signal
+ * Run a request then trigger the callback
  * @param name the request name
  * @param data the request data
  * @param [etag] will run a conditional request if passed
@@ -106,7 +89,6 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
         headers["If-None-Match"] = etag;
 
     var requestFunction = that._requestMapping[name].request;
-    var signal = that._requestMapping[name].signal;
 
     //run the request
     requestFunction(requestOptions, function (err, res) {
@@ -115,8 +97,6 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
         else {
             logRemainingRequests(res, name);
             callback(null, res);
-            if (signal)
-                signal.dispatch(that, err, res);
         }
     }, headers);
 };

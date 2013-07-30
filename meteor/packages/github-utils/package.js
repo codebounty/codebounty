@@ -4,8 +4,7 @@ Package.describe({
 
 Npm.depends({
     "async": "0.2.7",
-    "github": "https://github.com/piascikj/node-github-1/tarball/b80e6e290e0c9b977272368fd47233155e5b1c8d",
-    "signals": "1.0.0"
+    "github": "https://github.com/piascikj/node-github-1/tarball/b80e6e290e0c9b977272368fd47233155e5b1c8d"
 });
 
 Package.on_use(function (api) {

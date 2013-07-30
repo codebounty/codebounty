@@ -32,7 +32,6 @@ Bitcoin.requestProxyAddress = function (address) {
             // If the call wasn't successful, log the response and
             // increment our error counter.
             if (response.data === null) {
-
                 TL.error(response.content(), Modules.Bitcoin);
                 successFut.ret(false);
                 return;
@@ -57,6 +56,7 @@ Bitcoin.requestProxyAddress = function (address) {
             }
 
             successFut.ret(true);
+            return;
         } catch (err) {
             TL.error("Blockchain.info API error: " + err.toString());
 
