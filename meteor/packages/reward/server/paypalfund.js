@@ -93,8 +93,10 @@ PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
         " and a $" + that.fee().toString() + " fee";
 
     PayPal.getApproval(that.amount.toString(), description, that.expires, cancel, confirm, function (error, data, approvalUrl) {
-        if (error)
-            throw "Could not get preapproval url";
+        if (error) {
+            TL.error("Could not get preapproval url " + EJSON.stringify(error), Modules.Paypal);
+            return;
+        }
 
         //set the preapproval key
         that.preapprovalKey = data.preapprovalKey;

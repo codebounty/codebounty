@@ -325,6 +325,11 @@ Meteor.methods({
         //update receivers before initiating payout
         var gitHub = new GitHub(Meteor.user());
         gitHub.getContributorsCommits(myReward.issueUrl, function (error, issueEvents, commits) {
+            if (error) {
+                fut.ret(false);
+                return;
+            }
+
             var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
             Fiber(function () {
                 myReward.updateReceivers(contributorsEmails);
@@ -344,7 +349,8 @@ Meteor.methods({
                     fut.ret(success);
 
                     if (error)
-                        throw error;
+                        TL.error("Error initiating payout for " + myReward._id.toString() +
+                            " :" + EJSON.stringify(error), Modules.Reward);
                 });
             }).run();
         });

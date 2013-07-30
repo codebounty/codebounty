@@ -357,8 +357,6 @@ GitHub.prototype.getCommit = function (repo, sha, callback) {
 
 /**
  * Loads the commit with a conditional request
- * @param repo {user: string, name: string}
- * @param {string} sha
  * @param {function} [callback] (error, result) result is an array with one item
  */
 GitHub.prototype.getUser = function (callback) {
@@ -382,11 +380,12 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
     var issue = GitHubUtils.issue(issueUrl);
 
     that.getIssueEvents(issueUrl, function (error, issueEvents) {
-        issueEvents = issueEvents.data;
         if (error) {
             callback(error);
             return;
         }
+
+        issueEvents = issueEvents.data;
 
         //load the commit data for each referenced commit
         var commitData = [];
