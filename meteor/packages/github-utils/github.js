@@ -414,8 +414,12 @@ GitHub.prototype.postComment = function (issueUrl, comment) {
             number: issue.number,
             body: comment
         }, function (err, res) {
-            if (err)
-                TL.error("ERROR: Posting GitHub comment", err);
+            if (err) {
+                Fiber(function () {
+                    TL.error("ERROR: Posting GitHub comment " + EJSON.stringify(issue) + " "
+                        + EJSON.stringify(err), Modules.Github);
+                }).run();
+            }
         }
     );
 };

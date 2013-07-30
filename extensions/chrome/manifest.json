@@ -2,7 +2,7 @@
     "name": "Code Bounty",
     "version": "0.0.1",
     "manifest_version": 2,
-    "description": "A simple bounty system",
+    "description": "An open source bounty system for GitHub",
     "icons": {
         "16": "icon16.png",
         "48": "icon48.png",
