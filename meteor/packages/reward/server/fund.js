@@ -43,7 +43,10 @@ Fund.prototype.toString = function () {
         " " + this.currency;
 };
 
-Fund.prototype.fee = function () {
+/**
+ * @param logFractionalFee If true, log any fractional fee
+ */
+Fund.prototype.fee = function (logFractionalFee) {
     var that = this;
     var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
 
@@ -71,8 +74,12 @@ Fund.prototype.fee = function () {
     // Add any amount beyond the maximum decimal precision to the fee.
     if (feeFractions.gt(0)) {
         fee = fee.plus(feeFractions);
-        TL.info("Fractional fee for " + that._id.toString() + ": " + feeFractions.toString(), Modules.Reward);
+
+        if (logFractionalFee)
+            TL.info("Fractional fee for " + that._id.toString() + ": " + feeFractions.toString() +
+                " total fee:" + fee.toString(), Modules.Reward);
     }
+
     return fee;
 };
 

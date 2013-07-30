@@ -38,6 +38,7 @@ OS X / Linux / Ubuntu
         rpcpassword=4Mr7LjcTbx66DpVvzkA93AvJesx6HpSY4974CXn57TXZ
         testnet=1
         server=1
+        rpcport=8332
 
 	Check out [Bitcoin.org](http://bitcoin.org/en/download) for the Bitcoin binaries, and check out the [Bitcoin wiki](https://	en.bitcoin.it/wiki/Data_directory) for information on how to find 	your bitcoin.conf file.
 

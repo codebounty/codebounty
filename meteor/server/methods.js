@@ -35,6 +35,12 @@ Meteor.methods({
         var fut = new Future();
         var gitHub = new GitHub(user);
         gitHub.getIssueEvents(issueUrl, function (error, result) {
+            if (error) {
+                TL.error("Error checking canPostBounty: " + EJSON.stringify(error), Modules.Github);
+                fut.ret(false);
+                return;
+            }
+
             var last = _.last(_.filter(result.data, function (item) {
                 return item.event === "closed" || item.event === "reopened";
             }));
@@ -123,13 +129,13 @@ Meteor.methods({
         if (currency !== "usd" && currency !== "btc")
             throw currency + " is an invalid currency";
 
-        
+
         if (currency == "usd") {
             amount = new Big(amount);
-            
+
             if (amount.lt(ReceiverUtils.minimum("usd")))
                 throw "Cannot add less than the minimum funds";
-                
+
             // Calculate how much we should charge the bounty poster
             // in order to leave the bounty amount they specified
             // after we take our fee.
@@ -138,14 +144,14 @@ Meteor.methods({
             } else {
                 amount = amount.div((new Big(1)).minus(Reward.Fee.Rate));
             }
-            
+
             if (BigUtils.remainder(amount, 2).gt(0)) {
                 // Equivalent to amount.times(10).ceil().div(10).
                 // If there's a fractional amount, we want to round it up.
                 amount = BigUtils.truncate(amount, 2).plus(0.01);
             }
-            
-                
+
+
         } else if (currency == "btc") {
             // Specifying fund amount before funds are actually received
             // is not supported by the Bitcoin flow, so we just set it to

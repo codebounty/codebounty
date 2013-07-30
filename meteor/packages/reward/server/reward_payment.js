@@ -215,7 +215,8 @@ Reward.prototype.fundDistributions = function () {
         // Add a record of the fee we're taking from this fund.
         fundDistribution.payments.push({
             email: Meteor.settings["PAYPAL_PAYMENTS_EMAIL"],
-            amount: availableFunds[fundIndex].fee()
+            //since we are processing a payout let's log any fractional fee
+            amount: availableFunds[fundIndex].fee(true)
         });
 
         //while there is money on the fund and more payouts to distribute
