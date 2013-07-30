@@ -8,3 +8,4 @@ meteor/settings.local.json
 meteor/settings.qa.json
 meteor/settings.dist.json
 node_modules/
+.npm/
