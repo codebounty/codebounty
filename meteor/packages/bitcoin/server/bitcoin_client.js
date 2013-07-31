@@ -4,8 +4,8 @@ var bitcoin = Npm.require("bitcoin");
  * Takes a Bitcoin client object, a zero-parameter function encapsulating the
  * original request to the Bitcoin client, and a callback function. Returns a
  * function that can be passed to a Bitcoin client object as a callback. If the
- * request fails due to the wallet being locked, the callback function returned
- * by this function will retry the original request after unlocking the wallet.
+ * request fails due to a recoverable error, the callback function returned
+ * by this function will retry the original request after attempting to recover.
  * If the request is successful either time, it will forward the response
  * transparently to the callback function passed in.
  * 
@@ -14,7 +14,7 @@ var bitcoin = Npm.require("bitcoin");
  * @param callback A function that receives the results of the client request.
  * @return function A callback function that can be passed to the Bitcoin client.
  **/
-Bitcoin._encryptedWalletCallbackDecorator = function (client, originalRequest, callback) {
+Bitcoin._selfRecoveringCallbackDecorator = function (client, originalRequest, callback) {
     return function () {
         if (arguments[0] && arguments[0].code == Bitcoin.Errors.WalletLocked) {
             // Unlock the wallet and try again.
@@ -22,6 +22,13 @@ Bitcoin._encryptedWalletCallbackDecorator = function (client, originalRequest, c
                 Meteor.settings["BITCOIN_PASSPHRASE"], 
                 Meteor.settings["BITCOIN_LOCK_INTERVAL"],
                 originalRequest);
+        } else if (arguments[0] && arguments[0].code == Bitcoin.Errors.KeypoolEmpty) {
+            client.walletPassphrase(
+                Meteor.settings["BITCOIN_PASSPHRASE"], 
+                Meteor.settings["BITCOIN_LOCK_INTERVAL"],
+                function () {
+                    client.keypoolRefill(originalRequest);
+                });
         } else if (callback) {
             // If the call succeeded, pass on the results to its callback.
             callback.apply(callback, arguments);
@@ -62,11 +69,12 @@ Bitcoin.overrideCallbackInArgs = function (args, callback) {
     return args;
 }
 
-// A decorator for bitcoin.Client commands that require an unlocked wallet.
+// A decorator for bitcoin.Client commands that can be successfully retried
+// after certain errors if steps are taken to recover from the errors.
 // Calling a bitcoin.Client command that has been wrapped in this decorator
-// results in the command being called once and then re-called after unlocking
-// the wallet if the command fails due to the wallet being locked.
-Bitcoin.withUnlockedWallet = function (command) {
+// results in the command being called once and then re-called after taking
+// steps to recover if it fails due to a recoverable error.
+Bitcoin.makeSelfRecovering = function (command) {
     
     return function () {
         var that = this;
@@ -76,7 +84,7 @@ Bitcoin.withUnlockedWallet = function (command) {
             command.apply(that, originalArgs);
         });
         var args = Bitcoin.overrideCallbackInArgs(arguments,
-            Bitcoin._encryptedWalletCallbackDecorator(that, originalRequest, callback));
+            Bitcoin._selfRecoveringCallbackDecorator(that, originalRequest, callback));
         
         command.apply(that, args);
     };
@@ -86,13 +94,13 @@ Bitcoin.withUnlockedWallet = function (command) {
 // override functions without altering the original class.
 var BitcoinClient = bitcoin.Client;
 
-// Decorate all functions that require an unlocked wallet,
-// save for dumpprivkeys, importprivkey, keypoolrefill,
-// signmessage, and signrawtransaction (since we should
-// NEVER need to run those from within the web app).
-BitcoinClient.prototype.sendToAddress = Bitcoin.withUnlockedWallet(BitcoinClient.prototype.sendToAddress);
-BitcoinClient.prototype.sendFrom = Bitcoin.withUnlockedWallet(BitcoinClient.prototype.sendFrom);
-BitcoinClient.prototype.sendMany = Bitcoin.withUnlockedWallet(BitcoinClient.prototype.sendMany);
+// Decorate all functions that could result in a recoverable error,
+// such as 'wallet locked' or 'keypool empty.'
+BitcoinClient.prototype.sendToAddress = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.sendToAddress);
+BitcoinClient.prototype.sendFrom = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.sendFrom);
+BitcoinClient.prototype.sendMany = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.sendMany);
+BitcoinClient.prototype.getAccountAddress = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.getAccountAddress);
+BitcoinClient.prototype.getNewAddress = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.getNewAddress);
 
 // And finally create an instance of our modified class!
 Bitcoin.Client = new BitcoinClient(Bitcoin.Settings.client);
