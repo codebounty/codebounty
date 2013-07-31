@@ -5,32 +5,29 @@ var GitHubApi = Npm.require("github"), async = Npm.require("async");
 //used to cache api responses
 var Responses = new Meteor.Collection("responses");
 
-//max allowed http://developer.github.com/v3/#pagination
-var pageSize = 100;
-
-var remainingRequests = 5000;
-
-/**
- * Log the # requests remaining when < 1000 are remaining
- * @param res
- * @param name
- */
-var logRemainingRequests = function (res, name) {
-    var before = remainingRequests;
-    remainingRequests = res.meta["x-ratelimit-remaining"];
-
-    if (before - remainingRequests > 0 && remainingRequests < 1000)
-        Fiber(function () {
-            TL.verbose("Remaining requests: " + remainingRequests, Modules.Github);
-        }).run();
-};
+// Max allowed according to
+// http://developer.github.com/v3/#pagination
+// http://developer.github.com/v3/#rate-limiting
+var PAGE_SIZE = 100;
+var MAX_REQUESTS = 5000;
 
 /**
  * Creates an authenticated github client
  * @param [user] The user to authorize the API with. If not passed, it will use the GITHUB_COMMENTER key
  * @constructor
  */
-GitHub = function (user) {
+GitHub = function (userParams) {
+    var accessToken;
+    var params = {
+        onError: function (err, that) {
+            console.log(err);
+        },
+        onSuccess: function (res, that) {
+            console.log(that.remainingRequests + " requests left this hour.");
+        },
+        requestsRemaining: MAX_REQUESTS
+    };
+    
     var githubApi = new GitHubApi({
         // required
         version: "3.0.0",
@@ -38,14 +35,27 @@ GitHub = function (user) {
         timeout: 5000
     });
 
-    var accessToken;
+    // Fill in omitted parameters with our defaults.
+    _.extend(params, userParams);
 
-    if (user) {
-        this.user = user;
-        accessToken = user.services.github.accessToken;
+    // Make sure the required parameters have been supplied.
+    if (params.user) {
+        this.user = params.user;
+        accessToken = this.user.services.github.accessToken;
+    } else if (params.accessToken) {
+        accessToken = params.accessToken;
+    } else {
+        throw "Must pass either user or accessToken to GitHub client!";
     }
-    else
-        accessToken = Meteor.settings["GITHUB_COMMENTER"];
+
+    // Set event callbacks.
+    if (params.onError) {
+        this.onError = params.onError;
+    }
+    
+    if (params.onSuccess) {
+        this.onSuccess = params.onSuccess;
+    }
 
     githubApi.authenticate({
         type: "oauth",
@@ -81,7 +91,7 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
     var requestOptions = JSON.parse(JSON.stringify(data));
     if (page >= 1)
         requestOptions.page = page;
-    requestOptions.per_page = pageSize;
+    requestOptions.per_page = PAGE_SIZE;
 
     //if there is a cached response perform a conditional request
     var headers = {};
@@ -95,7 +105,8 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
         if (err)
             callback(err);
         else {
-            logRemainingRequests(res, name);
+            // Update our count of how many requests we have left this hour.
+            that.remainingRequests = res.meta["x-ratelimit-remaining"];
             callback(null, res);
         }
     }, headers);
@@ -192,7 +203,7 @@ GitHub.prototype._crawlToEnd = function (cachedResponse, callback) {
         lastPage = _.last(cachedResponse.pages);
     }
 
-    var nextPage = lastPage.data.length === pageSize;
+    var nextPage = lastPage.data.length === PAGE_SIZE;
     //done crawling so return
     if (!nextPage) {
         callback(null, cachedResponse);
@@ -243,14 +254,17 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
         //then store the result and return it
         function (error, cachedResponse) {
             Fiber(function () {
-                if (error) {
-                    TL.error("ConditionalCrawlAndCache: " + error + " for " + JSON.stringify(request) + " " +
-                        JSON.stringify(data), Modules.Github);
+                if (error && that.onError) {
+                    that.onError("ConditionalCrawlAndCache: " + error
+                        + " for " + JSON.stringify(request) + " " +
+                        JSON.stringify(data), that);
 
                     if (callback)
                         callback(error);
 
                     return;
+                } else {
+                    that.onSuccess(cachedResponse, that);
                 }
 
                 //update cached response if it already exists
@@ -405,6 +419,7 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
  * @param {string} comment "Interesting issue!"
  */
 GitHub.prototype.postComment = function (issueUrl, comment) {
+    var that = this;
     var issue = GitHubUtils.issue(issueUrl);
 
     this._client.issues.createComment(
@@ -414,11 +429,14 @@ GitHub.prototype.postComment = function (issueUrl, comment) {
             number: issue.number,
             body: comment
         }, function (err, res) {
-            if (err) {
+            if (err && that.onError) {
                 Fiber(function () {
-                    TL.error("ERROR: Posting GitHub comment " + EJSON.stringify(issue) + " "
-                        + EJSON.stringify(err), Modules.Github);
+                    that.onError("ERROR: Posting GitHub comment "
+                        + EJSON.stringify(issue) + " "
+                        + EJSON.stringify(err), that);
                 }).run();
+            } else {
+                that.onSuccess(res, that);
             }
         }
     );

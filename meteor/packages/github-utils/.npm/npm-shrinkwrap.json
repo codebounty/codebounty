@@ -1,10 +1,10 @@
 {
   "dependencies": {
-    "async": {
-      "version": "0.2.7"
-    },
     "github": {
       "from": "https://github.com/piascikj/node-github-1/tarball/b80e6e290e0c9b977272368fd47233155e5b1c8d"
+    },
+    "async": {
+      "version": "0.2.7"
     }
   }
 }
