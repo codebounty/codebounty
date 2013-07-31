@@ -117,17 +117,23 @@ Bitcoin.pay = function (address, receiverList, callback) {
                     } else {
                         Bitcoin.Client.getAccountAddress(receiver.email,
                         function (err, payoutAddress) {
-                            Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
-                            
-                            // Save the temporary address for this user so we
-                            // don't bother bitcoind for a new one later if the
-                            // same user gets another reward before signing up.
-                            Fiber(function () {
-                                Bitcoin.TemporaryReceiverAddresses.insert({
-                                    email: receiver.email,
-                                    address: payoutAddress
-                                });
-                            }).run();
+                            if (err) {
+                                Fiber(function () {
+                                    TL.error("getAccountAddress error: " + err.toString());
+                                }).run();
+                            } else {
+                                Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+                                
+                                // Save the temporary address for this user so we
+                                // don't bother bitcoind for a new one later if the
+                                // same user gets another reward before signing up.
+                                Fiber(function () {
+                                    Bitcoin.TemporaryReceiverAddresses.insert({
+                                        email: receiver.email,
+                                        address: payoutAddress
+                                    });
+                                }).run();
+                            }
                         });
                     }
                 }
