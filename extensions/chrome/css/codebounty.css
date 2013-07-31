@@ -87,7 +87,7 @@
     width: 250px;
     height: 250px;
     margin: auto;
-    background: url("chrome-extension://__MSG_@@extension_id__/content/ajax-loader.gif");
+    background: url("chrome-extension://__MSG_@@extension_id__/images/ajax-loader.gif");
     background-repeat: no-repeat;
 }
 
@@ -105,21 +105,21 @@
 }
 
 .statusCoins {
-    content: url("chrome-extension://__MSG_@@extension_id__/content/status-coins.png");
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-coins.png");
 }
 
 .statusMoneybag {
-    content: url("chrome-extension://__MSG_@@extension_id__/content/status-moneybag.png");
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-moneybag.png");
 }
 
 .statusMoneybags {
-    content: url("chrome-extension://__MSG_@@extension_id__/content/status-moneybags.png");
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-moneybags.png");
 }
 
 .statusBars {
-    content: url("chrome-extension://__MSG_@@extension_id__/content/status-bars.png");
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-bars.png");
 }
 
 .statusJackpot {
-    content: url("chrome-extension://__MSG_@@extension_id__/content/status-jackpot.png");
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-jackpot.png");
 }
