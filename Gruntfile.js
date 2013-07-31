@@ -84,8 +84,8 @@ module.exports = function (grunt) {
                         ROOTURL: "<%= config.rootUrl.dist %>"
                     }
                 },
-                src: "<%= config.dist %>/chrome/content/github.js",
-                dest: "<%= config.dist %>/chrome/content/github.js"
+                src: "<%= config.dist %>/chrome/js/github.js",
+                dest: "<%= config.dist %>/chrome/js/github.js"
             },
             qa: {
                 options: {
@@ -93,8 +93,8 @@ module.exports = function (grunt) {
                         ROOTURL: "<%= config.rootUrl.qa %>"
                     }
                 },
-                src: "<%= config.dist %>/chrome/content/github.js",
-                dest: "<%= config.dist %>/chrome/content/github.js"
+                src: "<%= config.dist %>/chrome/js/github.js",
+                dest: "<%= config.dist %>/chrome/js/github.js"
             },
             local: {
                 options: {
@@ -102,8 +102,8 @@ module.exports = function (grunt) {
                         ROOTURL: "<%= config.rootUrl.local %>"
                     }
                 },
-                src: "<%= config.dist %>/chrome/content/github.js",
-                dest: "<%= config.dist %>/chrome/content/github.js"
+                src: "<%= config.dist %>/chrome/js/github.js",
+                dest: "<%= config.dist %>/chrome/js/github.js"
             }
         }
     });

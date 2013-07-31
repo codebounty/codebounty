@@ -4,14 +4,14 @@
     "manifest_version": 2,
     "description": "An open source bounty system for GitHub",
     "icons": {
-        "16": "icon16.png",
-        "48": "icon48.png",
-        "128": "icon128.png"
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
     },
     "page_action": {
         "default_icon": {
-            "19": "icon16.png",
-            "38": "icon48.png"
+            "19": "images/icon16.png",
+            "38": "images/icon48.png"
         },
         "default_title": "Code Bounty"
     },
@@ -24,14 +24,23 @@
         {
             "matches": ["https://github.com/*/*/issues/*"],
             "exclude_matches": ["https://github.com/*/*/issues/new"],
-            "js": ["jquery-1.9.1.min.js", "chromeContent.js"],
+            "css": [
+                "css/codebounty.css",
+                "css/toggles.css",
+                "css/toggles-github.css"
+            ],
+            "js": [
+                "js/lib/jquery-1.9.1.min.js",
+                "js/lib/toggles.min.js",
+                "js/github.js"
+            ],
             "run_at": "document_end",
             "all_frames": true
         }
     ],
     "background": {
-        "scripts": ["chrome.js"]
+        "scripts": ["js/chrome.js"]
     },
     "homepage_url": "http://codebounty.co",
-    "web_accessible_resources": ["content/*"]
+    "web_accessible_resources": ["images/*"]
 }
