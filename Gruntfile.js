@@ -81,6 +81,7 @@ module.exports = function (grunt) {
             dist: {
                 options: {
                     context: {
+                        BASEURL: "<%= config.baseUrl.dist %>",
                         ROOTURL: "<%= config.rootUrl.dist %>"
                     }
                 },
@@ -90,6 +91,7 @@ module.exports = function (grunt) {
             qa: {
                 options: {
                     context: {
+                        BASEURL: "<%= config.baseUrl.qa %>",
                         ROOTURL: "<%= config.rootUrl.qa %>"
                     }
                 },
@@ -99,6 +101,7 @@ module.exports = function (grunt) {
             local: {
                 options: {
                     context: {
+                        BASEURL: "<%= config.baseUrl.local %>",
                         ROOTURL: "<%= config.rootUrl.local %>"
                     }
                 },

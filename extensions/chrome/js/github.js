@@ -1,6 +1,7 @@
 //the injected github UI
 (function (undefined) {
-    var rootUrl = "/* @echo ROOTURL */",
+    var baseUrl = "/* @echo BASEURL */",
+        rootUrl = "/* @echo ROOTURL */",
         thisIssueUrl = encodeURI(window.location.href);
 
     //region Messenger
@@ -344,9 +345,9 @@
         }(),
 
         /**
-         * Initialize the ui (after the user is authenticated)
+         * Initialize the ui after the user is authenticated
          */
-        initialize: function () {
+        initializeAuthenticatedUser: function () {
             ui.setupOverlay();
             ui.setupContainer();
 
@@ -391,6 +392,66 @@
         }
     };
 
+    var credentialTokenKey = "Meteor.loginToken";
+
+    var loginWithGitHub = function () {
+        var clientId = "8660a42d9a14177b2a45";
+        var scope = ["user:email", "repo"];
+        var flatScope = scope.map(encodeURIComponent).join('+');
+        var credentialToken = Random.id();
+
+        var loginUrl =
+            "https://github.com/login/oauth/authorize" +
+                "?client_id=" + clientId +
+                "&scope=" + flatScope +
+                "&redirect_uri=" + rootUrl + "/_oauth/github?close" +
+                "&state=" + credentialToken;
+
+        Oauth.initiateLogin(credentialToken, loginUrl,
+            function () {
+                //after the login window closes, attempt to resume the session
+                setTimeout(resumeSession, 1000);
+            }, {width: 900, height: 450});
+
+        console.log("Perform github login authentication here", loginUrl);
+    };
+
+    var resumeSession = function (credentialToken, onFailTryLogin) {
+        var login = ddp.call("login", [
+                {resume: credentialToken}
+            ])
+            .done(function () {
+                //if we were successful logging in with the credential token, store it
+                localStorage.setItem(credentialTokenKey, credentialToken);
+                checkGitHubAuthorization();
+            });
+
+        if (onFailTryLogin)
+            login.fail(loginWithGitHub);
+    };
+
+    //check we can access the required scopes for this user
+    //then either initialize the ui or ask the user to login
+    var checkGitHubAuthorization = function () {
+        ddp.call("checkAuthorization").done(function (hasProperAuthorization) {
+            if (hasProperAuthorization)
+                ui.initializeAuthenticatedUser();
+            else
+                loginWithGitHub();
+        });
+    };
+
+    //start the ddp session
+    var ddp = new MeteorDdp("ws://" + baseUrl + "/websocket");
+    ddp.connect().done(function () {
+        //if there is a login token try to resume the session
+        var credentialToken = localStorage.getItem(credentialTokenKey);
+        if (credentialToken)
+            resumeSession(credentialToken, true);
+        else
+            loginWithGitHub();
+    });
+
     events.register("closeOverlay", ui.closeOverlay);
     events.register("bountyRewarded", ui.removeRewardButton);
     //synchronize the total bounty reward for this issue, and show it
@@ -398,12 +459,5 @@
         ui.setBountyAmount(message);
     });
 
-    messenger.initialize();
-
-    events.register("authenticated", function (handle) {
-        //only initialize once
-        handle();
-
-        ui.initialize();
-    });
+//    messenger.initialize();
 })();
