@@ -2,6 +2,14 @@
 
 Bitcoin = {};
 
+/**
+ * Define all error code constants.
+ **/
+Bitcoin.Errors = {
+    KeypoolEmpty: -12,
+    WalletLocked: -13
+};
+
 /***********************************************
  * Returns a Bitcoin.IssueAddress for the given issue / user pair.
  * If one does not exist, it assigns one from the pool of unassigned addresses.

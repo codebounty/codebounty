@@ -1,5 +1,4 @@
 var bitcoin = Npm.require("bitcoin");
-var ERR_CODE_WALLET_LOCKED = -13;
 
 /**
  * Takes a Bitcoin client object, a zero-parameter function encapsulating the
@@ -17,7 +16,7 @@ var ERR_CODE_WALLET_LOCKED = -13;
  **/
 Bitcoin._encryptedWalletCallbackDecorator = function (client, originalRequest, callback) {
     return function () {
-        if (arguments[0] && arguments[0].code == ERR_CODE_WALLET_LOCKED) {
+        if (arguments[0] && arguments[0].code == Bitcoin.Errors.WalletLocked) {
             // Unlock the wallet and try again.
             client.walletPassphrase(
                 Meteor.settings["BITCOIN_PASSPHRASE"], 
