@@ -66,15 +66,17 @@ Meteor.methods({
 
         // See if we set up a temporary address for this user and
         // forward any BTC in it to their receiving address
-        Bitcoin.Client.getAccountAddress(user.email, function (err, address) {
-            if (!address)
-                return;
-
-            Bitcoin.Client.getReceivedByAddress(address, function (err, received) {
-                if (received)
-                    Bitcoin.Client.sendToAddress(receiverAddress, received);
-            });
-        });
+        var tempAddress = Bitcoin.TemporaryReceiverAddresses.findOne({ email: user.email });
+        if (tempAddress) {
+            Fiber(function () {
+                Bitcoin.Client.getReceivedByAddress(tempAddress.address,
+                function (err, received) {
+                    if (received)
+                        Bitcoin.Client.sendToAddress(receiverAddress, received);
+                });
+                Bitcoin.TemporaryReceiverAddresses.remove({ email: user.email });
+            }).run();
+        }
     },
 
     "setIsActive": function (user, isActive, reason) {

@@ -10,6 +10,9 @@ Bitcoin.IssueAddresses = new Meteor.Collection("Bitcoin.IssueAddresses");
 Bitcoin.ReceiverAddress = {};
 Bitcoin.ReceiverAddresses = new Meteor.Collection("Bitcoin.ReceiverAddresses");
 
+Bitcoin.TemporaryReceiverAddress = {};
+Bitcoin.TemporaryReceiverAddresses = new Meteor.Collection("Bitcoin.TempReceiverAddresses");
+
 /**
  * Request a proxy address from blockchain.info.
  * This address allows us to listen for callbacks when it gets funded.
