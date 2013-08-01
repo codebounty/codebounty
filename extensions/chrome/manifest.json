@@ -33,8 +33,7 @@
                 "js/lib/jquery-1.9.1.min.js",
                 "js/lib/toggles.min.js",
                 "js/lib/meteor-ddp.js",
-                "js/lib/random.js",
-                "js/lib/oauth_client.js",
+                "js/lib/meteor-ddp-oauth.js",
                 "js/github.js"
             ],
             "run_at": "document_end",

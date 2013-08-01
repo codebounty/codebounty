@@ -392,67 +392,42 @@
         }
     };
 
-    var loginTokenKey = "Meteor.loginToken";
+    //start the ddp session
+    var ddp = new MeteorDdp("ws://" + baseUrl + "/websocket");
 
-    var loginWithGitHub = function () {
-        var clientId = "8660a42d9a14177b2a45",
-            credentialToken = Random.id(),
-            scope = ["user:email", "repo"];
-
-        var loginUrl =
-            "https://github.com/login/oauth/authorize" +
-                "?client_id=" + clientId +
-                "&scope=" + scope.map(encodeURIComponent).join('+') +
-                "&redirect_uri=" + rootUrl + "/_oauth/github?close" +
-                "&state=" + credentialToken;
-
-        Oauth.initiateLogin(credentialToken, loginUrl,
-            function () {
-                //after the login window closes, attempt to login
-                var login = ddp.call("login", [
-                        { oauth: { credentialToken: credentialToken }}
-                    ])
-                    .done(function (data) {
-                        localStorage.setItem(loginTokenKey, data.token);
-
-                        //if we were successful logging in with the credential token, store it
-                        checkGitHubAuthorization();
-                    });
-            }, {width: 900, height: 450});
-    };
-
-    var resumeSession = function (loginToken) {
-        var login = ddp.call("login", [
-                { resume: loginToken }
-            ])
-            .done(checkGitHubAuthorization)
-            .fail(function (error) {
-                console.log(error);
-            });
-
-        login.fail(loginWithGitHub);
-    };
+    var tries = 0;
 
     //check we can access the required scopes for this user
     //then either initialize the ui or ask the user to login
     var checkGitHubAuthorization = function () {
+        if (tries > 3)
+            throw "Could not authenticate with the required permissions";
+
         ddp.call("checkAuthorization").done(function (hasProperAuthorization) {
             if (hasProperAuthorization)
                 ui.initializeAuthenticatedUser();
-            else
-                loginWithGitHub();
+            else {
+                ddp.oauthPrompt().then(function () {
+                    tries++;
+                    checkGitHubAuthorization();
+                }, function () {
+                    tries++;
+                    checkGitHubAuthorization();
+                });
+            }
         });
     };
 
-    //start the ddp session
-    var ddp = new MeteorDdp("ws://" + baseUrl + "/websocket");
-    ddp.connect().done(function () {
-        //if there is a login token try to resume the session
-        var loginToken = localStorage.getItem(loginTokenKey);
-        if (loginToken)
-            resumeSession(loginToken);
-        else
-            loginWithGitHub();
+    ddp.connect().then(function () {
+        ddp.loginWithOauth({
+            clientId: "8660a42d9a14177b2a45",
+            oauthUrl: "https://github.com/login/oauth/authorize",
+            redirectUrl: "http://localhost:3000/_oauth/github?close",
+            scopes: ["user:email", "repo"]
+        }).then(function () {
+                console.log("We are logged in.");
+                checkGitHubAuthorization();
+            });
     });
 
     events.register("closeOverlay", ui.closeOverlay);
