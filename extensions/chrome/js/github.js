@@ -392,42 +392,45 @@
         }
     };
 
-    var credentialTokenKey = "Meteor.loginToken";
+    var loginTokenKey = "Meteor.loginToken";
 
     var loginWithGitHub = function () {
-        var clientId = "8660a42d9a14177b2a45";
-        var scope = ["user:email", "repo"];
-        var flatScope = scope.map(encodeURIComponent).join('+');
-        var credentialToken = Random.id();
+        var clientId = "8660a42d9a14177b2a45",
+            credentialToken = Random.id(),
+            scope = ["user:email", "repo"];
 
         var loginUrl =
             "https://github.com/login/oauth/authorize" +
                 "?client_id=" + clientId +
-                "&scope=" + flatScope +
+                "&scope=" + scope.map(encodeURIComponent).join('+') +
                 "&redirect_uri=" + rootUrl + "/_oauth/github?close" +
                 "&state=" + credentialToken;
 
         Oauth.initiateLogin(credentialToken, loginUrl,
             function () {
-                //after the login window closes, attempt to resume the session
-                setTimeout(resumeSession, 1000);
-            }, {width: 900, height: 450});
+                //after the login window closes, attempt to login
+                var login = ddp.call("login", [
+                        { oauth: { credentialToken: credentialToken }}
+                    ])
+                    .done(function (data) {
+                        localStorage.setItem(loginTokenKey, data.token);
 
-        console.log("Perform github login authentication here", loginUrl);
+                        //if we were successful logging in with the credential token, store it
+                        checkGitHubAuthorization();
+                    });
+            }, {width: 900, height: 450});
     };
 
-    var resumeSession = function (credentialToken, onFailTryLogin) {
+    var resumeSession = function (loginToken) {
         var login = ddp.call("login", [
-                {resume: credentialToken}
+                { resume: loginToken }
             ])
-            .done(function () {
-                //if we were successful logging in with the credential token, store it
-                localStorage.setItem(credentialTokenKey, credentialToken);
-                checkGitHubAuthorization();
+            .done(checkGitHubAuthorization)
+            .fail(function (error) {
+                console.log(error);
             });
 
-        if (onFailTryLogin)
-            login.fail(loginWithGitHub);
+        login.fail(loginWithGitHub);
     };
 
     //check we can access the required scopes for this user
@@ -445,9 +448,9 @@
     var ddp = new MeteorDdp("ws://" + baseUrl + "/websocket");
     ddp.connect().done(function () {
         //if there is a login token try to resume the session
-        var credentialToken = localStorage.getItem(credentialTokenKey);
-        if (credentialToken)
-            resumeSession(credentialToken, true);
+        var loginToken = localStorage.getItem(loginTokenKey);
+        if (loginToken)
+            resumeSession(loginToken);
         else
             loginWithGitHub();
     });
