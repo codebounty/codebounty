@@ -30,19 +30,26 @@
                 "css/toggles-github.css"
             ],
             "js": [
-                "js/lib/jquery-1.9.1.min.js",
-                "js/lib/toggles.min.js",
+                "js/lib/jquery.min.js",
                 "js/lib/meteor-ddp.js",
                 "js/lib/meteor-ddp-oauth.js",
-                "js/github.js"
+                "js/lib/toggles.min.js",
+
+                "js/lib/require.js",
+                "js/requireContent.js",
+                "js/requireConfig.js",
+                "js/content.js"
             ],
             "run_at": "document_end",
             "all_frames": true
         }
     ],
     "background": {
-        "scripts": ["js/chrome.js"]
+        "scripts": ["js/background.js"]
     },
     "homepage_url": "http://codebounty.co",
-    "web_accessible_resources": ["images/*"]
+    "web_accessible_resources": [
+        "images/*",
+        "js/*"
+    ]
 }

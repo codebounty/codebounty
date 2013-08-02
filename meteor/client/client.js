@@ -65,19 +65,6 @@ Meteor.Router.add({
 
     //-------------------------------------------------------
 
-    //used by a hidden iframe view inserted into the GitHub issue page
-    "/messenger": function () {
-        var url = window.url("?url");
-        Messenger.listen(Messenger.target.plugin);
-        RewardUtils.trackTotal(url);
-
-        AuthUtils.afterLogin(function () {
-            Messenger.send({ event: "authenticated" }, Messenger.target.plugin);
-        });
-
-        return "messengerView";
-    },
-
     "/reward": function () {
         if (Meteor.loggingIn())
             return "loadingView";

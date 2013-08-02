@@ -219,11 +219,11 @@ MeteorDdp.prototype.watch = function(collectionName, cb) {
 
 MeteorDdp.prototype.getCollection = function(collectionName) {
   return this.collections[collectionName] || null;
-}
+};
 
 MeteorDdp.prototype.getDocument = function(collectionName, docId) {
   return this.collections[collectionName][docId] || null;
-}
+};
 
 MeteorDdp.prototype.send = function(msg) {
   this.sock.send(JSON.stringify(msg));
