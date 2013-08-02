@@ -31,19 +31,13 @@ define(["config"], function (config) {
         return def.promise();
     };
 
-//    var _afterAuthorization = function () {
-//        ui.initializeAuthenticatedUser();
-
-//        ddp.call("canPostBounty", [thisIssueUrl]).done(function (result) {
-//            console.log("canPostBounty", result);
-//        });
-//
-//        ddp.call("canReward", [thisIssueUrl]).done(function (result) {
-//            console.log("canReward", result);
-//        });
-//    };
-
     return {
+        /**
+         * Connect to the server and attempt to get authorization for GitHub
+         * @param {Function} onConnected
+         * @param {Function} onAuthenticated
+         * @param {Function} onAuthorized
+         */
         connect: function (onConnected, onAuthenticated, onAuthorized) {
             ddp.connect().then(function () {
                 if (onConnected)
@@ -62,7 +56,6 @@ define(["config"], function (config) {
                     });
             });
         },
-        totalRewardChanged: function (callback) {
-        }
+        ddp: ddp
     };
 });

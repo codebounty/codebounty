@@ -1,4 +1,5 @@
 define({
     baseUrl: "/* @echo BASEURL */",
-    rootUrl: "/* @echo ROOTURL */"
+    rootUrl: "/* @echo ROOTURL */",
+    issueUrl: encodeURI(window.location.href)
 });
