@@ -27,19 +27,26 @@ Bitcoin.addressForIssue = function (userId, url) {
     address = Bitcoin.IssueAddresses.findOne({
         used: false, proxyAddress: { $exists: true }
     });
-    if (!address)
-        throw "No bitcoin addresses loaded!";
+    
+    if (address) {
+        
+        // Update our local instance and then the instance in the database.
+        address.used = true;
+        address.url = url;
+        address.userId = userId;
+        
+        Fiber(function () {
+            Bitcoin.IssueAddresses.update({ address: address.address },
+                { $set: { used: true, url: url, userId: userId } });
 
-    Fiber(function () {
-        Bitcoin.IssueAddresses.update({ address: address.address },
-            { $set: { used: true, url: url, userId: userId } });
-
-        // Set the address's "account" via bitcoind,
-        // for extra data redundancy.
-        Bitcoin.Client.setAccount(address.address, userId + ":" + url);
-    }).run();
-
-    return address;
+            // Set the address's "account" via bitcoind,
+            // for extra data redundancy.
+            Bitcoin.Client.setAccount(address.address, userId + ":" + url);
+        }).run();
+        
+        return address;
+    }
+    return Bitcoin._insertAddressForIssue(userId, url);
 };
 
 /*****************************************************
