@@ -89,6 +89,16 @@ Bitcoin._createWithNewProxyAddress = function (address) {
     return false;
 };
 
+Bitcoin._insertAddressForIssue = function (userId, url) {
+    var addressFut = new Future();
+    
+    Bitcoin.Client.getAccountAddress(userId + ":" + url, function (err, address) {
+        addressFut.ret(Bitcoin._createWithNewProxyAddress(address));
+    });
+    
+    return addressFut.wait();
+};
+
 Meteor.setInterval(function () {
     var response;
     var errors = 0;
