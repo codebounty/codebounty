@@ -5,32 +5,30 @@ var GitHubApi = Npm.require("github"), async = Npm.require("async");
 //used to cache api responses
 var Responses = new Meteor.Collection("responses");
 
-//max allowed http://developer.github.com/v3/#pagination
-var pageSize = 100;
-
-var remainingRequests = 5000;
-
-/**
- * Log the # requests remaining when < 1000 are remaining
- * @param res
- * @param name
- */
-var logRemainingRequests = function (res, name) {
-    var before = remainingRequests;
-    remainingRequests = res.meta["x-ratelimit-remaining"];
-
-    if (before - remainingRequests > 0 && remainingRequests < 1000)
-        Fiber(function () {
-            TL.verbose("Remaining requests: " + remainingRequests, Modules.Github);
-        }).run();
-};
+// Max allowed according to
+// http://developer.github.com/v3/#pagination
+// http://developer.github.com/v3/#rate-limiting
+var PAGE_SIZE = 100;
+var MAX_REQUESTS = 5000;
 
 /**
  * Creates an authenticated github client
  * @param [user] The user to authorize the API with. If not passed, it will use the GITHUB_COMMENTER key
  * @constructor
  */
-GitHub = function (user) {
+GitHub = function (userParams) {
+    var accessToken;
+    var params = {
+        onError: function (err, that) {
+            console.log(err);
+        },
+        onSuccess: function (res, that) {
+            console.log(that.remainingRequests + " requests left this hour.");
+        },
+        requestsRemaining: MAX_REQUESTS,
+        cacheExpirationInterval: 60000 // In milliseconds
+    };
+    
     var githubApi = new GitHubApi({
         // required
         version: "3.0.0",
@@ -38,14 +36,23 @@ GitHub = function (user) {
         timeout: 5000
     });
 
-    var accessToken;
+    // Fill in omitted parameters with our defaults.
+    _.extend(params, userParams);
 
-    if (user) {
-        this.user = user;
-        accessToken = user.services.github.accessToken;
+    // Make sure the required parameters have been supplied.
+    if (params.user) {
+        this.user = params.user;
+        accessToken = this.user.services.github.accessToken;
+    } else if (params.accessToken) {
+        accessToken = params.accessToken;
+    } else {
+        throw "Must pass either user or accessToken to GitHub client!";
     }
-    else
-        accessToken = Meteor.settings["GITHUB_COMMENTER"];
+
+    // Set event callbacks.
+    this.onError = params.onError;
+    this.onSuccess = params.onSuccess;
+    this.cacheExpirationInterval = params.cacheExpirationInterval;
 
     githubApi.authenticate({
         type: "oauth",
@@ -77,11 +84,12 @@ GitHub = function (user) {
  */
 GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
     var that = this;
+    
     //clone data to use for request options
     var requestOptions = JSON.parse(JSON.stringify(data));
     if (page >= 1)
         requestOptions.page = page;
-    requestOptions.per_page = pageSize;
+    requestOptions.per_page = PAGE_SIZE;
 
     //if there is a cached response perform a conditional request
     var headers = {};
@@ -95,11 +103,19 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
         if (err)
             callback(err);
         else {
-            logRemainingRequests(res, name);
+            // Update our count of how many requests we have left this hour.
+            that.remainingRequests = res.meta["x-ratelimit-remaining"];
             callback(null, res);
         }
     }, headers);
 };
+
+GitHub.prototype._pastCacheExpiration = function (response) {
+    var now = new Date();
+    
+    return (!response
+    || response.retrieved < new Date(now - this.cacheExpirationInterval));
+}
 
 /**
  * Takes a standard response and adds it to the cachedResponse
@@ -122,16 +138,26 @@ GitHub.prototype._addPageResponse = function (cachedResponse, res) {
  * @param data
  * @param callback (error, result) returns the cachedResponse
  */
-GitHub.prototype._updateCachedResponse = function (request, data, callback) {
+GitHub.prototype._updateCachedResponse = function (request, data, forceRequest, callback) {
     var that = this;
     Fiber(function () {
         var cachedResponse = Responses.findOne({request: request, data: data});
+        
+        // If there is a cached response and it has not yet expired,
+        // just return that. (Unless we're being forced to make a request.)
+        if (!forceRequest && cachedResponse
+        && !that._pastCacheExpiration(cachedResponse)) {
+            callback(null, cachedResponse);
+            return;
+        }
+        
         //if there is not a cached response yet
         //load the first page and set it on a new cached response
         if (!cachedResponse) {
             cachedResponse = {
                 request: request,
                 data: data,
+                retrieved: new Date(),
                 pages: []
             };
 
@@ -151,7 +177,7 @@ GitHub.prototype._updateCachedResponse = function (request, data, callback) {
         //if there is a cached response do a conditional request for each cached page
         async.each(cachedResponse.pages, function (pageResponse, pageChecked) {
             var pageIndex = _.indexOf(cachedResponse.pages, pageResponse);
-            that._runRequest(request, data, pageResponse.meta.etag, pageIndex + 1, function (err, res) {
+            that._runRequest(request, data, pageResponse, pageIndex + 1, function (err, res) {
                 if (!err) {
                     //if the page changed, update it
                     if (res.meta.etag !== pageResponse.meta.etag) {
@@ -164,10 +190,12 @@ GitHub.prototype._updateCachedResponse = function (request, data, callback) {
                 pageChecked(err);
             });
         }, function (err) {
-            if (err)
+            if (err) {
                 callback(err);
-            else
+            } else {
+                cachedResponse.retrieved = new Date();
                 callback(null, cachedResponse);
+            }
         });
     }).run();
 };
@@ -192,7 +220,7 @@ GitHub.prototype._crawlToEnd = function (cachedResponse, callback) {
         lastPage = _.last(cachedResponse.pages);
     }
 
-    var nextPage = lastPage.data.length === pageSize;
+    var nextPage = lastPage.data.length === PAGE_SIZE;
     //done crawling so return
     if (!nextPage) {
         callback(null, cachedResponse);
@@ -224,12 +252,12 @@ GitHub.prototype._crawlToEnd = function (cachedResponse, callback) {
  * resultData has properties - data: merged page data, - meta: the last page's meta data
  * and the last pages metadata
  */
-GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, callback) {
+GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, force, callback) {
     var that = this;
     async.waterfall([
         //update the cache
         function (cb) {
-            that._updateCachedResponse(request, data, cb);
+            that._updateCachedResponse(request, data, force, cb);
         },
 
         //then crawl until the last page
@@ -243,19 +271,25 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
         //then store the result and return it
         function (error, cachedResponse) {
             Fiber(function () {
-                if (error) {
-                    TL.error("ConditionalCrawlAndCache: " + error + " for " + JSON.stringify(request) + " " +
-                        JSON.stringify(data), Modules.Github);
+                if (error && that.onError) {
+                    that.onError("ConditionalCrawlAndCache: " + error
+                        + " for " + JSON.stringify(request) + " " +
+                        JSON.stringify(data), that);
 
                     if (callback)
                         callback(error);
 
                     return;
+                } else {
+                    that.onSuccess(cachedResponse, that);
                 }
 
                 //update cached response if it already exists
                 if (cachedResponse._id) {
-                    Responses.update(cachedResponse._id, {$set: {pages: cachedResponse.pages}});
+                    Responses.update(cachedResponse._id, {$set: {
+                        pages: cachedResponse.pages,
+                        retrieved: cachedResponse.retrieved
+                    }});
                 }
                 //otherwise insert it
                 else {
@@ -287,11 +321,11 @@ GitHub.prototype._conditionalCrawlAndCache = function (request, data, paging, ca
 };
 
 //Check we have access to the user and repo scopes
-GitHub.prototype.checkAccess = function (callback) {
+GitHub.prototype.checkAccess = function (callback, force) {
     var that = this;
     that._conditionalCrawlAndCache("User.get", {
         user: AuthUtils.username(that.user)
-    }, false, function (error, result) {
+    }, false, force, function (error, result) {
         if (error) {
             callback(false);
             return;
@@ -311,14 +345,14 @@ GitHub.prototype.checkAccess = function (callback) {
  * @param {string} issueUrl
  * @param {function} [callback] (error, result) result is an array
  */
-GitHub.prototype.getIssueEvents = function (issueUrl, callback) {
+GitHub.prototype.getIssueEvents = function (issueUrl, callback, force) {
     var issue = GitHubUtils.issue(issueUrl);
 
     this._conditionalCrawlAndCache("Issues.getEvents", {
         user: issue.repo.user,
         repo: issue.repo.name,
         number: issue.number
-    }, true, callback);
+    }, true, force, callback);
 };
 
 /**
@@ -327,23 +361,23 @@ GitHub.prototype.getIssueEvents = function (issueUrl, callback) {
  * @param {string} sha
  * @param {function} [callback] (error, result) result is an array with one item
  */
-GitHub.prototype.getCommit = function (repo, sha, callback) {
+GitHub.prototype.getCommit = function (repo, sha, callback, force) {
     this._conditionalCrawlAndCache("GitData.getCommit", {
         user: repo.user,
         repo: repo.name,
         sha: sha
-    }, false, callback);
+    }, false, force, callback);
 };
 
 /**
  * Loads the commit with a conditional request
  * @param {function} [callback] (error, result) result is an array with one item
  */
-GitHub.prototype.getUser = function (callback) {
+GitHub.prototype.getUser = function (callback, force) {
     var that = this;
     that._conditionalCrawlAndCache("User.get", {
         user: AuthUtils.username(that.user)
-    }, false, function (error, result) {
+    }, false, force, function (error, result) {
         callback(error, !error ? result.data[0] : undefined);
     });
 };
@@ -405,6 +439,7 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
  * @param {string} comment "Interesting issue!"
  */
 GitHub.prototype.postComment = function (issueUrl, comment) {
+    var that = this;
     var issue = GitHubUtils.issue(issueUrl);
 
     this._client.issues.createComment(
@@ -414,11 +449,14 @@ GitHub.prototype.postComment = function (issueUrl, comment) {
             number: issue.number,
             body: comment
         }, function (err, res) {
-            if (err) {
+            if (err && that.onError) {
                 Fiber(function () {
-                    TL.error("ERROR: Posting GitHub comment " + EJSON.stringify(issue) + " "
-                        + EJSON.stringify(err), Modules.Github);
+                    that.onError("ERROR: Posting GitHub comment "
+                        + EJSON.stringify(issue) + " "
+                        + EJSON.stringify(err), that);
                 }).run();
+            } else {
+                that.onSuccess(res, that);
             }
         }
     );
