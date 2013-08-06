@@ -81,6 +81,12 @@ Reward.prototype.addFund = function (amount, funder, callback) {
 
     if (that.currency === "btc") {
         var address = Bitcoin.addressForIssue(funder._id, that.issueUrl);
+        
+        if (!address) {
+            callback(rootUrl + "newAddressError");
+            return;
+        }
+        
         var fundingUrl = rootUrl + "addBitcoinFunds?issueAddress=" + address.proxyAddress;
 
         //only need to setup a fund for btc if there is not one already

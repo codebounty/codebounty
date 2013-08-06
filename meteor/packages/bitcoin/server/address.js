@@ -19,58 +19,58 @@ Bitcoin.TemporaryReceiverAddresses = new Meteor.Collection("Bitcoin.TempReceiver
  * @param address
  * @returns proxyAddress
  */
-Bitcoin.requestProxyAddress = function (address) {
-    var addressFut = new Future();
-
+Bitcoin.requestProxyAddress = function (address, callback) {
     Fiber(function () {
         var response;
         
         // Occasionally Blockchain.info fails when we ask it for a proxy
         // address. Putting this in a try/catch block allows us to save state
         // when it fails and pick up where we left off next time around.
-        try {
-            // Contact Blockchain.info for a proxy address.
-            response = Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI);
-
-            if (response.data) {
-                addressFut.ret(response.data.input_address);
-            } else {
+    
+        // Contact Blockchain.info for a proxy address.
+        Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI,
+        function (err, response) {
+            if (err) {
+                TL.error("Blockchain.info API error: " + err.toString());
+                callback(undefined);
+            } else if (!response.data) {
                 TL.error(response.content(), Modules.Bitcoin);
-                addressFut.ret(undefined);
+                callback(undefined);
+            } else {
+                callback(response.data.input_address);
             }
-        } catch (err) {
-            TL.error("Blockchain.info API error: " + err.toString());
-            addressFut.ret(undefined);
-        }
-    }).run();
-
-    return addressFut.wait();
-};
-
-Bitcoin._updateWithNewProxyAddress = function (address) {
-    var proxyAddress = Bitcoin.requestProxyAddress(address.address);
-
-    if (proxyAddress) {
-        // Update the now-proxied address.
-        address.proxyAddress = response.data.input_address;
-
-        Fiber(function () {
-            Bitcoin.IssueAddresses.update(
-                { "_id": address._id },
-                { $set: { proxyAddress: address.proxyAddress } }
-            );
         });
-
-        return address;
-    }
-        
-    return false;
+    }).run();
 };
 
-Bitcoin._createWithNewProxyAddress = function (address) {
-    var proxyAddress = Bitcoin.requestProxyAddress(address);
+Bitcoin._updateWithNewProxyAddress = function (address, callback) {
+    Bitcoin.requestProxyAddress(address.address, function (proxyAddress) {
 
-    if (proxyAddress) {
+        if (proxyAddress) {
+            // Update the now-proxied address.
+            address.proxyAddress = response.data.input_address;
+
+            Fiber(function () {
+                Bitcoin.IssueAddresses.update(
+                    { "_id": address._id },
+                    { $set: { proxyAddress: address.proxyAddress } }
+                );
+            });
+
+            callback(address);
+        }
+        callback(false);
+    });
+};
+
+Bitcoin._createWithNewProxyAddress = function (address, callback) {
+    Bitcoin.requestProxyAddress(address, function (proxyAddress) {
+
+        if (!proxyAddress) {
+            callback(false);
+            return;
+        }
+        
         var idFut = new Future();
         var addressObj = {
             address: address,
@@ -84,19 +84,14 @@ Bitcoin._createWithNewProxyAddress = function (address) {
         
         addressObj._id = idFut.wait();
         
-        return addressObj;
-    }
-    return false;
+        callback(addressObj);
+    });
 };
 
-Bitcoin._insertAddressForIssue = function (userId, url) {
-    var addressFut = new Future();
-    
+Bitcoin._insertAddressForIssue = function (userId, url, callback) {    
     Bitcoin.Client.getAccountAddress(userId + ":" + url, function (err, address) {
-        addressFut.ret(Bitcoin._createWithNewProxyAddress(address));
+        Bitcoin._createWithNewProxyAddress(address, callback);
     });
-    
-    return addressFut.wait();
 };
 
 Meteor.setInterval(function () {
@@ -135,7 +130,13 @@ Meteor.setInterval(function () {
             } else {
                 var address = Bitcoin.Client.getNewAddress();
                 if (address) {
-                    if (Bitcoin._createWithNewProxyAddress(address)) {
+                    var addressFut = new Future();
+                    
+                    Bitcoin._createWithNewProxyAddress(address, function (addressObj) {
+                        addressFut.ret(addressObj);
+                    });
+                    
+                    if (addressFut.wait()){
                         availableAddresses++;
                     } else {
                         // Remember that we were unable to create a proxy

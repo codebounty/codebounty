@@ -22,31 +22,39 @@ Bitcoin.addressForIssue = function (userId, url) {
     if (address)
         return address;
 
-    // If there is no address associated with this user and issue,
-    // grab an unused one and associate it.
-    address = Bitcoin.IssueAddresses.findOne({
-        used: false, proxyAddress: { $exists: true }
-    });
+    var addressFut = new Future();
     
-    if (address) {
+    Fiber(function () {
+        // If there is no address associated with this user and issue,
+        // grab an unused one and associate it.
+        address = Bitcoin.IssueAddresses.findOne({
+            used: false, proxyAddress: { $exists: true }
+        });
         
-        // Update our local instance and then the instance in the database.
-        address.used = true;
-        address.url = url;
-        address.userId = userId;
-        
-        Fiber(function () {
-            Bitcoin.IssueAddresses.update({ address: address.address },
-                { $set: { used: true, url: url, userId: userId } });
+        if (address) {
+            
+            // Update our local instance and then the instance in the database.
+            address.used = true;
+            address.url = url;
+            address.userId = userId;
+            
+            Fiber(function () {
+                Bitcoin.IssueAddresses.update({ address: address.address },
+                    { $set: { used: true, url: url, userId: userId } });
 
-            // Set the address's "account" via bitcoind,
-            // for extra data redundancy.
-            Bitcoin.Client.setAccount(address.address, userId + ":" + url);
-        }).run();
-        
-        return address;
-    }
-    return Bitcoin._insertAddressForIssue(userId, url);
+                // Set the address's "account" via bitcoind,
+                // for extra data redundancy.
+                Bitcoin.Client.setAccount(address.address, userId + ":" + url);
+            }).run();
+            
+            addressFut.ret(address);
+            return;
+        }
+        Bitcoin._insertAddressForIssue(userId, url, function (addressObj) {
+            addressFut.ret(addressObj);
+        });
+    }).run();
+    return addressFut.wait();
 };
 
 /*****************************************************
