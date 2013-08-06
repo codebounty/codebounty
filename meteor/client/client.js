@@ -62,6 +62,9 @@ Meteor.Router.add({
         Session.set("redirect", redirect);
         return "setupReceiverAddressView";
     },
+    "/newAddressError": function () {
+        return "newAddressErrorView";
+    },
 
     //-------------------------------------------------------
 
