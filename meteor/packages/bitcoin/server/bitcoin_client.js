@@ -16,13 +16,13 @@ var bitcoin = Npm.require("bitcoin");
  **/
 Bitcoin._selfRecoveringCallbackDecorator = function (client, originalRequest, callback) {
     return function () {
-        if (arguments[0] && arguments[0].code == Bitcoin.Errors.WalletLocked) {
+        if (arguments[0] && arguments[0].code == Bitcoin.Errors.UnlockNeeded) {
             // Unlock the wallet and try again.
             client.walletPassphrase(
                 Meteor.settings["BITCOIN_PASSPHRASE"], 
                 Meteor.settings["BITCOIN_LOCK_INTERVAL"],
                 originalRequest);
-        } else if (arguments[0] && arguments[0].code == Bitcoin.Errors.KeypoolEmpty) {
+        } else if (arguments[0] && arguments[0].code == Bitcoin.Errors.KeypoolRanOut) {
             client.walletPassphrase(
                 Meteor.settings["BITCOIN_PASSPHRASE"], 
                 Meteor.settings["BITCOIN_LOCK_INTERVAL"],
