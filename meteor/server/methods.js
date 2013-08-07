@@ -9,7 +9,11 @@ Meteor.methods({
 
         var fut = new Future();
 
-        var gitHub = new GitHub(user);
+        var gitHub = new GitHub({
+            user: user,
+            onError: GitHubUtils.Local.Logging.onError,
+            onSuccess: GitHubUtils.Local.Logging.onSuccess
+        });
         gitHub.checkAccess(function (hasAccess) {
             fut.ret(hasAccess);
         });
@@ -33,7 +37,12 @@ Meteor.methods({
             return false;
 
         var fut = new Future();
-        var gitHub = new GitHub(user);
+        var gitHub = new GitHub({
+            user: user,
+            onError: GitHubUtils.Local.Logging.onError,
+            onSuccess: GitHubUtils.Local.Logging.onSuccess
+        });
+        
         gitHub.getIssueEvents(issueUrl, function (error, result) {
             if (error) {
                 TL.error("Error checking canPostBounty: " + EJSON.stringify(error), Modules.Github);
@@ -235,7 +244,11 @@ Meteor.methods({
         if (!byAdmin)
             selector.userId = user._id;
 
-        var gitHub = new GitHub(user);
+        var gitHub = new GitHub({
+            user: user,
+            onError: GitHubUtils.Local.Logging.onError,
+            onSuccess: GitHubUtils.Local.Logging.onSuccess
+        });
 
         RewardUtils.eligibleForManualReward(selector, {}, issueUrl, true, gitHub, function (rewards, contributorsEmails) {
             if (contributorsEmails && contributorsEmails.length > 0) {
@@ -325,7 +338,11 @@ Meteor.methods({
         var fut = new Future();
 
         //update receivers before initiating payout
-        var gitHub = new GitHub(Meteor.user());
+        var gitHub = new GitHub({
+            user: Meteor.user(),
+            onError: GitHubUtils.Local.Logging.onError,
+            onSuccess: GitHubUtils.Local.Logging.onSuccess
+        });
         gitHub.getContributorsCommits(myReward.issueUrl, function (error, issueEvents, commits) {
             if (error) {
                 fut.ret(false);

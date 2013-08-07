@@ -13,7 +13,11 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
         currency: currency,
         userId: user._id
     };
-    var gitHub = new GitHub(user);
+    var gitHub = new GitHub({
+        user: user,
+        onError: GitHubUtils.Local.Logging.onError,
+        onSuccess: GitHubUtils.Local.Logging.onSuccess
+    });
 
     RewardUtils.eligibleForManualReward(selector, {}, issueUrl, false, gitHub, function (rewards, contributorsEmails) {
         var reward;

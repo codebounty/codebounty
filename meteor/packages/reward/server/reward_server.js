@@ -209,7 +209,11 @@ Reward.prototype.fundApproved = function () {
     var commentBody = "[![Code Bounty](" + imageUrl + ")](" + commentLink + ")";
 
     //post as charlie
-    var gitHub = new GitHub();
+    var gitHub = new GitHub({
+        accessToken: Meteor.settings["GITHUB_COMMENTER"],
+        onError: GitHubUtils.Local.Logging.onError,
+        onSuccess: GitHubUtils.Local.Logging.onSuccess
+    });
     gitHub.postComment(that.issueUrl, commentBody);
 };
 
