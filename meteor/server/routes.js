@@ -143,7 +143,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                     funds: {
                         $elemMatch: {
                             transactionHash: params.transaction_hash,
-                            approved: true
+                            approved: { $exists: true }
                         }
                     }
                 });
@@ -246,7 +246,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                         TL.error("No eligible reward found " + EJSON.stringify(params));
                         fut.ret([404]); // Someone's probably screwing with us.
                     }
-                } else { // if (!existing && transaction)
+                } else { // if (existing || !transaction)
                     TL.error("BitcoinFund approval already recorded " + EJSON.stringify(params));
                     fut.ret([200, "*ok*"]); // Have BitPay stop sending notifications.
                 }
