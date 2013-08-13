@@ -34,11 +34,10 @@ module.exports = function () {
                     + address + "&value=" + amount * SATOSHI_PER_BITCOIN
                     + "&confirmations=10&transaction_hash=" + transactionHash);
                 self.browser.sleep(4000);
-                self.browser.getPageSource();
+                return self.browser.getPageSource();
             })
             .then(function (source) {
-                console.log(source);
-                if (source != "*ok*") {
+                if (source.indexOf("*ok*") < 0) {
                     callback.fail();
                 } else {
                     callback();
