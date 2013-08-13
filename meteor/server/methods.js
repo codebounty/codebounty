@@ -255,6 +255,8 @@ Meteor.methods({
                 var clientRewards = _.map(rewards, RewardUtils.clientReward);
 
                 //order by size
+                // TODO: What happens if someone cancels a fund?
+                // Largest != newest.
                 clientRewards = _.sortBy(clientRewards, function (reward) {
                     return parseFloat(BigUtils.sum(reward.availableFundPayoutAmounts()).toString());
                 });
