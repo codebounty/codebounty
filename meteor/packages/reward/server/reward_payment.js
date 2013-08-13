@@ -193,6 +193,10 @@ Reward.prototype.fundDistributions = function () {
     var receiverPayments = _.map(that.receivers, function (receiver) {
         return { email: receiver.email, amount: receiver.getReward() };
     });
+    
+    if (receiverPayments.length == 0) {
+        return [];
+    }
 
     // Initialize some variables we'll use later for looping through
     // all the Fund objects and payees.
