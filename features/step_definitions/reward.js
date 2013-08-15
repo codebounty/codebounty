@@ -16,7 +16,7 @@ module.exports = function () {
 
     var currentRewardPage;
 
-    this.When(/I reward the bounty equally among the contributors/, function (callback) {
+    this.When(/I reward the (.*) bounty equally among the contributors/, function (currency, callback) {
         var self = this;
 
         self.browser.sleep(1000);
@@ -28,6 +28,18 @@ module.exports = function () {
 
         currentRewardPage = new RewardPage(self);
         currentRewardPage.switchTo();
+        
+        var submitRewards = function () {
+			self.browser.findElement({className: "rewardButton"}).click();
+
+			//wait for the reward to submit
+			return self.browser.sleep(4000);
+		};
+		
+		if (currency == "BTC") {
+			submitRewards().then(callback);
+			return;
+		}
 
         //equally split the amount among each contributor
         var equallySplit = currentRewardPage.amount().then(function (amount) {
@@ -56,14 +68,11 @@ module.exports = function () {
                     currentRewardPage.setContributorAmount(i, contributorReward);
                 }
 
-                self.browser.findElement({className: "rewardButton"}).click();
-
-                //wait for the reward to submit
-                return self.browser.sleep(4000);
+                return self.browser;
             });
         });
 
-        equallySplit.then(callback);
+        equallySplit.then(submitRewards).then(callback);
     });
 
     this.Then(/there should be no remaining money on the issue$/, function (callback) {

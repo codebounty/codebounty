@@ -7,8 +7,8 @@ RewardPage.prototype.amount = function () {
         className: "payoutTotalAmount"
     }).getText()
         .then(function (amount) {
-            //get rid of the currency symbol
-            amount = amount.substring(1);
+            //get rid of the currency symbol & whitespace
+            amount = amount.substring(1).trim();
 
             return amount;
         });

@@ -22,7 +22,7 @@ module.exports = function () {
             currentIssuePage.openBountyWindow()
             .then(function (windowHandle) {
                 self.browser.switchTo().window(windowHandle);
-                self.browser.sleep(8000);
+                self.browser.sleep(18000);
                 
                 var btcBountyPage = new BtcBountyPage(self, windowHandle);
                 return btcBountyPage.bitcoinAddress();
@@ -33,12 +33,11 @@ module.exports = function () {
                     + Settings.BITCOIN_SECRET + "&input_address="
                     + address + "&value=" + amount * SATOSHI_PER_BITCOIN
                     + "&confirmations=10&transaction_hash=" + transactionHash);
-                self.browser.sleep(4000);
-                self.browser.getPageSource();
+                self.browser.sleep(8000);
+                return self.browser.getPageSource();
             })
             .then(function (source) {
-                console.log(source);
-                if (source != "*ok*") {
+                if (source.indexOf("*ok*") < 0) {
                     callback.fail();
                 } else {
                     callback();
