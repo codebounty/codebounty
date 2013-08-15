@@ -80,7 +80,7 @@ Reward.prototype.addFund = function (amount, funder, callback) {
     }
 
     if (that.currency === "btc") {
-        var address = Bitcoin.addressForIssue(funder._id, that.issueUrl);
+        var address = BitcoinLocal.addressForIssue(funder._id, that.issueUrl);
         
         if (!address) {
             callback(rootUrl + "newAddressError");
@@ -107,7 +107,7 @@ Reward.prototype.addFund = function (amount, funder, callback) {
         // Make sure this user has a receiving address set up before
         // we issue them an address to send us funds through in the add bitcoin funds view
         var email = AuthUtils.email(funder);
-        var receivingAddress = Bitcoin.ReceiverAddresses.findOne({ email: email });
+        var receivingAddress = BitcoinLocal.ReceiverAddresses.findOne({ email: email });
         if (!receivingAddress)
             callback(rootUrl + "setupReceiverAddress?redirect=" + encodeURIComponent(fundingUrl));
         else
