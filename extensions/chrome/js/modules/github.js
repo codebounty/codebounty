@@ -155,11 +155,34 @@ define(["config"], function (config) {
                 "<input id='currencyInput' type='hidden' value='usd' />" +
                 "<a id='postBounty' class='bountyButton button minibutton bigger' href='#'>" +
                 "Post Bounty" +
-                "</a>");
+                "</a>" +
+                "<div class='payWithBox'>" +
+                "<p> with <img class='paypal-mark'></p>" +
+                "</div>"
+            );
 
             $usdDiv.insertAfter(container);
             $(currencyToggle).insertBefore(".discussion-stats .inputWrapper");
             updateBountyStatusIcon();
+
+            //slide out "pay with paypal" on hover (for compliance)
+            $("#postBounty").hover(
+                function () {
+                    var currency = $("#currencyInput").val();
+                    if (currency !== "usd")
+                        return;
+
+                    var $this = $(this);
+                    var $slidelem = $this.next();
+                    $slidelem.stop().animate({'height': '23px'}, 300);
+                    $slidelem.stop(true, true).fadeIn();
+                },
+                function () {
+                    var $this = $(this);
+                    var $slidelem = $this.next();
+                    $slidelem.stop(true, true).fadeOut();
+                }
+            );
 
             $("#currencyToggle")
                 .on("toggle", function (e, usd) {
