@@ -42,7 +42,7 @@ define(["config"], function (config) {
             renderContainer();
     }, 1000);
 
-    /************************ issue status ************************/
+    //--------------------- issue status ------------------------
 
     /**
      * Sets how much the total bounty is
@@ -59,7 +59,7 @@ define(["config"], function (config) {
         }, "setBountyAmount");
     };
 
-    /************************ post bounty ************************/
+    //--------------------- post bounty ------------------------
 
     function enablePostBounty(enable) {
         var hasDisabledClass = $("#postBounty").hasClass("disabled");
@@ -203,7 +203,7 @@ define(["config"], function (config) {
         }, "postBounty");
     };
 
-    /************************ reward bounty ************************/
+    //--------------------- reward bounty ------------------------
 
     github.renderRewardBounty = function () {
         render(function () {
@@ -227,7 +227,7 @@ define(["config"], function (config) {
         $("#rewardBounty").remove();
     };
 
-    /************************ overlay and popup window ************************/
+    //--------------------- overlay and popup window ------------------------
 
     //setup the overlay div
     var overlayDiv = "" +

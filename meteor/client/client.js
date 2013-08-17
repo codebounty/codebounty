@@ -1,6 +1,6 @@
 Meteor.Router.add({
     //----------------- admin dashboard --------------------
-    //
+
     "/admin": function () {
         return "adminView";
     },
@@ -12,7 +12,8 @@ Meteor.Router.add({
         return "adminUsersView";
     },
 
-    //----------------- funds ------------------------------
+    //---------------------- funds --------------------------
+
     "/addFunds": function () {
         if (Meteor.loggingIn())
             return "loadingView";
@@ -108,4 +109,4 @@ Meteor.Router.filters({
     }
 });
 
-Meteor.Router.filter("checkLoggedIn", {except: "/messenger"});
+Meteor.Router.filter("checkLoggedIn");
