@@ -20,8 +20,6 @@ Package.on_use(function (api) {
     api.add_files("reward.js", ["client", "server"]);
     api.add_files("settings.js", ["client", "server"]);
 
-    api.add_files("client/reward_client.js", "client");
-
     api.add_files("server/settings.js", "server");
     api.add_files("server/reward_utils.js", "server");
 

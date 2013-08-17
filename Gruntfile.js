@@ -1,6 +1,18 @@
 var fs = require("fs"), util = require("util");
 
 module.exports = function (grunt) {
+    function preprocessChromeExtensionConfig(environment) {
+        return {
+            options: {
+                context: {
+                    BASEURL: "<%= config.baseUrl." + environment + " %>",
+                    ROOTURL: "<%= config.rootUrl." + environment + " %>"
+                }
+            },
+            src: "<%= config.dist %>/chrome/js/modules/config.js",
+            dest: "<%= config.dist %>/chrome/js/modules/config.js"
+        }
+    }
 
     grunt.initConfig({
         config: grunt.file.readJSON("config.json"),
@@ -78,33 +90,9 @@ module.exports = function (grunt) {
             }
         },
         preprocess: {
-            dist: {
-                options: {
-                    context: {
-                        ROOTURL: "<%= config.rootUrl.dist %>"
-                    }
-                },
-                src: "<%= config.dist %>/chrome/js/github.js",
-                dest: "<%= config.dist %>/chrome/js/github.js"
-            },
-            qa: {
-                options: {
-                    context: {
-                        ROOTURL: "<%= config.rootUrl.qa %>"
-                    }
-                },
-                src: "<%= config.dist %>/chrome/js/github.js",
-                dest: "<%= config.dist %>/chrome/js/github.js"
-            },
-            local: {
-                options: {
-                    context: {
-                        ROOTURL: "<%= config.rootUrl.local %>"
-                    }
-                },
-                src: "<%= config.dist %>/chrome/js/github.js",
-                dest: "<%= config.dist %>/chrome/js/github.js"
-            }
+            dist: preprocessChromeExtensionConfig("dist"),
+            qa: preprocessChromeExtensionConfig("qa"),
+            local: preprocessChromeExtensionConfig("local")
         }
     });
 
