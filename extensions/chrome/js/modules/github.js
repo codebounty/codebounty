@@ -174,9 +174,9 @@ define(["config"], function (config) {
                 })
                 .toggles({
                     animate: 0,
-                    type: "select",
+                    on: true,
                     text: {on: "USD", off: "BTC"},
-                    on: true
+                    type: "select"
                 });
 
             $("#postBounty").click(function (e) {

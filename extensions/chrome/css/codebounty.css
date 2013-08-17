@@ -60,6 +60,8 @@
 #currencyToggle {
     position: relative;
     margin: 0 auto 8px;
+    width: 60px;
+    height: 20px;
 }
 
 #iframecontainer {
