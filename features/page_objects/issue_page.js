@@ -1,58 +1,58 @@
 function IssuePage(world, number, organization, repo, callback) {
-    var self = this;
+    var that = this;
 
-    self.browser = world.browser;
-    self.issueUrl = "https://github.com/" + organization + "/" + repo + "/issues/" + number;
-    self.settings = world.settings;
+    that.browser = world.browser;
+    that.issueUrl = "https://github.com/" + organization + "/" + repo + "/issues/" + number;
+    that.settings = world.settings;
 
-    self.browser.getAllWindowHandles().then(function (handles) {
-        self.handle = handles[0];
+    that.browser.getAllWindowHandles().then(function (handles) {
+        that.handle = handles[0];
     });
 
-    self._navigate().then(callback);
+    that._navigate().then(callback);
 }
 
 IssuePage.prototype._login = function () {
-    var self = this;
+    var that = this;
 
-    self.browser.findElement({name: "login"}).sendKeys(self.settings.GITHUB_USERNAME);
-    self.browser.findElement({name: "password"}).sendKeys(self.settings.GITHUB_PASSWORD);
-    self.browser.findElement({name: "commit"}).click();
+    that.browser.findElement({name: "login"}).sendKeys(that.settings.GITHUB_USERNAME);
+    that.browser.findElement({name: "password"}).sendKeys(that.settings.GITHUB_PASSWORD);
+    that.browser.findElement({name: "commit"}).click();
 
     //allow some time for logging in
     //this only needs to happen the first time run the tests so its not a big deal
-    return self.browser.sleep(5000);
+    return that.browser.sleep(5000);
 };
 
 IssuePage.prototype._navigate = function () {
-    var self = this;
+    var that = this;
 
-    self.browser.get(self.issueUrl);
+    that.browser.get(that.issueUrl);
 
     //it takes a bit for the login and password to drop down
-    self.browser.sleep(1000);
+    that.browser.sleep(1000);
 
-    return self.browser.isElementPresent({name: "login"}).then(function (shouldLogin) {
+    return that.browser.isElementPresent({name: "login"}).then(function (shouldLogin) {
         if (!shouldLogin)
             return;
 
-        return self._login();
+        return that._login();
     });
 };
 
 IssuePage.prototype.isBountyCommentPresent = function () {
-    var self = this;
+    var that = this;
 
     var xpath = "//a[contains(@href, 'reward/link/')]/img[contains(@src, 'reward/image/')]";
 
-    return self.browser.isElementPresent({
+    return that.browser.isElementPresent({
         xpath: xpath
     });
 };
 
 IssuePage.prototype.openBountyAmount = function () {
-    var self = this,
-        element = self.browser.findElement({
+    var that = this,
+        element = that.browser.findElement({
             xpath: "//span[contains(@class, 'state-indicator open')]"
         });
 
@@ -66,19 +66,23 @@ IssuePage.prototype.openBountyAmount = function () {
  * Returns the approval page handle
  */
 IssuePage.prototype.postBounty = function (amount) {
-    var self = this;
-
-    var bountyInput = self.browser.findElement({id: "bountyInput"});
+    var bountyInput = this.browser.findElement({id: "bountyInput"});
     bountyInput.clear();
     bountyInput.sendKeys(amount);
 
-    self.browser.findElement({id: "postBounty"}).click();
+    return this.openBountyWindow();
+};
 
-    return self.browser.getAllWindowHandles().then(function (handles) {
+IssuePage.prototype.openBountyWindow = function () {
+    var that = this;
+    
+    that.browser.findElement({id: "postBounty"}).click();
+
+    return this.browser.getAllWindowHandles().then(function (handles) {
         for (var i = 0; i < handles.length; i++)
             //there should only be two windows open
             //the one that is not this issue page should is the approval page
-            if (handles[i] !== self.handle)
+            if (handles[i] !== that.handle)
                 return handles[i];
     });
 };
@@ -92,9 +96,7 @@ IssuePage.prototype.switchTo = function () {
 };
 
 IssuePage.prototype.toggleCurrency = function () {
-    return this.browser.findElement({id: "currencyToggle"})
-        .findElement({className: "toggle-select"})
-        .click();
+    return this.browser.findElement({id: "currencyToggle"}).click();
 };
 
 module.exports = {
