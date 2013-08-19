@@ -68,6 +68,10 @@
 		background: #ccc;
 		box-shadow: none;
 	}
+    /* Fix for disabled scrollbar blocking check box */
+    .noUiSlider.disabled a {
+        display: none;
+    }
 	.noUiSlider div {
 		height: 18px;
 		width: 18px;
