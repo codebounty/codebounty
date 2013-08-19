@@ -43,15 +43,17 @@ Template.rewardView.receiverTotal = function () {
     var myReward = reward();
     return myReward ? myReward.receiverTotal() : new Big(0);
 };
+
 Template.rewardView.receiverHasReward = function () {
     var receiver = this;
     return receiver.getReward().gt(0);
 };
-Template.rewardView.receiverReward = function (percent) {
+
+Template.rewardView.receiverReward = function (getPercent) {
     var receiver = this;
     var receiverReward = receiver.getReward();
 
-    if (percent !== true)
+    if (getPercent !== true)
         return receiverReward;
 
     var total = rewardTotal();
@@ -104,6 +106,11 @@ var showError = _.debounce(function (show) {
             });
 }, 250);
 
+var singleReceiver = function () {
+    var myReward = reward();
+    return myReward.receivers.length === 1;
+};
+
 Template.rewardView.rendered = function () {
     var myReward = reward();
     if (!myReward)
@@ -141,6 +148,10 @@ Template.rewardView.rendered = function () {
     });
 
     showError(!isValid());
+
+    if (singleReceiver()) {
+        setRowAmount($(".contributorRow"), rewardTotal());
+    }
 };
 
 Template.rewardView.events({
