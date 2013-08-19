@@ -1,6 +1,6 @@
 Meteor.Router.add({
     //----------------- admin dashboard --------------------
-    //
+
     "/admin": function () {
         return "adminView";
     },
@@ -12,7 +12,8 @@ Meteor.Router.add({
         return "adminUsersView";
     },
 
-    //----------------- funds ------------------------------
+    //---------------------- funds --------------------------
+
     "/addFunds": function () {
         if (Meteor.loggingIn())
             return "loadingView";
@@ -68,19 +69,6 @@ Meteor.Router.add({
 
     //-------------------------------------------------------
 
-    //used by a hidden iframe view inserted into the GitHub issue page
-    "/messenger": function () {
-        var url = window.url("?url");
-        Messenger.listen(Messenger.target.plugin);
-        RewardUtils.trackTotal(url);
-
-        AuthUtils.afterLogin(function () {
-            Messenger.send({ event: "authenticated" }, Messenger.target.plugin);
-        });
-
-        return "messengerView";
-    },
-
     "/reward": function () {
         if (Meteor.loggingIn())
             return "loadingView";
@@ -124,4 +112,4 @@ Meteor.Router.filters({
     }
 });
 
-Meteor.Router.filter("checkLoggedIn", {except: "/messenger"});
+Meteor.Router.filter("checkLoggedIn");

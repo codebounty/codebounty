@@ -60,6 +60,15 @@
 #currencyToggle {
     position: relative;
     margin: 0 auto 8px;
+    width: 60px;
+    height: 20px;
+}
+
+.payWithBox {
+    display:none;
+    margin-bottom: 5px;
+    text-align: center;
+    vertical-align: middle;
 }
 
 #iframecontainer {
@@ -104,8 +113,21 @@
     z-index: 100;
 }
 
+.paypal-mark {
+    content: url("chrome-extension://__MSG_@@extension_id__/images/paypal-mark.gif");
+    vertical-align: middle;
+}
+
+.statusBars {
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-bars.png");
+}
+
 .statusCoins {
     content: url("chrome-extension://__MSG_@@extension_id__/images/status-coins.png");
+}
+
+.statusJackpot {
+    content: url("chrome-extension://__MSG_@@extension_id__/images/status-jackpot.png");
 }
 
 .statusMoneybag {
@@ -114,12 +136,4 @@
 
 .statusMoneybags {
     content: url("chrome-extension://__MSG_@@extension_id__/images/status-moneybags.png");
-}
-
-.statusBars {
-    content: url("chrome-extension://__MSG_@@extension_id__/images/status-bars.png");
-}
-
-.statusJackpot {
-    content: url("chrome-extension://__MSG_@@extension_id__/images/status-jackpot.png");
 }

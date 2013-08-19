@@ -2,6 +2,7 @@ Meteor.methods({
     //Authorization -------------------------------------------------------------
 
     //checks if the user has properly authorized codebounty
+    //to access Environment.githubScopes
     "checkAuthorization": function () {
         var user = Meteor.user();
         if (!user)
