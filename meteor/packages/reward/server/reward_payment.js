@@ -67,6 +67,11 @@ Reward.prototype.distributeEqually = function () {
                 rewardAmount = equallyDistributed;
 
             //add fraction to the first receiver, then clear it
+            // TODO: There's an intermittent bug here that ends up
+            // adding an infinitesimal fraction to the first receiver
+            // under certain conditions, which pushes the sum of the
+            // receiver totals over the sum of the funds to be
+            // distributed.
             receiver.setReward(rewardAmount.plus(fraction));
             fraction = new Big(0);
         }
@@ -193,6 +198,10 @@ Reward.prototype.fundDistributions = function () {
     var receiverPayments = _.map(that.receivers, function (receiver) {
         return { email: receiver.email, amount: receiver.getReward() };
     });
+    
+    if (receiverPayments.length == 0) {
+        return [];
+    }
 
     // Initialize some variables we'll use later for looping through
     // all the Fund objects and payees.

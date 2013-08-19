@@ -6,3 +6,8 @@ Feature: Backer posts a bounty
     Given I visit issue 25 in codebounty/codebounty
     When I post a 15 USD bounty
     Then a bounty comment should be posted on the issue
+
+  Scenario: Backer posts a BTC bounty
+    Given I visit issue 25 in codebounty/codebounty
+    When I post a 0.05 BTC bounty
+    Then a bounty comment should be posted on the issue
