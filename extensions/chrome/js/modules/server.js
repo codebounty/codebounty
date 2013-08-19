@@ -43,11 +43,12 @@ define(["config"], function (config) {
                 if (onConnected)
                     onConnected();
 
-                ddp.loginWithOauth({
-                    clientId: "8660a42d9a14177b2a45",
-                    oauthUrl: "https://github.com/login/oauth/authorize",
-                    redirectUrl: "http://localhost:3000/_oauth/github?close",
-                    scopes: ["user:email", "repo"]
+                ddp.loginWithOauth(function (credentialToken) {
+                    return "https://github.com/login/oauth/authorize" +
+                        "?client_id=" + "8660a42d9a14177b2a45" +
+                        "&scope=" + ["user:email", "repo"].map(encodeURIComponent).join('+') +
+                        "&redirect_uri=" + config.rootUrl + "/_oauth/github?close" +
+                        "&state=" + credentialToken;
                 }).then(function () {
                         if (onAuthenticated)
                             onAuthenticated();
