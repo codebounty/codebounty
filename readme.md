@@ -45,7 +45,9 @@ OS X / Linux / Ubuntu
 
 6. For testing you will also need to download [chromedriver](https://code.google.com/p/chromedriver/downloads/list) into a folder and add that folder to your PATH.
 
-7. Run `git update-index --assume-unchanged meteor/settings.local.json` to prevent checking in changes
+7. Copy and rename `config.json.example` to `config.json`.
+
+8. Copy `settings.local.json.example` to `meteor/settings.local.json`.
 
 ###Run Project
 

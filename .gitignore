@@ -3,6 +3,7 @@
 *.log
 build/
 chromeprofile/
+config.json
 features/support/settings.local.json
 meteor/settings.local.json
 meteor/settings.qa.json
