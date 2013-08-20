@@ -94,7 +94,9 @@ PayPalFund.prototype.initiatePreapproval = function (reward, callback) {
 
     PayPal.getApproval(that.amount.toString(), description, that.expires, cancel, confirm, function (error, data, approvalUrl) {
         if (error) {
-            TL.error("Could not get preapproval url " + EJSON.stringify(error), Modules.Paypal);
+            Fiber(function () {
+                TL.error("Could not get preapproval url " + EJSON.stringify(error), Modules.Paypal);
+            }).run();
             return;
         }
 

@@ -198,7 +198,7 @@ Reward.prototype.fundDistributions = function () {
     var receiverPayments = _.map(that.receivers, function (receiver) {
         return { email: receiver.email, amount: receiver.getReward() };
     });
-    
+
     if (receiverPayments.length == 0) {
         return [];
     }
@@ -281,7 +281,10 @@ Reward.prototype.fundDistributions = function () {
     if (payDeficit.gt(0)) {
         var error = "Problem with distributing the funds of reward " + that._id +
             " due to deficit of " + payDeficit.toString();
-        TL.error(error, Modules.Reward);
+
+        Fiber(function () {
+            TL.error(error, Modules.Reward);
+        }).run();
         throw error; //throw the error so the payment is not processed
     }
 

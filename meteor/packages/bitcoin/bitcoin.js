@@ -15,21 +15,21 @@ Bitcoin.addressForIssue = function (userId, url) {
         return address;
 
     var addressFut = new Future();
-    
+
     Fiber(function () {
         // If there is no address associated with this user and issue,
         // grab an unused one and associate it.
         address = Bitcoin.IssueAddresses.findOne({
             used: false, proxyAddress: { $exists: true }
         });
-        
+
         if (address) {
-            
+
             // Update our local instance and then the instance in the database.
             address.used = true;
             address.url = url;
             address.userId = userId;
-            
+
             Fiber(function () {
                 Bitcoin.IssueAddresses.update({ address: address.address },
                     { $set: { used: true, url: url, userId: userId } });
@@ -38,7 +38,7 @@ Bitcoin.addressForIssue = function (userId, url) {
                 // for extra data redundancy.
                 Bitcoin.Client.setAccount(address.address, userId + ":" + url);
             }).run();
-            
+
             addressFut.ret(address);
             return;
         }
@@ -62,7 +62,9 @@ Bitcoin.verify = function (request, response, callback) {
 
     if (params.secret != Bitcoin.IPNSecret) {
         error = "Incorrect secret for Bitcoin IPN: " + params.secret;
-        TL.error(error, Modules.Bitcoin);
+        Fiber(function () {
+            TL.error(error, Modules.Bitcoin);
+        }).run();
     }
 
     if (callback)
@@ -117,31 +119,31 @@ Bitcoin.pay = function (address, receiverList, callback) {
                     // don't have one yet) and then send the amount owed to that
                     // address.
                     var tempAddress = Bitcoin.TemporaryReceiverAddresses.findOne(
-                        { email: receiver.email } );
-                        
+                        { email: receiver.email });
+
                     if (tempAddress) {
                         Bitcoin.Client.sendToAddress(tempAddress.address, receiver.amount);
                     } else {
                         Bitcoin.Client.getAccountAddress(receiver.email,
-                        function (err, payoutAddress) {
-                            if (err) {
-                                Fiber(function () {
-                                    TL.error("getAccountAddress error: " + err.toString());
-                                }).run();
-                            } else {
-                                Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
-                                
-                                // Save the temporary address for this user so we
-                                // don't bother bitcoind for a new one later if the
-                                // same user gets another reward before signing up.
-                                Fiber(function () {
-                                    Bitcoin.TemporaryReceiverAddresses.insert({
-                                        email: receiver.email,
-                                        address: payoutAddress
-                                    });
-                                }).run();
-                            }
-                        });
+                            function (err, payoutAddress) {
+                                if (err) {
+                                    Fiber(function () {
+                                        TL.error("getAccountAddress error: " + err.toString());
+                                    }).run();
+                                } else {
+                                    Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);
+
+                                    // Save the temporary address for this user so we
+                                    // don't bother bitcoind for a new one later if the
+                                    // same user gets another reward before signing up.
+                                    Fiber(function () {
+                                        Bitcoin.TemporaryReceiverAddresses.insert({
+                                            email: receiver.email,
+                                            address: payoutAddress
+                                        });
+                                    }).run();
+                                }
+                            });
                     }
                 }
             });

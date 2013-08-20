@@ -43,10 +43,12 @@ Meteor.methods({
             onError: GitHubUtils.Local.Logging.onError,
             onSuccess: GitHubUtils.Local.Logging.onSuccess
         });
-        
+
         gitHub.getIssueEvents(issueUrl, function (error, result) {
             if (error) {
-                TL.error("Error checking canPostBounty: " + EJSON.stringify(error), Modules.Github);
+                Fiber(function () {
+                    TL.error("Error checking canPostBounty: " + EJSON.stringify(error), Modules.Github);
+                }).run();
                 fut.ret(false);
                 return;
             }
@@ -80,10 +82,10 @@ Meteor.methods({
         if (tempAddress) {
             Fiber(function () {
                 Bitcoin.Client.getReceivedByAddress(tempAddress.address,
-                function (err, received) {
-                    if (received)
-                        Bitcoin.Client.sendToAddress(receiverAddress, received);
-                });
+                    function (err, received) {
+                        if (received)
+                            Bitcoin.Client.sendToAddress(receiverAddress, received);
+                    });
                 Bitcoin.TemporaryReceiverAddresses.remove({ email: user.email });
             }).run();
         }
@@ -371,8 +373,10 @@ Meteor.methods({
                     fut.ret(success);
 
                     if (error)
-                        TL.error("Error initiating payout for " + myReward._id.toString() +
-                            " :" + EJSON.stringify(error), Modules.Reward);
+                        Fiber(function () {
+                            TL.error("Error initiating payout for " + myReward._id.toString() +
+                                " :" + EJSON.stringify(error), Modules.Reward);
+                        }).run();
                 });
             }).run();
         });
