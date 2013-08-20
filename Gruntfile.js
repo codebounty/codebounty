@@ -1,13 +1,16 @@
 var fs = require("fs"), util = require("util");
 
 module.exports = function (grunt) {
+    var config = grunt.file.readJSON("config.json");
+
     function preprocessChromeExtensionConfig(environment) {
         return {
             options: {
                 context: {
-                    BASEURL: "<%= config.baseUrl." + environment + " %>",
-                    ROOTURL: "<%= config.rootUrl." + environment + " %>",
-                    GITHUBCLIENTID: "<%= config.githubClientId." + environment + " %>"
+                    BASEURL: config.baseUrl[environment],
+                    ROOTURL: config.rootUrl[environment],
+                    GITHUBCLIENTID: config.githubClientId[environment],
+                    GITHUBSCOPES: JSON.stringify(config.githubScopes[environment])
                 }
             },
             src: "<%= config.dist %>/chrome/js/modules/config.js",
@@ -16,7 +19,7 @@ module.exports = function (grunt) {
     }
 
     grunt.initConfig({
-        config: grunt.file.readJSON("config.json"),
+        config: config,
         bgShell: {
             bitcoind: {
                 cmd: "bitcoind",

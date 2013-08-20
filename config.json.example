@@ -15,5 +15,10 @@
         "local": "A github client id",
         "qa": "Another github client id",
         "dist": "Another github client id"
+    },
+    "githubScopes": {
+        "local": ["user:email", "repo"],
+        "qa": ["user:email", "repo"],
+        "dist": ["user:email", "public_repo"]
     }
 }

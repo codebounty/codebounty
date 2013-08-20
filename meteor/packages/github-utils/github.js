@@ -13,7 +13,7 @@ var MAX_REQUESTS = 5000;
 
 /**
  * Creates an authenticated github client
- * @param [user] The user to authorize the API with. If not passed, it will use the GITHUB_COMMENTER key
+ * @param [userParams] The user to authorize the API with. If not passed, it will use the GITHUB_COMMENTER key
  * @constructor
  */
 GitHub = function (userParams) {
@@ -28,7 +28,7 @@ GitHub = function (userParams) {
         requestsRemaining: MAX_REQUESTS,
         cacheExpirationInterval: 60000 // In milliseconds
     };
-    
+
     var githubApi = new GitHubApi({
         // required
         version: "3.0.0",
@@ -84,7 +84,7 @@ GitHub = function (userParams) {
  */
 GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
     var that = this;
-    
+
     //clone data to use for request options
     var requestOptions = JSON.parse(JSON.stringify(data));
     if (page >= 1)
@@ -112,10 +112,10 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
 
 GitHub.prototype._pastCacheExpiration = function (response) {
     var now = new Date();
-    
+
     return (!response
-    || response.retrieved < new Date(now - this.cacheExpirationInterval));
-}
+        || response.retrieved < new Date(now - this.cacheExpirationInterval));
+};
 
 /**
  * Takes a standard response and adds it to the cachedResponse
@@ -142,15 +142,15 @@ GitHub.prototype._updateCachedResponse = function (request, data, forceRequest, 
     var that = this;
     Fiber(function () {
         var cachedResponse = Responses.findOne({request: request, data: data});
-        
+
         // If there is a cached response and it has not yet expired,
         // just return that. (Unless we're being forced to make a request.)
         if (!forceRequest && cachedResponse
-        && !that._pastCacheExpiration(cachedResponse)) {
+            && !that._pastCacheExpiration(cachedResponse)) {
             callback(null, cachedResponse);
             return;
         }
-        
+
         //if there is not a cached response yet
         //load the first page and set it on a new cached response
         if (!cachedResponse) {
@@ -333,6 +333,9 @@ GitHub.prototype.checkAccess = function (callback, force) {
 
         var scopes = result.meta["x-oauth-scopes"].replace(" ", "").split(",");
         var haveAccess = _.every(Environment.githubScopes, function (requiredScope) {
+            if (requiredScope === "public_repo")
+                return _.contains(scopes, "public_repo") || _.contains(scopes, "repo");
+
             return _.contains(scopes, requiredScope);
         });
 
