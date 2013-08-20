@@ -25,7 +25,9 @@ define(["config"], function (config) {
             };
 
             //if not lets re-prompt the user for authorization again
-            ddp.oauthPrompt().then(tryAgain, tryAgain);
+            ddp.oauthPrompt().then(function () {
+                def.resolve();
+            }, tryAgain);
         });
 
         return def.promise();
