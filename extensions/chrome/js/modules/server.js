@@ -45,7 +45,7 @@ define(["config"], function (config) {
 
                 ddp.loginWithOauth(function (credentialToken) {
                     return "https://github.com/login/oauth/authorize" +
-                        "?client_id=" + "8660a42d9a14177b2a45" +
+                        "?client_id=" + config.githubClientId +
                         "&scope=" + ["user:email", "repo"].map(encodeURIComponent).join('+') +
                         "&redirect_uri=" + config.rootUrl + "/_oauth/github?close" +
                         "&state=" + credentialToken;

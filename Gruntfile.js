@@ -6,7 +6,8 @@ module.exports = function (grunt) {
             options: {
                 context: {
                     BASEURL: "<%= config.baseUrl." + environment + " %>",
-                    ROOTURL: "<%= config.rootUrl." + environment + " %>"
+                    ROOTURL: "<%= config.rootUrl." + environment + " %>",
+                    GITHUBCLIENTID: "<%= config.githubClientId." + environment + " %>"
                 }
             },
             src: "<%= config.dist %>/chrome/js/modules/config.js",

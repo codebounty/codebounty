@@ -22,11 +22,11 @@
     "PAYPAL_REQURL": "https://svcs.sandbox.paypal.com/",
     "PAYPAL_SANDBOX_EMAIL": "support-facilitator@codebounty.co",
     "PAYPAL_SIGNATURE": "Your PayPal signature",
-    "PAYPAL_USERID": "support-facilitator_api1.codebounty.co",
+    "PAYPAL_USERID": "Your PayPal user id",
     "public": {
         "environment": "local"
     },
-    "ROOT_URL": "https://cbounty.fwd.wf/",
+    "ROOT_URL": "https://localmachine.fwd.wf/",
     "SMTP_URL": null,
     "SUPPORT_EMAIL": "support@codebounty.co"
 }
