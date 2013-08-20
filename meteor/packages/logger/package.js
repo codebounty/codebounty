@@ -5,7 +5,8 @@ Package.describe({
 Package.on_use(function (api) {
     api.use("observatory", ["client", "server"]);
 
-    api.add_files("logger.js", ["client", "server"]);
+    api.export("Modules");
 
+    api.add_files("logger.js", ["client", "server"]);
     api.add_files("logger_client.js", "client");
 });

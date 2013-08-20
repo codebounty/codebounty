@@ -1,11 +1,13 @@
 {
-  "packages": {
-    "bootstrap-3": {},
-    "router": {},
-    "session-extras": {},
-    "font-awesome": {},
-    "observatory": {
-        "git": "https://github.com/jperl/observatory.git"
+    "meteor": {
+        "git": "https://github.com/meteor/meteor.git",
+        "tag": "release/0.6.5"
+    },
+    "packages": {
+        "bootstrap-3": {},
+        "font-awesome": {},
+        "observatory": {},
+        "router": {},
+        "session-extras": {}
     }
-  }
 }

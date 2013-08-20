@@ -4,4 +4,6 @@ Package.describe({
 
 Package.on_use(function (api) {
     api.add_files("environment.js", ["client", "server"]);
+
+    api.export("Environment");
 });

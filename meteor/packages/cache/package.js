@@ -8,4 +8,6 @@ Npm.depends({
 
 Package.on_use(function (api) {
     api.add_files("image_cache.js", "server");
+
+    api.export("ImageCacheTools", "server");
 });

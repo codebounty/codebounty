@@ -1,0 +1,26 @@
+{
+  "format": "unipackage-slice-pre1",
+  "packageVariables": [
+    {
+      "name": "ObservatorySettings"
+    }
+  ],
+  "uses": [
+    {
+      "package": "meteor"
+    },
+    {
+      "package": "coffeescript"
+    }
+  ],
+  "resources": [
+    {
+      "type": "prelink",
+      "file": "os/packages/observatory-settings.js",
+      "length": 2216,
+      "offset": 0,
+      "servePath": "/packages/observatory-settings.js",
+      "sourceMap": "os/packages/observatory-settings.js.map"
+    }
+  ]
+}

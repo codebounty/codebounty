@@ -16,6 +16,10 @@ Package.on_use(function (api) {
     api.use("tools", ["client", "server"]);
     api.use("underscore", ["client", "server"]);
 
+    api.export("Receiver", ["client", "server"]);
+    api.export("Reward", ["client", "server"]);
+    api.export("Settings", ["client", "server"]);
+
     api.add_files("receiver.js", ["client", "server"]);
     api.add_files("reward.js", ["client", "server"]);
     api.add_files("settings.js", ["client", "server"]);

@@ -1,0 +1,43 @@
+{
+  "builtBy": "meteor/8",
+  "sliceDependencies": {
+    "browser.json": {
+      "files": {
+        "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/package.js": "0bec81718702b8b96ea61df9ddbda29bafa6dc46",
+        "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/ObservatorySettings.js": "734903956aa4d2280317a87bb549d729ed1a37d1"
+      },
+      "directories": []
+    },
+    "os.json": {
+      "files": {
+        "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/package.js": "0bec81718702b8b96ea61df9ddbda29bafa6dc46",
+        "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/ObservatorySettings.js": "734903956aa4d2280317a87bb549d729ed1a37d1"
+      },
+      "directories": []
+    },
+    "tests.browser.json": {
+      "files": {
+        "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/package.js": "0bec81718702b8b96ea61df9ddbda29bafa6dc46"
+      },
+      "directories": []
+    },
+    "tests.os.json": {
+      "files": {
+        "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/package.js": "0bec81718702b8b96ea61df9ddbda29bafa6dc46"
+      },
+      "directories": []
+    }
+  },
+  "pluginDependencies": {
+    "files": {
+      "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings/package.js": "0bec81718702b8b96ea61df9ddbda29bafa6dc46"
+    },
+    "directories": []
+  },
+  "pluginProviderPackages": {
+    "observatory-settings": "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings",
+    "meteor": "/Users/jperl/.meteor/packages/meteor/e3bd161f1e",
+    "coffeescript": "/Users/jperl/.meteor/packages/coffeescript/135e6997ae"
+  },
+  "source": "/Users/jperl/src/codebounty/codebounty/meteor/packages/observatory-settings"
+}
