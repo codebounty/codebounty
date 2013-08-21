@@ -28,9 +28,9 @@ EmailManager.sendRewardEmail = function (backerName, receiverEmail, receiverName
                 "<div>So long, Slim.</div><br>" +
                 "<div>- <a href='https://github.com/codebountycharlie'>Charlie</a> (from <a href='http://codebounty.co'>Code Bounty</a>)</div>"
         });
-    } catch (exception) {
+    } catch (error) {
         Fiber(function () {
-            TL.error(EJSON.stringify(exception), Modules.Reward);
+            TL.error(EJSON.stringify(error), Modules.Reward);
         }).run();
     }
 };
