@@ -128,7 +128,7 @@ Bitcoin.pay = function (address, receiverList, callback) {
                             function (err, payoutAddress) {
                                 if (err) {
                                     Fiber(function () {
-                                        TL.error("getAccountAddress error: " + err.toString());
+                                        TL.error("getAccountAddress error: " + EJSON.stringify(err));
                                     }).run();
                                 } else {
                                     Bitcoin.Client.sendToAddress(payoutAddress, receiver.amount);

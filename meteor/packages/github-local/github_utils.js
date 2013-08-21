@@ -3,7 +3,7 @@ GitHubUtils.Local = {};
 GitHubUtils.Local.Logging = {
     onError: (function (err) {
         Fiber(function () {
-            TL.error(err, Modules.Github);
+            TL.error(EJSON.stringify(err), Modules.Github);
         }).run()
     }),
     onSuccess: (function (res, that) {

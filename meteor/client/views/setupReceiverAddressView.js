@@ -4,7 +4,7 @@ Template.setupReceiverAddressView.events({
 
         Meteor.call("setupReceiverAddress", receiverAddress, function (error, result) {
             if (error) {
-                TL.error(error, Modules.Bitcoin);
+                TL.error(EJSON.stringify(error), Modules.Bitcoin);
                 return;
             }
 

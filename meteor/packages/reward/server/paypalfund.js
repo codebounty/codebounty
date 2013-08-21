@@ -193,7 +193,7 @@ PayPalFund.prototype.pay = function (fundDistribution) {
         Fiber(function () {
             if (error) {
                 update.$set["funds.$.paymentError"] = error;
-                TL.error("Payment " + error, Modules.Paypal);
+                TL.error("Payment " + EJSON.stringify(error), Modules.Paypal);
             } else {
                 update.$set["funds.$.paid"] = new Date();
                 TL.info("Paid " + that._id.toString(), Modules.Paypal);
@@ -218,7 +218,7 @@ PayPalFund.prototype.refund = function () {
         Fiber(function () {
             if (error) {
                 update.$set["funds.$.refundError"] = error;
-                TL.error("Refund " + error, Modules.Paypal);
+                TL.error("Refund " + EJSON.stringify(error), Modules.Paypal);
             } else {
                 update.$set["funds.$.refunded"] = new Date();
                 TL.info("Refunded " + that._id.toString(), Modules.Paypal);

@@ -116,7 +116,7 @@ BitcoinFund.prototype.confirm = function (reward, params, insert) {
 
     that.approved = new Date();
     that.transactionHash = params.transaction_hash;
-        
+
     //TODO figure out a scenario when this is not already rewarded or a reward is in progress and a lingering payment is approved
     //after new funds are approved distribute the reward equally among all the contributors
     reward.distributeEqually();
@@ -178,7 +178,7 @@ BitcoinFund.prototype.pay = function (fundDistribution) {
         Fiber(function () {
             if (error) {
                 update.$set["funds.$.paymentError"] = error;
-                TL.error("Payment " + error, Modules.Bitcoin);
+                TL.error("Payment " + EJSON.stringify(error), Modules.Bitcoin);
             } else {
                 update.$set["funds.$.paid"] = new Date();
                 TL.info("Paid " + that._id.toString(), Modules.Bitcoin);

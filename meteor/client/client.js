@@ -24,7 +24,7 @@ Meteor.Router.add({
 
         Meteor.call("addFunds", amount, currency, url, function (error, result) {
             if (error) {
-                TL.error(error, Modules.Bounty);
+                TL.error(EJSON.stringify(error), Modules.Bounty);
                 return;
             }
 
@@ -41,7 +41,7 @@ Meteor.Router.add({
 
         Meteor.call("cancelFunds", id, function (error) {
             if (error)
-                TL.error(error, Modules.Bounty);
+                TL.error(EJSON.stringify(error), Modules.Bounty);
 
             window.close();
         });
@@ -79,7 +79,7 @@ Meteor.Router.add({
         var admin = window.url("?admin");
         Meteor.call("getReward", url, admin, function (error, result) {
             if (error) {
-                TL.error(error, Modules.Reward);
+                TL.error(EJSON.stringify(error), Modules.Reward);
                 return;
             }
 

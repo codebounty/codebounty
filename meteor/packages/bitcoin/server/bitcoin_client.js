@@ -119,7 +119,7 @@ Bitcoin.makeSynchronous = function (command) {
         args[args.length] = function (err, result) {
             if (err) {
                 Fiber(function () {
-                    TL.error("BitcoinClient.Synchronous error: " + err.toString());
+                    TL.error("BitcoinClient.Synchronous error: " + EJSON.stringify(err));
                 }).run();
                 fut.ret(undefined);
             } else {
