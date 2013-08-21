@@ -31,6 +31,9 @@ Meteor.Router.add("/reward/image/:id", function (id) {
         claimedBy: claimedBy
     };
 
+    if (reward.payout && reward.payout.on)
+        rewardDetails.payoutOn = reward.payout.on;
+
     var imagePath = "rewards/" + id + ".png";
 
     //find if there is already a matching image
@@ -51,7 +54,7 @@ Meteor.Router.add("/reward/image/:id", function (id) {
 });
 
 Meteor.Router.add("/reward/link/:id", function () {
-    return [302, { "Location": Meteor.settings["ROOT_URL"] }, null];
+    return [302, { "Location": Meteor.settings["PUBLIC_SITE_URL"] }, null];
 });
 
 //the generated repo badge route
@@ -130,13 +133,13 @@ Meteor.Router.add("/bitcoin-ipn", function () {
             fut.ret([404]);
             return;
         }
-            
+
         Bitcoin.Client.getTransaction(params.transaction_hash, function (error, transaction) {
             if (error) {
                 fut.ret([404]);
                 return;
             }
-            
+
             Fiber(function () {
                 // Check if this transaction has already been recorded
                 var existing = Rewards.findOne({
@@ -147,10 +150,10 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                         }
                     }
                 });
-                
+
                 // Make sure this transaction is in our wallet and was not already approved.
                 if (!existing && transaction) {
-                    
+
                     //find an open reward with a matching address
                     var proxyAddress = params.input_address;
                     var reward = Rewards.findOne({
@@ -167,17 +170,17 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                             }
                         }
                     });
-                    
+
                     if (reward) {
-                        
+
                         // Get the BitcoinFund that this notification is for.
                         var bitcoinFund = _.find(reward.funds, function (fund) {
                             return (!fund.transactionHash
-                                    || fund.transactionHash == params.transaction_hash)
+                                || fund.transactionHash == params.transaction_hash)
                                 && fund.proxyAddress === proxyAddress
                                 && !fund.approved;
                         });
-                        
+
                         // add a new fund for this transaction if an unassigned
                         // one doesn't exist already.
                         if (!bitcoinFund) {
@@ -192,19 +195,19 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                             });
                             reward.funds.push(bitcoinFund);
                         }
-                        
+
                         if (!bitcoinFund.transactionHash) {
                             // Save the transaciton hash.
                             bitcoinFund.setAmount((new Big(params.value).div(Bitcoin.SATOSHI_PER_BITCOIN)))
                             bitcoinFund.transactionHash = params.transaction_hash;
                             reward.saveFunds();
-                        
+
                             // Figure out how much this BTC payment will bring the
                             // total BTC paid on this issue to.
                             var totalPaid = BigUtils
                                 .sum(reward.availableFundAmounts())
                                 .plus(bitcoinFund.amount);
-                            
+
                             // Send the user different notification emails depending
                             // on whether there is enough BTC to fund a full bounty.
                             if (totalPaid >= Bitcoin.Settings.minimumFundAmount) {
@@ -215,7 +218,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                                     subject: Bitcoin.Emails.transaction_received.subject,
                                     text: Bitcoin.Emails.transaction_received.text
                                 });
-                                
+
                             } else {
                                 Email.send({
                                     to: AuthUtils.email(
@@ -226,16 +229,16 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                                 });
                             }
                         }
-                        
+
                         // If Blockchain.info says we've got enough confirmations,
                         //  and the transaction is in our wallet and also has enough
                         // confirmations...
                         if (params.confirmations >= Bitcoin.Settings.minimumConfirmations
                             && transaction.confirmations >= Bitcoin.Settings.minimumConfirmations) {
-                                
+
                             // ...go ahead and mark the BitcoinFund confirmed.
                             bitcoinFund.confirm(reward, params, false);
-                        
+
                             // Prevent Blockchain.info from continually resending the transaction.
                             fut.ret([200, "*ok*"]);
                         } else {

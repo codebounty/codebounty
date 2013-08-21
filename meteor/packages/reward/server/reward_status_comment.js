@@ -124,7 +124,8 @@ Fonts.Lato.addFace(RewardUtils.assetFile("Lato/Lato-Bold.ttf"), "bold");
 
 /**
  * generates the reward status comment image
- * @param {{status: string, amount: Number, currency: string, expiredDate: Date, userName: string,
+ * @param {{amount: Number, currency: string, expiredDate: Date,
+  *         payoutOn: Date, status: string, userName: string,
  *          claimedBy: Array.<{userName: string, amount: Number}>}=} options
  * - status: "open", "closed", "reopened", "claimed"
  * - userName: user who posted the reward
@@ -157,23 +158,23 @@ RewardUtils.statusComment = function (options) {
     if (status === "open" || status === "closed" || status === "reopened") {
         var statusHeader;
         var bountyAmount;
-        var bountyExpiration;
+        var bountyRelevantDate;
         var bountyStatusImageFile;
 
         if (status === "open") {
             statusHeader = "BOUNTY NOW OPEN!";
             bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
-            bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
+            bountyRelevantDate = "Expires: " + Tools.formatDate(options.expiredDate);
             bountyStatusImageFile = "banner-bounty-open.png";
         } else if (status === "closed") {
             statusHeader = "BOUNTY CLOSED";
             bountyAmount = "This " + formatter.getRewardAmount() + " bounty will be paid out";
-            bountyExpiration = "on " + Tools.formatDate(options.expiredDate) + " to";
+            bountyRelevantDate = "on " + Tools.formatDate(options.payoutOn) + " to";
             bountyStatusImageFile = "banner-bounty-closed.png";
         } else if (status === "reopened") {
             statusHeader = "BOUNTY REOPENED";
             bountyAmount = "This bounty is posted for " + formatter.getRewardAmount();
-            bountyExpiration = "Expires: " + Tools.formatDate(options.expiredDate);
+            bountyRelevantDate = "Expires: " + Tools.formatDate(options.expiredDate);
             bountyStatusImageFile = "banner-bounty-reopened.png";
         }
 
@@ -250,7 +251,7 @@ RewardUtils.statusComment = function (options) {
         ctx.font = RewardUtils.canvasFontString(contentFontSize, Lato, "bold");
         ctx.fillStyle = contentFontColor;
         ctx.fillText(bountyAmount, bountyContentOriginX, bountyAmountOriginY);
-        ctx.fillText(bountyExpiration, bountyContentOriginX, bountyExpirationOriginY);
+        ctx.fillText(bountyRelevantDate, bountyContentOriginX, bountyExpirationOriginY);
 
         // Draw codebounty plug and link (align right)
         ctx.textAlign = "right";

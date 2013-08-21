@@ -26,6 +26,7 @@
     "public": {
         "environment": "local"
     },
+    "PUBLIC_SITE_URL": "http://codebounty.co/",
     "ROOT_URL": "https://localmachine.fwd.wf/",
     "SMTP_URL": null,
     "SUPPORT_EMAIL": "support@codebounty.co",
