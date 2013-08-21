@@ -210,13 +210,14 @@ MeteorDdp.prototype.loginWithOauth = function (oauthLoginUrl) {
 
 MeteorDdp.prototype._loginTokenKey = "Meteor.loginToken";
 MeteorDdp.prototype.oauthPrompt = function (timeoutInSeconds) {
-    //default timeout to 60 seconds
-    timeoutInSeconds = timeoutInSeconds ? timeoutInSeconds : 60;
+    //default timeout to 120 seconds
+    timeoutInSeconds = timeoutInSeconds ? timeoutInSeconds : 120;
 
     var def = $.Deferred(),
+        activeCall,
         credentialToken = Random.id(),
         self = this,
-        attempts,
+        seconds,
         error;
 
     //we cannot trust the credentialRequestCompleteCallback callback because if
@@ -224,7 +225,12 @@ MeteorDdp.prototype.oauthPrompt = function (timeoutInSeconds) {
     //even though this could be before the user authenticated
     //so let's try every second until the timeout to login and then consider the login failed
     var tryLoginInterval = setInterval(function () {
-        attempts++;
+        seconds++;
+
+        if (activeCall)
+            return;
+
+        activeCall = true;
 
         //after the login popup closes attempt to login
         self.call("login", [
@@ -235,12 +241,16 @@ MeteorDdp.prototype.oauthPrompt = function (timeoutInSeconds) {
                 localStorage.setItem(self._loginTokenKey, data.token);
                 def.resolve();
                 clearInterval(tryLoginInterval);
+
+                activeCall = false;
             })
             .fail(function (data) {
                 error = data;
+
+                activeCall = false;
             });
 
-        if (attempts > timeoutInSeconds) {
+        if (seconds > timeoutInSeconds) {
             def.reject(error);
             clearInterval(tryLoginInterval);
         }
