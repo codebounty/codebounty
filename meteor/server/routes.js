@@ -211,7 +211,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                                 Email.send({
                                     to: AuthUtils.email(
                                         Meteor.users.find({_id: reward.userId})),
-                                    from: Meteor.settings["ALERTS_EMAIL"],
+                                    from: Meteor.settings["CHARLIE_EMAIL"],
                                     subject: Bitcoin.Emails.transaction_received.subject,
                                     text: Bitcoin.Emails.transaction_received.text
                                 });
@@ -220,7 +220,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                                 Email.send({
                                     to: AuthUtils.email(
                                         Meteor.users.find({_id: reward.userId})),
-                                    from: Meteor.settings["ALERTS_EMAIL"],
+                                    from: Meteor.settings["CHARLIE_EMAIL"],
                                     subject: Bitcoin.Emails.insufficient_funds.subject,
                                     text: Bitcoin.Emails.insufficient_funds.text
                                 });

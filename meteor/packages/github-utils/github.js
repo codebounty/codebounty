@@ -68,8 +68,8 @@ GitHub = function (userParams) {
         "Issues.getEvents": {
             request: this._client.issues.getEvents
         },
-        "GitData.getCommit": {
-            request: this._client.gitdata.getCommit
+        "Repos.getCommit": {
+            request: this._client.repos.getCommit
         }
     };
 };
@@ -365,7 +365,7 @@ GitHub.prototype.getIssueEvents = function (issueUrl, callback, force) {
  * @param {function} [callback] (error, result) result is an array with one item
  */
 GitHub.prototype.getCommit = function (repo, sha, callback, force) {
-    this._conditionalCrawlAndCache("GitData.getCommit", {
+    this._conditionalCrawlAndCache("Repos.getCommit", {
         user: repo.user,
         repo: repo.name,
         sha: sha

@@ -11,6 +11,7 @@ Package.on_use(function (api) {
     api.use("fibers", "server");
     api.use("github", "server");
     api.use("paypal", "server");
+    api.use("email-manager", "server");
 
     api.use("big", ["client", "server"]);
     api.use("tools", ["client", "server"]);
@@ -20,7 +21,6 @@ Package.on_use(function (api) {
     api.add_files("reward.js", ["client", "server"]);
     api.add_files("settings.js", ["client", "server"]);
 
-    api.add_files("server/settings.js", "server");
     api.add_files("server/reward_utils.js", "server");
 
     api.add_files("server/fund.js", "server");

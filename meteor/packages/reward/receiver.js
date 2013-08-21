@@ -20,6 +20,8 @@ ReceiverUtils.fromJSONValue = function (value) {
     return new Receiver({
         currency: value.currency,
         email: value.email,
+        login: value.login,
+        name: value.name,
         reward: new Big(value._reward)
     });
 };
@@ -29,19 +31,22 @@ ReceiverUtils.fromJSONValue = function (value) {
  * paid out to a particular user. Each Reward has many Receivers.
  * @param options {{currency: string,
  *                  email: string,
+ *                  login: string,
+ *                  name: string,
  *                  reward: Big}}
  * @constructor
  */
 Receiver = function (options) {
-    _.each(["currency", "email", "reward"], function (requiredProperty) {
+    _.each(["currency", "email", "name", "login", "reward"], function (requiredProperty) {
         if (typeof options[requiredProperty] === "undefined")
             throw requiredProperty + " is required";
     });
 
     //email and currency should be read only
-    this.email = options.email;
     this.currency = options.currency;
-    this.bitcoinAddress = options.bitcoinAddress;
+    this.email = options.email;
+    this.login = options.login;
+    this.name = options.name;
 
     //should only be accessed through getter / setter
     this._reward = options.reward;
@@ -62,6 +67,8 @@ Receiver.prototype = {
         return new Receiver({
             currency: that.currency,
             email: that.email,
+            login: that.login,
+            name: that.name,
             reward: new Big(that._reward)
         });
     },
@@ -70,8 +77,8 @@ Receiver.prototype = {
         if (!(other instanceof Receiver))
             return false;
 
-        return this.email === other.email && this._reward.eq(other._reward)
-            && this.currency === other.currency;
+        return this.currency === other.currency && this.email === other.email &&
+            this.login === other.login && this.name === other.name && this._reward.eq(other._reward);
     },
 
     typeName: function () {
@@ -80,9 +87,11 @@ Receiver.prototype = {
 
     toJSONValue: function () {
         return {
+            currency: this.currency,
             email: this.email,
-            _reward: this._reward.toString(),
-            currency: this.currency
+            login: this.login,
+            name: this.name,
+            _reward: this._reward.toString()
         };
     }
 };
@@ -106,6 +115,15 @@ Receiver.prototype.getReward = function () {
 Receiver.prototype.setReward = function (reward) {
     this._reward = reward;
     this._rewardDep.changed();
+};
+
+Receiver.prototype.amountString = function () {
+    var amount = this._reward.toString();
+
+    if (this.currency === "usd")
+        return "$" + amount;
+
+    return amount + " BTC";
 };
 
 /**

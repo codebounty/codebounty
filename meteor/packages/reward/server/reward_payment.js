@@ -109,27 +109,23 @@ Reward.prototype.initiatePayout = function (by, callback) {
         };
         that.status = "initiated";
 
-        var jsonReceivers = _.map(that.receivers, function (receiver) {
-            return receiver.toJSONValue();
-        });
-
         //after the payout is set, it will automatically be paid
         Rewards.update(that._id, {
             $set: {
                 payout: that.payout,
-                receivers: jsonReceivers,
                 status: that.status
             }
         });
 
+        var issue = GitHubUtils.issue(that.issueUrl);
+        var backerUsername = AuthUtils.username(Meteor.users.findOne(that.userId));
+
         // Email an alert to all recipients and the backer.
         _.each(that.receivers, function (receiver) {
-            Email.send({
-                to: receiver.email,
-                from: Meteor.settings["ALERTS_EMAIL"],
-                subject: Reward.Emails.rewarded.subject,
-                text: Reward.Emails.rewarded.text
-            });
+            if (!receiver._reward.gt(0))
+                return;
+
+            EmailManager.sendRewardEmail(backerUsername, "perl.jonathan@gmail.com", receiver.name, issue, receiver.amountString());
         });
 
         callback(null, true);

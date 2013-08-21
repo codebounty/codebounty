@@ -81,12 +81,12 @@ Reward.prototype.addFund = function (amount, funder, callback) {
 
     if (that.currency === "btc") {
         var address = Bitcoin.addressForIssue(funder._id, that.issueUrl);
-        
+
         if (!address) {
             callback(rootUrl + "newAddressError");
             return;
         }
-        
+
         var fundingUrl = rootUrl + "addBitcoinFunds?issueAddress=" + address.proxyAddress;
 
         //only need to setup a fund for btc if there is not one already
@@ -126,14 +126,14 @@ Reward.prototype.addFund = function (amount, funder, callback) {
  */
 Reward.prototype.saveFunds = function (callback) {
     var that = this;
-    
+
     Fiber(function () {
         // Just update the reward funds. Receivers are updated
         // in the eligibleForManualReward for existing rewards
         var funds = _.map(that.funds, function (fund) {
             return fund.toJSONValue();
         });
-        
+
         Rewards.update(that._id, {
             $set: {
                 funds: funds,
@@ -149,12 +149,12 @@ Reward.prototype.saveFunds = function (callback) {
                 _expires: that.expires()
             }
         });
-        
+
         // Call whatever was passed in.
         if (callback)
             callback();
     }).run();
-}
+};
 
 /**
  * If the last issue event was
@@ -218,19 +218,38 @@ Reward.prototype.fundApproved = function () {
 };
 
 /**
- * Find all the contributors for an issue, and make sure they are receivers
+ * Find all the contributors for an issue and make sure they are receivers (excluding the backer)
+ * This updates the receivers property on the document, but it does not save those changes to the database.
  */
-Reward.prototype.updateReceivers = function (contributorsEmails) {
+Reward.prototype.updateReceivers = function (commits) {
+    var that = this;
+
+    //exclude the backer
+    var backerLogin = AuthUtils.username(Meteor.users.findOne(that.userId));
+    commits = _.filter(commits, function (commit) {
+        return commit.author.login !== backerLogin;
+    });
+
+    var contributors = _.map(commits, function (commit) {
+        return { name: commit.commit.author.name, email: commit.commit.author.email, login: commit.author.login};
+    });
+    contributors = _.uniq(contributors, false, function (author) {
+        return author.email;
+    });
+
     //we do not want to use the reactive getReceivers since we are modifying it
     var receivers = this.receivers;
 
-    var that = this;
     var receiversChanged = false;
-    var receiverEmails = _.pluck(receivers, "email");
     var r = 0;
+
     //remove receivers that are not contributors
-    _.each(receiverEmails, function (receiverEmail) {
-        if (!_.contains(contributorsEmails, receiverEmail)) {
+    _.each(receivers, function (receiver) {
+        var contributorMatchesReceiver = _.some(contributors, function (contributor) {
+            return receiver.email === contributor.email;
+        });
+
+        if (!contributorMatchesReceiver) {
             receivers.splice(r, 1);
             receiversChanged = true;
         }
@@ -239,11 +258,17 @@ Reward.prototype.updateReceivers = function (contributorsEmails) {
     });
 
     //add contributors that are not receivers
-    _.each(contributorsEmails, function (contributorEmail) {
-        if (!_.contains(receiverEmails, contributorEmail)) {
+    _.each(contributors, function (contributor) {
+        var contributorMatchesReceiver = _.some(receivers, function (receiver) {
+            return contributor.email === receiver.email;
+        });
+
+        if (!contributorMatchesReceiver) {
             var newReceiver = new Receiver({
                 currency: that.currency,
-                email: contributorEmail,
+                email: contributor.email,
+                name: contributor.name,
+                login: contributor.login,
                 reward: new Big(0)
             });
 

@@ -1,5 +1,5 @@
 {
-    "ALERTS_EMAIL": "support@codebounty.co",
+    "CHARLIE_EMAIL": "Charlie <charlie@codebounty.co>",
     "AWS_ACCESS_KEY_ID": null,
     "AWS_IMAGE_BUCKET": "codebountydev-images",
     "AWS_SECRET_ACCESS_KEY": null,

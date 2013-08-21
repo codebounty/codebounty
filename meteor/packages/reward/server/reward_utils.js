@@ -19,7 +19,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
         onSuccess: GitHubUtils.Local.Logging.onSuccess
     });
 
-    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, false, gitHub, function (rewards, contributorsEmails) {
+    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, false, gitHub, function (rewards, commmits) {
         var reward;
 
         //add to the existing reward
@@ -46,7 +46,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             };
 
             reward = new Reward(options);
-            reward.updateReceivers(contributorsEmails);
+            reward.updateReceivers(commmits);
 
             reward.addFund(amount, user, function (fundingUrl) {
                 Fiber(function () {
@@ -126,7 +126,7 @@ RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
  * @param contributorsIssueUrl If passed, only load rewards for this issueUrl and load the contributors
  * @param includeHeld If true, include the held rewards (ex. the admin is manually rewarding)
  * @param gitHub The gitHub api instance to use for loading the contributors commits
- * @param {function(Array.<Reward>, Array.<string>)} callback (rewards, contributorsEmails)
+ * @param {function(Array.<Reward>, Array.<string>)} callback (rewards, commits)
  */
 RewardUtils.eligibleForManualReward = function (selector, options, contributorsIssueUrl, includeHeld, gitHub, callback) {
     selector = selector || {};
@@ -156,13 +156,12 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
 
     //if the contributorsIssueUrl was passed, also load the contributors / issue events
     gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
-        var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
         Fiber(function () {
             //update the status and receivers since we are already loading the issueEvents & contributors
             _.each(rewards, function (reward) {
                 //must update the receivers before doing checkStatus
                 //because it relies on them being up to date
-                reward.updateReceivers(contributorsEmails);
+                reward.updateReceivers(commits);
 
                 var jsonReceivers = _.map(reward.receivers, function (receiver) {
                     return receiver.toJSONValue();
@@ -178,7 +177,7 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
                 reward.checkStatus(issueEvents);
             });
 
-            callback(rewards, contributorsEmails);
+            callback(rewards, commits);
         }).run();
     });
 };

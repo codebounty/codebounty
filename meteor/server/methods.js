@@ -253,8 +253,8 @@ Meteor.methods({
             onSuccess: GitHubUtils.Local.Logging.onSuccess
         });
 
-        RewardUtils.eligibleForManualReward(selector, {}, issueUrl, true, gitHub, function (rewards, contributorsEmails) {
-            if (contributorsEmails && contributorsEmails.length > 0) {
+        RewardUtils.eligibleForManualReward(selector, {}, issueUrl, true, gitHub, function (rewards, commits) {
+            if (commits && commits.length > 0) {
                 var clientRewards = _.map(rewards, RewardUtils.clientReward);
 
                 //order by size
@@ -344,7 +344,7 @@ Meteor.methods({
 
         //update receivers before initiating payout
         var gitHub = new GitHub({
-            user: Meteor.user(),
+            user: user,
             onError: GitHubUtils.Local.Logging.onError,
             onSuccess: GitHubUtils.Local.Logging.onSuccess
         });
@@ -354,9 +354,8 @@ Meteor.methods({
                 return;
             }
 
-            var contributorsEmails = GitHubUtils.authorsEmails(commits, gitHub.user);
             Fiber(function () {
-                myReward.updateReceivers(contributorsEmails);
+                myReward.updateReceivers(commits);
 
                 //the client should only have changed the receiver amounts
                 //so update the corresponding receiver amounts on the reward we fetched from the db
