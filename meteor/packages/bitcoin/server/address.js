@@ -31,10 +31,10 @@ Bitcoin.requestProxyAddress = function (address, callback) {
         Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + Bitcoin.Settings.callbackURI,
         function (err, response) {
             if (err) {
-                TL.error("Blockchain.info API error: " + err.toString());
+                TL.error("Blockchain.info API error: " + EJSON.stringify(err));
                 callback(undefined);
             } else if (!response.data) {
-                TL.error(response.content(), Modules.Bitcoin);
+                TL.error(EJSON.stringify(response.content()), Modules.Bitcoin);
                 callback(undefined);
             } else {
                 callback(response.data.input_address);

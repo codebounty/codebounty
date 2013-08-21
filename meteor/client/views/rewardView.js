@@ -178,7 +178,7 @@ Template.rewardView.events({
             $.unblockUI();
             Messenger.send({event: "closeOverlay"});
             if (error) {
-                TL.error(error, Modules.Reward);
+                TL.error(EJSON.stringify(error), Modules.Reward);
                 return;
             }
 

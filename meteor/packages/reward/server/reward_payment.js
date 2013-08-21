@@ -34,46 +34,38 @@ Reward.prototype.distributeEqually = function () {
     if (receivers.length <= 0 || amountToDistribute.lt(minimumReward))
         return;
 
-    var equallyDistributed = amountToDistribute.div(receivers.length);
+    var maxDecimals = that.currency === "usd" ? 2 : 4;
+    var equallyDistributedAmount = BigUtils.truncate(amountToDistribute.div(receivers.length), maxDecimals);
 
-    var truncateAfterDecimals = that.currency === "usd" ? 2 : 4;
-
-    //add the fraction to the first receivers
-    var fraction = BigUtils.remainder(equallyDistributed, truncateAfterDecimals).times(receivers.length);
-    equallyDistributed = BigUtils.truncate(equallyDistributed, truncateAfterDecimals);
-
-    //equally distribute the reward
-    if (equallyDistributed.gte(minimumReward)) {
+    //if the equally distributed amount is greater than the minimum reward then distribute it
+    if (equallyDistributedAmount.gte(minimumReward)) {
         _.each(receivers, function (receiver) {
-            //add fraction to the first receiver, then clear it
-            receiver.setReward(equallyDistributed.plus(fraction));
-            fraction = new Big(0);
+            receiver.setReward(equallyDistributedAmount);
         });
     }
-    //pay as many of the contributors as possible
+    //otherwise pay as many of the contributors as possible
     else {
         var numberCanPay = amountToDistribute.div(minimumReward).toFixed(0);
-        equallyDistributed = amountToDistribute.div(numberCanPay);
+        equallyDistributedAmount = BigUtils.truncate(amountToDistribute.div(numberCanPay), maxDecimals);
 
-        var fraction = BigUtils.remainder(equallyDistributed, truncateAfterDecimals).times(receivers.length);
-        equallyDistributed = BigUtils.truncate(equallyDistributed, truncateAfterDecimals);
-
+        //set the rewards on each contributor
         for (var i = 0; i < receivers.length; i++) {
             var receiver = receivers[i];
 
             var rewardAmount = new Big(0);
             if (i < numberCanPay)
-                rewardAmount = equallyDistributed;
+                rewardAmount = equallyDistributedAmount;
 
-            //add fraction to the first receiver, then clear it
-            // TODO: There's an intermittent bug here that ends up
-            // adding an infinitesimal fraction to the first receiver
-            // under certain conditions, which pushes the sum of the
-            // receiver totals over the sum of the funds to be
-            // distributed.
-            receiver.setReward(rewardAmount.plus(fraction));
-            fraction = new Big(0);
+            receiver.setReward(rewardAmount);
         }
+    }
+
+    //if there is a remaining fractional balance
+    //add it to the first receiver's reward
+    var remaining = BigUtils.truncate(amountToDistribute.minus(that.receiverTotal()), maxDecimals);
+    if (remaining.gt(0)) {
+        var firstReceiver = receivers[0];
+        firstReceiver.setReward(firstReceiver.getReward().plus(remaining));
     }
 };
 
