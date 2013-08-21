@@ -9,12 +9,13 @@ EmailManager = {};
  * @param {string} rewardAmount Ex. $5
  */
 EmailManager.sendRewardEmail = function (backerName, receiverEmail, receiverName, issue, rewardAmount) {
-    debugger;
-
     var subject = "Ace-high " + receiverName + ", you fetched yourself a reward";
 
     var repoUrl = "https://github.com/" + issue.repo.user + "/" + issue.repo.name;
     var issueUrl = repoUrl + "/issues/" + issue.number;
+
+    if (!Environment.isProduction)
+        receiverEmail = Meteor.settings["TEST_EMAIL"];
 
     try {
         Email.send({

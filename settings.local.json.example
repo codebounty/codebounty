@@ -28,5 +28,6 @@
     },
     "ROOT_URL": "https://localmachine.fwd.wf/",
     "SMTP_URL": null,
-    "SUPPORT_EMAIL": "support@codebounty.co"
+    "SUPPORT_EMAIL": "support@codebounty.co",
+    "TEST_EMAIL": "you@email.com"
 }

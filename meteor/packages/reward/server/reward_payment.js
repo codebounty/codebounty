@@ -125,7 +125,7 @@ Reward.prototype.initiatePayout = function (by, callback) {
             if (!receiver._reward.gt(0))
                 return;
 
-            EmailManager.sendRewardEmail(backerUsername, "perl.jonathan@gmail.com", receiver.name, issue, receiver.amountString());
+            EmailManager.sendRewardEmail(backerUsername, receiver.email, receiver.name, issue, receiver.amountString());
         });
 
         callback(null, true);
