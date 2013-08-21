@@ -1,5 +1,4 @@
 {
-    "CHARLIE_EMAIL": "Charlie <charlie@codebounty.co>",
     "AWS_ACCESS_KEY_ID": null,
     "AWS_IMAGE_BUCKET": "codebountydev-images",
     "AWS_SECRET_ACCESS_KEY": null,
@@ -12,6 +11,7 @@
     "BITCOIN_LOCK_INTERVAL": 10,
     "BITCOIN_PASSPHRASE": "Put your wallet encryption password here",
     "BITCOIN_SECRET": "Put a random string of characters here",
+    "CHARLIE_EMAIL": "Charlie <charlie@codebounty.co>",
     "GITHUB_CLIENTID": "Your Github API client ID",
     "GITHUB_COMMENTER": "Access token for Code Bounty Charlie goes here",
     "GITHUB_SECRET": "Your Github API client secret",
