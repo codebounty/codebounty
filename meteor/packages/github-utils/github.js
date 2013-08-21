@@ -26,7 +26,8 @@ GitHub = function (userParams) {
             console.log(that.remainingRequests + " requests left this hour.");
         },
         requestsRemaining: MAX_REQUESTS,
-        cacheExpirationInterval: 60000 // In milliseconds
+        // In milliseconds
+        cacheExpirationInterval: 600000 //10 minutes
     };
 
     var githubApi = new GitHubApi({
@@ -113,8 +114,7 @@ GitHub.prototype._runRequest = function (name, data, etag, page, callback) {
 GitHub.prototype._pastCacheExpiration = function (response) {
     var now = new Date();
 
-    return (!response
-        || response.retrieved < new Date(now - this.cacheExpirationInterval));
+    return (!response || response.retrieved < new Date(now - this.cacheExpirationInterval));
 };
 
 /**
@@ -136,6 +136,7 @@ GitHub.prototype._addPageResponse = function (cachedResponse, res) {
  * NOTE: this does not update the DB, that is done later when it is crawled to the end
  * @param request
  * @param data
+ * @param {boolean} forceRequest Do not pull from cache
  * @param callback (error, result) returns the cachedResponse
  */
 GitHub.prototype._updateCachedResponse = function (request, data, forceRequest, callback) {
@@ -145,8 +146,7 @@ GitHub.prototype._updateCachedResponse = function (request, data, forceRequest, 
 
         // If there is a cached response and it has not yet expired,
         // just return that. (Unless we're being forced to make a request.)
-        if (!forceRequest && cachedResponse
-            && !that._pastCacheExpiration(cachedResponse)) {
+        if (!forceRequest && cachedResponse && !that._pastCacheExpiration(cachedResponse)) {
             callback(null, cachedResponse);
             return;
         }
@@ -248,6 +248,7 @@ GitHub.prototype._crawlToEnd = function (cachedResponse, callback) {
  * @param data the request data (no config options like page #)
  *             used as a lookup in the cache for existing responses
  * @param paging if the request can return multiple results
+ * @param {boolean} force Do not pull from cache
  * @param [callback] (error, resultData) called after completed.
  * resultData has properties - data: merged page data, - meta: the last page's meta data
  * and the last pages metadata
@@ -347,6 +348,7 @@ GitHub.prototype.checkAccess = function (callback, force) {
  * Loads the issue events with a conditional request
  * @param {string} issueUrl
  * @param {function} [callback] (error, result) result is an array
+ * @param {boolean} force Do not pull from cache
  */
 GitHub.prototype.getIssueEvents = function (issueUrl, callback, force) {
     var issue = GitHubUtils.issue(issueUrl);
@@ -363,6 +365,7 @@ GitHub.prototype.getIssueEvents = function (issueUrl, callback, force) {
  * @param repo {user: string, name: string}
  * @param {string} sha
  * @param {function} [callback] (error, result) result is an array with one item
+ * @param {boolean} force Do not pull from cache
  */
 GitHub.prototype.getCommit = function (repo, sha, callback, force) {
     this._conditionalCrawlAndCache("Repos.getCommit", {
@@ -375,6 +378,7 @@ GitHub.prototype.getCommit = function (repo, sha, callback, force) {
 /**
  * Loads the commit with a conditional request
  * @param {function} [callback] (error, result) result is an array with one item
+ * @param {boolean} force Do not pull from cache
  */
 GitHub.prototype.getUser = function (callback, force) {
     var that = this;
@@ -390,8 +394,10 @@ GitHub.prototype.getUser = function (callback, force) {
  * NOTE: The commit or pull request must have a comment referencing the issue to count as a contributor
  * @param {string} issueUrl
  * @param {function} callback (error, eventsResult, commitsResult)
+ * @param {boolean} force Do not pull from cache
+ * @param force
  */
-GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
+GitHub.prototype.getContributorsCommits = function (issueUrl, callback, force) {
     var that = this;
 
     var issue = GitHubUtils.issue(issueUrl);
@@ -433,7 +439,7 @@ GitHub.prototype.getContributorsCommits = function (issueUrl, callback) {
                 }
             });
         }, commitsLoaded);
-    });
+    }, force);
 };
 
 /**

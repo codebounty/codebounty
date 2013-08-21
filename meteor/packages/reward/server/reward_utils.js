@@ -19,7 +19,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
         onSuccess: GitHubUtils.Local.Logging.onSuccess
     });
 
-    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, false, gitHub, function (rewards, commmits) {
+    RewardUtils.eligibleForManualReward(selector, {}, issueUrl, false, gitHub, function (rewards, commits) {
         var reward;
 
         //add to the existing reward
@@ -46,7 +46,7 @@ RewardUtils.addFundsToIssue = function (amount, currency, issueUrl, user, callba
             };
 
             reward = new Reward(options);
-            reward.updateReceivers(commmits);
+            reward.updateReceivers(commits);
 
             reward.addFund(amount, user, function (fundingUrl) {
                 Fiber(function () {
@@ -126,7 +126,7 @@ RewardUtils.canvasFontString = function (fontSize, fontName, fontFace) {
  * @param contributorsIssueUrl If passed, only load rewards for this issueUrl and load the contributors
  * @param includeHeld If true, include the held rewards (ex. the admin is manually rewarding)
  * @param gitHub The gitHub api instance to use for loading the contributors commits
- * @param {function(Array.<Reward>, Array.<string>)} callback (rewards, commits)
+ * @param {function(Array.<Reward>, Array.<string>=)} callback (rewards, commits)
  */
 RewardUtils.eligibleForManualReward = function (selector, options, contributorsIssueUrl, includeHeld, gitHub, callback) {
     selector = selector || {};
@@ -156,28 +156,30 @@ RewardUtils.eligibleForManualReward = function (selector, options, contributorsI
 
     //if the contributorsIssueUrl was passed, also load the contributors / issue events
     gitHub.getContributorsCommits(contributorsIssueUrl, function (error, issueEvents, commits) {
-        Fiber(function () {
-            //update the status and receivers since we are already loading the issueEvents & contributors
-            _.each(rewards, function (reward) {
-                //must update the receivers before doing checkStatus
-                //because it relies on them being up to date
-                reward.updateReceivers(commits);
+            Fiber(function () {
+                //update the status and receivers since we are already loading the issueEvents & contributors
+                _.each(rewards, function (reward) {
+                    //must update the receivers before doing checkStatus
+                    //because it relies on them being up to date
+                    reward.updateReceivers(commits);
 
-                var jsonReceivers = _.map(reward.receivers, function (receiver) {
-                    return receiver.toJSONValue();
+                    var jsonReceivers = _.map(reward.receivers, function (receiver) {
+                        return receiver.toJSONValue();
+                    });
+                    Rewards.update(reward._id, {
+                        $set: {
+                            receivers: jsonReceivers,
+                            lastSync: new Date()
+                        }
+                    });
+
+                    reward.checkStatus(issueEvents);
                 });
 
-                Rewards.update(reward._id, {
-                    $set: {
-                        receivers: jsonReceivers,
-                        lastSync: new Date()
-                    }
-                });
-
-                reward.checkStatus(issueEvents);
-            });
-
-            callback(rewards, commits);
-        }).run();
-    });
+                callback(rewards, commits);
+            }).run();
+        },
+        //force load issue events so we know if the
+        //issue closed for checkStatus in the callback
+        true);
 };

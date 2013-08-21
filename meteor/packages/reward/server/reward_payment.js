@@ -1,9 +1,8 @@
 //contains reward payment options
 
 //how long (in minutes) to payout the bounty once it is rewarded
-//var payoutWindow = 60 * 72; //72 hours
-//for testing
-var payoutWindow = 0.5; //.5 minutes
+var payoutWindow = Environment.isProduction ? 60 * 72 //72 hours
+    : 0.5; //half a minute
 
 /**
  * Cancel the payout

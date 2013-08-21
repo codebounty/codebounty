@@ -144,7 +144,7 @@ PayPalFund.prototype.confirm = function (reward, params) {
         //after new funds are approved distribute the reward equally among all the contributors
         reward.distributeEqually();
 
-        var jsonReceivers = _.map(that.receivers, function (receiver) {
+        var jsonReceivers = _.map(reward.receivers, function (receiver) {
             return receiver.toJSONValue();
         });
 

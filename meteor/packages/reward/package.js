@@ -8,6 +8,7 @@ Npm.depends({
 
 Package.on_use(function (api) {
     api.use("canvas", "server");
+    api.use("environment", "server");
     api.use("fibers", "server");
     api.use("github", "server");
     api.use("paypal", "server");

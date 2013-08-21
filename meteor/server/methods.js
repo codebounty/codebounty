@@ -258,8 +258,6 @@ Meteor.methods({
                 var clientRewards = _.map(rewards, RewardUtils.clientReward);
 
                 //order by size
-                // TODO: What happens if someone cancels a fund?
-                // Largest != newest.
                 clientRewards = _.sortBy(clientRewards, function (reward) {
                     return parseFloat(BigUtils.sum(reward.availableFundPayoutAmounts()).toString());
                 });
@@ -316,26 +314,26 @@ Meteor.methods({
 
     /**
      * Initiate the reward payout process
-     * @param reward
+     * @param clientReward
      * @param {boolean} [byAdmin] If this was initiated by an admin
      * @param {string} [reason] Required if initiated by an admin
      * @returns true if there is no error
      */
-    "reward": function (reward, byAdmin, reason) {
+    "reward": function (clientReward, byAdmin, reason) {
         var user = Meteor.user();
         AuthUtils.requireAuthorization(user, byAdmin ? "admin" : null);
 
         var selector = {
-            _id: reward._id
+            _id: clientReward._id
         };
         if (!byAdmin)
             selector.userId = user._id;
 
-        var myReward = Rewards.findOne(selector);
+        var serverReward = Rewards.findOne(selector);
         if (byAdmin) {
             var logItem = "Rewarded on " + new Date().toString() + " by " + user._id + " because " + reason;
 
-            Rewards.update(reward._id, {
+            Rewards.update(clientReward._id, {
                 $push: { log: logItem }
             });
         }
@@ -348,32 +346,40 @@ Meteor.methods({
             onError: GitHubUtils.Local.Logging.onError,
             onSuccess: GitHubUtils.Local.Logging.onSuccess
         });
-        gitHub.getContributorsCommits(myReward.issueUrl, function (error, issueEvents, commits) {
+        gitHub.getContributorsCommits(serverReward.issueUrl, function (error, issueEvents, commits) {
             if (error) {
                 fut.ret(false);
                 return;
             }
 
             Fiber(function () {
-                myReward.updateReceivers(commits);
-
                 //the client should only have changed the receiver amounts
                 //so update the corresponding receiver amounts on the reward we fetched from the db
-                //then check the reward is still valid
-                _.each(reward.receivers, function (receiver) {
-                    var myReceiver = _.find(myReward.receivers, function (r) {
+                //then (in initiatePayout) check the reward is still valid
+                _.each(clientReward.receivers, function (receiver) {
+                    var serverReceiver = _.find(serverReward.receivers, function (r) {
                         return r.email === receiver.email;
                     });
 
-                    myReceiver.setReward(receiver.getReward());
+                    serverReceiver.setReward(receiver.getReward());
                 });
 
-                myReward.initiatePayout(byAdmin ? "admin" : user._id, function (error, success) {
+                var jsonReceivers = _.map(serverReward.receivers, function (receiver) {
+                    return receiver.toJSONValue();
+                });
+                Rewards.update(serverReward._id, {
+                    $set: {
+                        receivers: jsonReceivers,
+                        lastSync: new Date()
+                    }
+                });
+
+                serverReward.initiatePayout(byAdmin ? "admin" : user._id, function (error, success) {
                     fut.ret(success);
 
                     if (error)
                         Fiber(function () {
-                            TL.error("Error initiating payout for " + myReward._id.toString() +
+                            TL.error("Error initiating payout for " + serverReward._id.toString() +
                                 " :" + EJSON.stringify(error), Modules.Reward);
                         }).run();
                 });
