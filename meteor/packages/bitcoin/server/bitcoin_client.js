@@ -119,7 +119,11 @@ Bitcoin.makeSynchronous = function (command) {
         args[args.length] = function (err, result) {
             if (err) {
                 Fiber(function () {
+<<<<<<< HEAD
                     TL.error("BitcoinClient.Synchronous error: " + EJSON.stringify(err));
+=======
+                    TL.error("Bitcoin.Client.Synchronous error: " + err.toString());
+>>>>>>> refs/remotes/origin/bitcoinPublicRefactor
                 }).run();
                 fut.ret(undefined);
             } else {
@@ -136,22 +140,22 @@ Bitcoin.makeSynchronous = function (command) {
 
 // Creating a copy of the bitcoin.Client class so we can
 // override functions without altering the original class.
-var BitcoinClient = bitcoin.Client;
+Bitcoin.Client = bitcoin.Client;
 
 // Decorate all functions that could result in a recoverable error,
 // such as 'wallet locked' or 'keypool empty.'
-BitcoinClient.prototype.sendToAddress = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.sendToAddress);
-BitcoinClient.prototype.sendFrom = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.sendFrom);
-BitcoinClient.prototype.sendMany = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.sendMany);
-BitcoinClient.prototype.getAccountAddress = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.getAccountAddress);
-BitcoinClient.prototype.getNewAddress = Bitcoin.makeSelfRecovering(BitcoinClient.prototype.getNewAddress);
+Bitcoin.Client.prototype.sendToAddress = Bitcoin.makeSelfRecovering(Bitcoin.Client.prototype.sendToAddress);
+Bitcoin.Client.prototype.sendFrom = Bitcoin.makeSelfRecovering(Bitcoin.Client.prototype.sendFrom);
+Bitcoin.Client.prototype.sendMany = Bitcoin.makeSelfRecovering(Bitcoin.Client.prototype.sendMany);
+Bitcoin.Client.prototype.getAccountAddress = Bitcoin.makeSelfRecovering(Bitcoin.Client.prototype.getAccountAddress);
+Bitcoin.Client.prototype.getNewAddress = Bitcoin.makeSelfRecovering(Bitcoin.Client.prototype.getNewAddress);
 
-// Make some of our functions optionally synchronous.
-// Note that we should prefer the asynchronous versions if it can
-// be helped, due to lower overhead. But this should save us a lot
-// of Future objects in other places in our code.
-BitcoinClient.prototype.getAccountAddress = Bitcoin.makeSynchronous(BitcoinClient.prototype.getAccountAddress);
-BitcoinClient.prototype.getNewAddress = Bitcoin.makeSynchronous(BitcoinClient.prototype.getNewAddress);
-
-// And finally create an instance of our modified class!
-Bitcoin.Client = new BitcoinClient(Bitcoin.Settings.client);
+// Make some of the functions optionally synchronous.
+// Note that you should prefer the asynchronous versions if it can
+// be helped, due to lower overhead and greater flexibility. But this
+// can save you some Future objects when you absolutely, positively
+// *have* to have synchronous execution.
+// If callbacks are passed in to these functions at execution, they will
+// run asynchronously. Otherwise, they will run synchronously.
+Bitcoin.Client.prototype.getAccountAddress = Bitcoin.makeSynchronous(Bitcoin.Client.prototype.getAccountAddress);
+Bitcoin.Client.prototype.getNewAddress = Bitcoin.makeSynchronous(Bitcoin.Client.prototype.getNewAddress);

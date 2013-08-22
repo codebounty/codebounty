@@ -85,7 +85,7 @@ BitcoinFund.prototype.refund = function (adminId) {
     TL.info("Refund " + that.toString(), Modules.Bitcoin);
 
     // And then make sure they have a refund address set
-    var refundAddress = Bitcoin.ReceiverAddresses.find({ userId: that.userId });
+    var refundAddress = BitcoinLocal.ReceiverAddresses.find({ userId: that.userId });
     // They shouldn't have been able to send us any bitcoin
     // if they didn't set up a receiving address first. If they're
     // trying to refund without having set up a refund address, something is
@@ -93,10 +93,10 @@ BitcoinFund.prototype.refund = function (adminId) {
     if (!refundAddress)
         throw "Error: Refund attempted by admin " + adminId + " for " + that._id + " without a receiving address!";
 
-    Bitcoin.Client.getReceivedByAddress(that.address, function (err, received) {
+    BitcoinLocal.Client.getReceivedByAddress(that.address, function (err, received) {
         // Send whatever has been sent to this Fund's address to the
         // user's refund address.
-        Bitcoin.Client.sendToAddress(refundAddress.address, received);
+        BitcoinLocal.Client.sendToAddress(refundAddress.address, received);
     });
 
     Rewards.update({ "funds._id": that._id }, { $set: { "funds.$.refunded": new Date() } });
@@ -172,7 +172,7 @@ BitcoinFund.prototype.pay = function (fundDistribution) {
         TL.info("Pay fund " + that.toString() + " " + EJSON.toJSONValue(receiverList), Modules.Bitcoin);
     }).run();
 
-    Bitcoin.pay(that.address, receiverList, function (error, data) {
+    BitcoinLocal.pay(that.address, receiverList, function (error, data) {
         var update = { $set: { "funds.$.details": { receiverList: receiverList } } };
 
         Fiber(function () {

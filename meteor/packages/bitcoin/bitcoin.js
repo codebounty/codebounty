@@ -1,6 +1,5 @@
-//Contains all logic for interacting with Bitcoin
-
 Bitcoin = {};
+<<<<<<< HEAD
 
 /***********************************************
  * Returns a Bitcoin.IssueAddress for the given issue / user pair.
@@ -150,3 +149,5 @@ Bitcoin.pay = function (address, receiverList, callback) {
         }).run();
     });
 };
+=======
+>>>>>>> refs/remotes/origin/bitcoinPublicRefactor
