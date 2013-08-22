@@ -7,10 +7,10 @@ module.exports = function (grunt) {
         return {
             options: {
                 context: {
-                    BASEURL: config.baseUrl[environment],
-                    ROOTURL: config.rootUrl[environment],
+                    APPROOTURL: config.appRootUrl[environment],
                     GITHUBCLIENTID: config.githubClientId[environment],
-                    GITHUBSCOPES: JSON.stringify(config.githubScopes[environment])
+                    GITHUBSCOPES: JSON.stringify(config.githubScopes[environment]),
+                    WEBSOCKETURI: config.webSocketUri[environment]
                 }
             },
             src: "<%= config.dist %>/chrome/js/modules/config.js",

@@ -1,5 +1,5 @@
 define(["config"], function (config) {
-    var ddp = new MeteorDdp("wss://" + config.baseUrl + "/websocket");
+    var ddp = new MeteorDdp(config.webSocketUri);
 
     //check we can access the required scopes for this user
     //if not ask the user to authorize the app
@@ -49,7 +49,7 @@ define(["config"], function (config) {
                     return "https://github.com/login/oauth/authorize" +
                         "?client_id=" + config.githubClientId +
                         "&scope=" + config.githubScopes.map(encodeURIComponent).join('+') +
-                        "&redirect_uri=" + config.rootUrl + "/_oauth/github?close" +
+                        "&redirect_uri=" + config.appRootUrl + "/_oauth/github?close" +
                         "&state=" + credentialToken;
                 }).then(function () {
                         if (onAuthenticated)

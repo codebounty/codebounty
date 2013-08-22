@@ -1,15 +1,10 @@
 {
     "dist": "build",
     "test": "tests",
-    "baseUrl": {
-        "local": "localhost:3000",
-        "qa": "localhost:3000",
-        "dist": "localhost:3000"
-    },
-    "rootUrl": {
+    "appRootUrl": {
         "local": "http://localhost:3000",
-        "qa": "http://localhost:3000",
-        "dist": "http://localhost:3000"
+        "qa": "https://testserver.com",
+        "dist": "https://liveserver.com"
     },
     "githubClientId": {
         "local": "A github client id",
@@ -20,5 +15,10 @@
         "local": ["user:email", "repo"],
         "qa": ["user:email", "repo"],
         "dist": ["user:email", "public_repo"]
+    },
+    "webSocketUri": {
+        "local": "ws://localhost:3000/websocket",
+        "qa": "wss://testserver.com/websocket",
+        "dist": "wss://liveserver.com/websocket"
     }
 }
