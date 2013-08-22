@@ -22,28 +22,24 @@ BitcoinLocal.TemporaryReceiverAddresses = new Meteor.Collection("BitcoinLocal.Te
 BitcoinLocal.requestProxyAddress = function (address, callback) {
     Fiber(function () {
         var response;
-        
+
         // Occasionally Blockchain.info fails when we ask it for a proxy
         // address. Putting this in a try/catch block allows us to save state
         // when it fails and pick up where we left off next time around.
-    
+
         // Contact Blockchain.info for a proxy address.
         Meteor.http.get("https://blockchain.info/api/receive?method=create&address=" + address + "&shared=false&callback=" + BitcoinLocal.Settings.callbackURI,
-        function (err, response) {
-            if (err) {
-                TL.error("Blockchain.info API error: " + EJSON.stringify(err));
-                callback(undefined);
-            } else if (!response.data) {
-<<<<<<< HEAD:meteor/packages/bitcoin/server/address.js
-                TL.error(EJSON.stringify(response.content()), Modules.Bitcoin);
-=======
-                TL.error(response.content(), Modules.BitcoinLocal);
->>>>>>> refs/remotes/origin/bitcoinPublicRefactor:meteor/packages/bitcoin-local/server/address.js
-                callback(undefined);
-            } else {
-                callback(response.data.input_address);
-            }
-        });
+            function (err, response) {
+                if (err) {
+                    TL.error("Blockchain.info API error: " + EJSON.stringify(err));
+                    callback(undefined);
+                } else if (!response.data) {
+                    TL.error(EJSON.stringify(response.content()), Modules.Bitcoin);
+                    callback(undefined);
+                } else {
+                    callback(response.data.input_address);
+                }
+            });
     }).run();
 };
 
@@ -74,25 +70,25 @@ BitcoinLocal._createWithNewProxyAddress = function (address, callback) {
             callback(false);
             return;
         }
-        
+
         var idFut = new Future();
         var addressObj = {
             address: address,
             proxyAddress: proxyAddress,
             used: false
         };
-        
+
         Fiber(function () {
             idFut.ret(BitcoinLocal.IssueAddresses.insert(addressObj));
         }).run();
-        
+
         addressObj._id = idFut.wait();
-        
+
         callback(addressObj);
     });
 };
 
-BitcoinLocal._insertAddressForIssue = function (userId, url, callback) {    
+BitcoinLocal._insertAddressForIssue = function (userId, url, callback) {
     BitcoinLocal.Client.getAccountAddress(userId + ":" + url, function (err, address) {
         BitcoinLocal._createWithNewProxyAddress(address, callback);
     });
@@ -121,26 +117,26 @@ Meteor.setInterval(function () {
         // Keep generating addresses until we have the maximum, or until
         // we've encountered enough errors to put us over the threshold.
         while (availableAddresses < BitcoinLocal.Settings.maximumAddresses
-        && errors < BitcoinLocal.Settings.maximumErrors) {
+            && errors < BitcoinLocal.Settings.maximumErrors) {
 
             // If there are addresses left over from previous runs that
             // have not yet received proxy addresses from Blockchain.info,
             // try assigning them proxy addresses again.
             if (unproxiedAddresses.length > 0
-            && BitcoinLocal._updateWithNewProxyAddress(unproxiedAddresses.pop())) {
+                && BitcoinLocal._updateWithNewProxyAddress(unproxiedAddresses.pop())) {
                 availableAddresses++;
 
-            // Otherwise, create a new address and try to get a proxy for it.
+                // Otherwise, create a new address and try to get a proxy for it.
             } else {
                 var address = BitcoinLocal.Client.getNewAddress();
                 if (address) {
                     var addressFut = new Future();
-                    
+
                     BitcoinLocal._createWithNewProxyAddress(address, function (addressObj) {
                         addressFut.ret(addressObj);
                     });
-                    
-                    if (addressFut.wait()){
+
+                    if (addressFut.wait()) {
                         availableAddresses++;
                     } else {
                         // Remember that we were unable to create a proxy
@@ -151,8 +147,8 @@ Meteor.setInterval(function () {
                                 address: address,
                                 used: false
                             });
-                        }).run()
-                        
+                        }).run();
+
                         errors++;
                     }
                 } else {

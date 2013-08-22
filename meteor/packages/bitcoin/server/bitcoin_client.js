@@ -8,7 +8,7 @@ var bitcoin = Npm.require("bitcoin");
  * by this function will retry the original request after attempting to recover.
  * If the request is successful either time, it will forward the response
  * transparently to the callback function passed in.
- * 
+ *
  * @param client A Bitcoin client object
  * @param originalRequest A zero-parameter function encapsulating the request.
  * @param callback A function that receives the results of the client request.
@@ -19,12 +19,12 @@ Bitcoin._selfRecoveringCallbackDecorator = function (client, originalRequest, ca
         if (arguments[0] && arguments[0].code == Bitcoin.Errors.UnlockNeeded) {
             // Unlock the wallet and try again.
             client.walletPassphrase(
-                Meteor.settings["BITCOIN_PASSPHRASE"], 
+                Meteor.settings["BITCOIN_PASSPHRASE"],
                 Meteor.settings["BITCOIN_LOCK_INTERVAL"],
                 originalRequest);
         } else if (arguments[0] && arguments[0].code == Bitcoin.Errors.KeypoolRanOut) {
             client.walletPassphrase(
-                Meteor.settings["BITCOIN_PASSPHRASE"], 
+                Meteor.settings["BITCOIN_PASSPHRASE"],
                 Meteor.settings["BITCOIN_LOCK_INTERVAL"],
                 function () {
                     client.keypoolRefill(originalRequest);
@@ -43,7 +43,7 @@ Bitcoin._selfRecoveringCallbackDecorator = function (client, originalRequest, ca
  * @return function
  **/
 Bitcoin.getCallbackFromArgs = function (args) {
-    var tail = args[args.length-1];
+    var tail = args[args.length - 1];
     return (_.isFunction(tail) ? tail : undefined);
 };
 
@@ -51,14 +51,14 @@ Bitcoin.getCallbackFromArgs = function (args) {
  * Either tacks the passed-in callback function onto the end of the passed-in
  * arguments object, or overwrites the last argument in the arguments object
  * if that argument is a function.
- * 
+ *
  * @param args The arguments object to change.
  * @param callback The callback to overwrite the callback function in args with.
  * @return args
  **/
 Bitcoin.overrideCallbackInArgs = function (args, callback) {
-    if (_.isFunction(args[args.length-1])) {
-        args[args.length-1] = callback;
+    if (_.isFunction(args[args.length - 1])) {
+        args[args.length - 1] = callback;
     } else {
         // args is an object masquerading as an array,
         // so we have to increment its length property
@@ -75,12 +75,12 @@ Bitcoin.overrideCallbackInArgs = function (args, callback) {
  * Calling a bitcoin.Client command that has been wrapped in this decorator
  * results in the command being called once and then re-called after taking
  * steps to recover if it fails due to a recoverable error.
- * 
+ *
  * @param command
  * @return function
  **/
 Bitcoin.makeSelfRecovering = function (command) {
-    
+
     return function () {
         var that = this;
         var callback = Bitcoin.getCallbackFromArgs(arguments);
@@ -90,7 +90,7 @@ Bitcoin.makeSelfRecovering = function (command) {
         });
         var args = Bitcoin.overrideCallbackInArgs(arguments,
             Bitcoin._selfRecoveringCallbackDecorator(that, originalRequest, callback));
-        
+
         command.apply(that, args);
     };
 };
@@ -98,7 +98,7 @@ Bitcoin.makeSelfRecovering = function (command) {
 /**
  * A decorator for bitcoin.Client commands. Makes an asynchronous
  * function execute synchronously if no callback is passed in.
- * 
+ *
  * @param function
  * @return function
  **/
@@ -106,24 +106,20 @@ Bitcoin.makeSynchronous = function (command) {
 
     return function () {
         var args = arguments;
-        
+
         // If the user is implicitly requesting asynchronous
         // execution by passing in a callback, then give it
         // to them.
         if (Bitcoin.getCallbackFromArgs(args) !== undefined)
             return command.apply(this, args);
-            
+
         // Otherwise, execute synchronously.
         var fut = new Future();
-        
+
         args[args.length] = function (err, result) {
             if (err) {
                 Fiber(function () {
-<<<<<<< HEAD
                     TL.error("BitcoinClient.Synchronous error: " + EJSON.stringify(err));
-=======
-                    TL.error("Bitcoin.Client.Synchronous error: " + err.toString());
->>>>>>> refs/remotes/origin/bitcoinPublicRefactor
                 }).run();
                 fut.ret(undefined);
             } else {
@@ -131,9 +127,9 @@ Bitcoin.makeSynchronous = function (command) {
             }
         };
         args.length++;
-        
+
         command.apply(this, args);
-        
+
         return fut.wait();
     }
 }
