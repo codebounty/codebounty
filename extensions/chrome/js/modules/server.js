@@ -1,5 +1,5 @@
 define(["config"], function (config) {
-    var ddp = new MeteorDdp("ws://" + config.baseUrl + "/websocket");
+    var ddp = new MeteorDdp("wss://" + config.baseUrl + "/websocket");
 
     //check we can access the required scopes for this user
     //if not ask the user to authorize the app
