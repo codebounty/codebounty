@@ -100,6 +100,7 @@ BitcoinLocal.pay = function (address, receiverList, callback) {
 
             return;
         }
+
         Fiber(function () {
             _.each(receiverList, function (receiver) {
                 // Look for a BitcoinLocal address for this recipient.
@@ -113,39 +114,41 @@ BitcoinLocal.pay = function (address, receiverList, callback) {
                 if (payoutAddress) {
                     // Send the amount owed the recipient.
                     BitcoinLocal.Client.sendToAddress(payoutAddress.address, receiver.amount);
-
-                } else {
-                    // Grant the recipient an address in our hot wallet (if they
-                    // don't have one yet) and then send the amount owed to that
-                    // address.
-                    var tempAddress = BitcoinLocal.TemporaryReceiverAddresses.findOne(
-                        { email: receiver.email });
-
-                    if (tempAddress) {
-                        BitcoinLocal.Client.sendToAddress(tempAddress.address, receiver.amount);
-                    } else {
-                        BitcoinLocal.Client.getAccountAddress(receiver.email,
-                            function (err, payoutAddress) {
-                                if (err) {
-                                    Fiber(function () {
-                                        TL.error("getAccountAddress error: " + EJSON.stringify(err));
-                                    }).run();
-                                } else {
-                                    BitcoinLocal.Client.sendToAddress(payoutAddress, receiver.amount);
-
-                                    // Save the temporary address for this user so we
-                                    // don't bother bitcoind for a new one later if the
-                                    // same user gets another reward before signing up.
-                                    Fiber(function () {
-                                        BitcoinLocal.TemporaryReceiverAddresses.insert({
-                                            email: receiver.email,
-                                            address: payoutAddress
-                                        });
-                                    }).run();
-                                }
-                            });
-                    }
+                    return;
                 }
+
+                var tempAddress = BitcoinLocal.TemporaryReceiverAddresses.findOne(
+                    { email: receiver.email });
+
+                if (tempAddress) {
+                    BitcoinLocal.Client.sendToAddress(tempAddress.address, receiver.amount);
+                    return;
+                }
+
+                // Grant the recipient an address in our hot wallet (if they
+                // don't have one yet) and then send the amount owed to that
+                // address.
+                BitcoinLocal.Client.getAccountAddress(receiver.email,
+                    function (err, payoutAddress) {
+                        if (err) {
+                            Fiber(function () {
+                                TL.error("getAccountAddress error: " + EJSON.stringify(err));
+                            }).run();
+                            return;
+                        }
+
+                        BitcoinLocal.Client.sendToAddress(payoutAddress, receiver.amount);
+
+                        // Save the temporary address for this user so we
+                        // don't bother bitcoind for a new one later if the
+                        // same user gets another reward before signing up.
+                        Fiber(function () {
+                            BitcoinLocal.TemporaryReceiverAddresses.insert({
+                                email: receiver.email,
+                                address: payoutAddress
+                            });
+                        }).run();
+                    });
             });
         }).run();
     });
