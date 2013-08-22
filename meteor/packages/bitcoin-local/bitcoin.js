@@ -2,8 +2,6 @@
 
 BitcoinLocal = {};
 
-BitcoinLocal.Client = new Bitcoin.Client(BitcoinLocal.Settings.client);
-
 /***********************************************
  * Returns a BitcoinLocal.IssueAddress for the given issue / user pair.
  * If one does not exist, it assigns one from the pool of unassigned addresses.
