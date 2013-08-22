@@ -14,7 +14,6 @@ router
 session-extras
 email
 observatory
-standard-app-packages
 big
 noUiSlider
 page-js-ie-support

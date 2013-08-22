@@ -1,4 +1,8 @@
 {
+  "meteor": {
+    "git": "https://github.com/meteor/meteor.git",
+    "tag": "release/0.6.4.1"
+  },
   "packages": {
     "bootstrap-3": {},
     "router": {},
