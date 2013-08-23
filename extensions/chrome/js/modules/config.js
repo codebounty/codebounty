@@ -1,7 +1,7 @@
 define({
-    baseUrl: "/* @echo BASEURL */",
-    rootUrl: "/* @echo ROOTURL */",
-    issueUrl: encodeURI(window.location.href),
+    appRootUrl: "/* @echo APPROOTURL */",
     githubClientId: "/* @echo GITHUBCLIENTID */",
-    githubScopes: /* @echo GITHUBSCOPES */
+    githubScopes: /* @echo GITHUBSCOPES */,
+    issueUrl: encodeURI(window.location.href),
+    webSocketUri: "/* @echo WEBSOCKETURI */"
 });

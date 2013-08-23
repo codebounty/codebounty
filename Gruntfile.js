@@ -7,10 +7,10 @@ module.exports = function (grunt) {
         return {
             options: {
                 context: {
-                    BASEURL: config.baseUrl[environment],
-                    ROOTURL: config.rootUrl[environment],
+                    APPROOTURL: config.appRootUrl[environment],
                     GITHUBCLIENTID: config.githubClientId[environment],
-                    GITHUBSCOPES: JSON.stringify(config.githubScopes[environment])
+                    GITHUBSCOPES: JSON.stringify(config.githubScopes[environment]),
+                    WEBSOCKETURI: config.webSocketUri[environment]
                 }
             },
             src: "<%= config.dist %>/chrome/js/modules/config.js",
@@ -30,7 +30,7 @@ module.exports = function (grunt) {
             meteor: {
                 cmd: [
                     "cd meteor",
-                    "meteor --settings settings.local.json"
+                    "meteor --release 0.6.4.1 --settings settings.local.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,
@@ -39,7 +39,7 @@ module.exports = function (grunt) {
             meteordebug: {
                 cmd: [
                     "cd meteor",
-                    "NODE_OPTIONS='--debug-brk' meteor --settings settings.local.json"
+                    "NODE_OPTIONS='--debug-brk' meteor --release 0.6.4.1 --settings settings.local.json"
                 ].join("&&"),
                 bg: false,
                 stdout: true,

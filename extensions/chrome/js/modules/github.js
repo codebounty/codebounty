@@ -211,7 +211,7 @@ define(["config"], function (config) {
                 if (!validatePostBountyInput(currency))
                     return;
 
-                var target = config.rootUrl + "/addFunds?amount=" + amount + "&currency=" + currency
+                var target = config.appRootUrl + "/addFunds?amount=" + amount + "&currency=" + currency
                     + "&url=" + config.issueUrl;
                 github.openWindow(target);
             });
@@ -238,7 +238,7 @@ define(["config"], function (config) {
             $(bountyDiv).insertAfter(container);
 
             $("#rewardBounty").click(function (e) {
-                var target = config.rootUrl + "/reward?url=" + config.issueUrl;
+                var target = config.appRootUrl + "/reward?url=" + config.issueUrl;
                 github.openOverlay(target);
                 e.stopPropagation();
                 e.preventDefault();

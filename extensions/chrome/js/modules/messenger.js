@@ -20,7 +20,7 @@ define(["config"], function (config) {
     }
 
     window.addEventListener("message", function (evt) {
-        if (evt.origin !== config.rootUrl)
+        if (evt.origin !== config.appRootUrl)
             return;
 
         //if the message has an event, trigger eventReceived

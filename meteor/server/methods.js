@@ -69,24 +69,24 @@ Meteor.methods({
         //TODO check this is a valid bitcoin address?
 
         // Make sure an address has not been assigned to this user before assigning one
-        var registeredAddress = Bitcoin.ReceiverAddresses.findOne({ userId: user._id });
+        var registeredAddress = BitcoinLocal.ReceiverAddresses.findOne({ userId: user._id });
         if (registeredAddress)
             throw "Receiver address already setup for user";
 
         var email = AuthUtils.email(user);
-        Bitcoin.ReceiverAddresses.insert({ userId: user._id, email: email, address: receiverAddress});
+        BitcoinLocal.ReceiverAddresses.insert({ userId: user._id, email: email, address: receiverAddress});
 
         // See if we set up a temporary address for this user and
         // forward any BTC in it to their receiving address
-        var tempAddress = Bitcoin.TemporaryReceiverAddresses.findOne({ email: user.email });
+        var tempAddress = BitcoinLocal.TemporaryReceiverAddresses.findOne({ email: user.email });
         if (tempAddress) {
             Fiber(function () {
-                Bitcoin.Client.getReceivedByAddress(tempAddress.address,
-                    function (err, received) {
-                        if (received)
-                            Bitcoin.Client.sendToAddress(receiverAddress, received);
-                    });
-                Bitcoin.TemporaryReceiverAddresses.remove({ email: user.email });
+                BitcoinLocal.Client.getReceivedByAddress(tempAddress.address,
+                function (err, received) {
+                    if (received)
+                        BitcoinLocal.Client.sendToAddress(receiverAddress, received);
+                });
+                BitcoinLocal.TemporaryReceiverAddresses.remove({ email: user.email });
             }).run();
         }
     },

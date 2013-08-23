@@ -1,5 +1,3 @@
-Bitcoin.SATOSHI_PER_BITCOIN = 100000000;
-
 /**
  * Define all error code constants.
  **/

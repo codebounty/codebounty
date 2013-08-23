@@ -1,5 +1,9 @@
 {
-  "meteor": {},
+  "meteor": {
+    "git": "https://github.com/meteor/meteor.git",
+    "tag": "release/0.6.4.1",
+    "commit": "ab0e8e770ef5ccd25c8fbd0886683adcb6510ca3"
+  },
   "dependencies": {
     "basePackages": {
       "bootstrap-3": {},
@@ -14,8 +18,8 @@
     "packages": {
       "bootstrap-3": {
         "git": "https://github.com/mangasocial/meteor-bootstrap-3.git",
-        "tag": "v0.2.8",
-        "commit": "8026f0beaa0274849adfcf8c53d919216b5e06ba"
+        "tag": "v0.3.2",
+        "commit": "a09f87b01f625ca86d97f93206e7ff475cf3db3b"
       },
       "router": {
         "git": "https://github.com/tmeasday/meteor-router.git",
@@ -29,8 +33,8 @@
       },
       "font-awesome": {
         "git": "https://github.com/nate-strauser/meteor-font-awesome.git",
-        "tag": "v3.2.0",
-        "commit": "2cba6f907a2579cae2d399b522f9544c13d5e091"
+        "tag": "v3.2.1",
+        "commit": "38bdfff72dfb8857b272f9a9b056045d6a015489"
       },
       "observatory": {
         "git": "https://github.com/jperl/observatory.git",
