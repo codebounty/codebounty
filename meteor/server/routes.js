@@ -152,7 +152,8 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                     funds: {
                         $elemMatch: {
                             transactionHash: params.transaction_hash,
-                            approved: { $exists: true }
+                            approved: { $exists: true },
+                            approved: { $ne: null }
                         }
                     }
                 });
