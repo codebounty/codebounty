@@ -221,13 +221,37 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                     var totalPaid = BigUtils
                         .sum(reward.availableFundAmounts())
                         .plus(bitcoinFund.amount);
+                        
+					// If Blockchain.info says we've got enough confirmations,
+					//  and the transaction is in our wallet and also has enough
+					// confirmations...
+					if (params.confirmations >= BitcoinLocal.Settings.minimumConfirmations
+						&& transaction.confirmations >= BitcoinLocal.Settings.minimumConfirmations) {
 
+						// ...go ahead and mark the BitcoinFund confirmed.
+						bitcoinFund.confirm(reward, params, false);
+
+						// Prevent Blockchain.info from continually resending the transaction.
+						fut.ret([200, "*ok*"]);
+					} else {
+						// Keep Blockchain.info sending notifications.
+						fut.ret([200]);
+					}    
+                    
+                    // Get the user's email address, in order to send
+                    // them "bitcoin received" notifications.
+                    var emailAddress = AuthUtils.email(
+						Meteor.users.find({_id: reward.userId}));
+
+                    if (!emailAddress) {
+						return;
+					}
+					
                     // Send the user different notification emails depending
                     // on whether there is enough BTC to fund a full bounty.
                     if (totalPaid >= BitcoinLocal.Settings.minimumFundAmount) {
                         Email.send({
-                            to: AuthUtils.email(
-                                Meteor.users.find({_id: reward.userId})),
+                            to: emailAddress,
                             from: Meteor.settings["CHARLIE_EMAIL"],
                             subject: BitcoinLocal.Emails.transaction_received.subject,
                             text: BitcoinLocal.Emails.transaction_received.text
@@ -235,8 +259,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
 
                     } else {
                         Email.send({
-                            to: AuthUtils.email(
-                                Meteor.users.find({_id: reward.userId})),
+                            to: emailAddress,
                             from: Meteor.settings["CHARLIE_EMAIL"],
                             subject: BitcoinLocal.Emails.insufficient_funds.subject,
                             text: BitcoinLocal.Emails.insufficient_funds.text
@@ -244,21 +267,7 @@ Meteor.Router.add("/bitcoin-ipn", function () {
                     }
                 }
 
-                // If Blockchain.info says we've got enough confirmations,
-                //  and the transaction is in our wallet and also has enough
-                // confirmations...
-                if (params.confirmations >= BitcoinLocal.Settings.minimumConfirmations
-                    && transaction.confirmations >= BitcoinLocal.Settings.minimumConfirmations) {
-
-                    // ...go ahead and mark the BitcoinFund confirmed.
-                    bitcoinFund.confirm(reward, params, false);
-
-                    // Prevent Blockchain.info from continually resending the transaction.
-                    fut.ret([200, "*ok*"]);
-                } else {
-                    // Keep Blockchain.info sending notifications.
-                    fut.ret([200]);
-                }
+                
             }).run();
         });
     });
