@@ -1,14 +1,9 @@
-Code Bounty
-===========
+This project is not in continued development -- it was a fun experiment to learn meteor. There are a lot of tools to help fund [open source projects](bountysource.com) but feel free to use this code however you like.
 
 An Open Source Bounty System
 ----------------------------
 
 As a project gets more popular, the increase in resources for a project are outstripped by the increase in demand for feature additions and bug fixes.
-
-Our goal is to help create a sustainable model for the suppliers of open source code by putting the weight of cash behind issues.
-
-Copyright © 2013 Code Bounty Developers
 
 Development
 -----------
